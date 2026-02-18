@@ -516,5 +516,19 @@
       "completed_at": "2026-02-18T19:57:06.370493098Z"
     },
     "version": null
+  },
+  {
+    "change": {
+      "description": "Add fd-dup redirection support (n>&m, n>&-) in Lash compiler/formatter/tree-sitter/tests",
+      "priority": "High",
+      "tags": [
+        "feature",
+        "compiler",
+        "treesitter"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-18T20:04:08.851731779Z"
+    },
+    "version": null
   }
 ]
