@@ -41,6 +41,9 @@
 - [ ] Runtime: define Process handle contract for spawn (pid, wait/exit semantics) and add Bash helper coverage (high) #runtime #process #bash #feature
       @created 2026-02-07 02:07
 
+- [ ] Implement subshell + wait syntax/codegen/tests with 'into' capture (high) #feature #compiler #treesitter
+      @created 2026-02-18 20:19
+
 
 ## Completed
 
