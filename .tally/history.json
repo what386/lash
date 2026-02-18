@@ -544,5 +544,20 @@
       "completed_at": "2026-02-18T20:29:51.582454142Z"
     },
     "version": null
+  },
+  {
+    "change": {
+      "description": "Refactor diagnostic code taxonomy and add compile-time feasibility/flow/safety analyzers",
+      "priority": "High",
+      "tags": [
+        "feature",
+        "compiler",
+        "semantic",
+        "diagnostics"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-18T20:51:20.257393Z"
+    },
+    "version": null
   }
 ]
