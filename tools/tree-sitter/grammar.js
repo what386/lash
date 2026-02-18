@@ -182,6 +182,7 @@ module.exports = grammar({
 
     expression: $ => choice(
       $.pipe_expression,
+      $.fd_dup_expression,
       $.redirect_expression,
       $.logical_expression,
       $.comparison_expression,
@@ -197,6 +198,11 @@ module.exports = grammar({
       field("left", $.expression),
       "|",
       field("right", $.expression),
+    )),
+
+    fd_dup_expression: $ => prec.left(1, seq(
+      field("left", $.expression),
+      field("operator", $.fd_dup_operator),
     )),
 
     redirect_expression: $ => prec.left(1, seq(
@@ -349,6 +355,8 @@ module.exports = grammar({
       /(.|\n|\r)*?/,
       "]]",
     )),
+
+    fd_dup_operator: _ => token(seq(/[0-9]+/, ">&", choice(/[0-9]+/, "-"))),
 
     line_comment: _ => token(seq("//", /[^\r\n]*/)),
 

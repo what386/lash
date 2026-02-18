@@ -94,6 +94,7 @@
 
 ; Operators
 (pipe_expression "|" @operator)
+(fd_dup_expression operator: (fd_dup_operator) @operator)
 (redirect_expression operator: "&>>" @operator)
 (redirect_expression operator: "2>>" @operator)
 (redirect_expression operator: ">>" @operator)

@@ -130,6 +130,8 @@ public class FormatterRulesTests
             feed()<"input.log"
             feed()<>"rw.log"
             feed()<<<"payload"
+            feed()3>&1
+            feed()1>&-
             """;
 
         const string expected =
@@ -143,6 +145,8 @@ public class FormatterRulesTests
             feed() < "input.log"
             feed() <> "rw.log"
             feed() <<< "payload"
+            feed() 3>&1
+            feed() 1>&-
             """;
 
         var formatted = LashFormatter.Format(input);

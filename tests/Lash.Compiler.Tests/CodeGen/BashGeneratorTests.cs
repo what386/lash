@@ -304,6 +304,8 @@ public class BashGeneratorTests
             feed() < "input.log"
             feed() <> "rw.log"
             feed() <<< "payload"
+            feed() 3>&1
+            feed() 1>&-
             """);
 
         var bash = new BashGenerator().Generate(program);
@@ -316,6 +318,8 @@ public class BashGeneratorTests
         Assert.Contains("feed < \"input.log\"", bash);
         Assert.Contains("feed <> \"rw.log\"", bash);
         Assert.Contains("feed <<< \"payload\"", bash);
+        Assert.Contains("feed 3>&1", bash);
+        Assert.Contains("feed 1>&-", bash);
     }
 
     [Fact]

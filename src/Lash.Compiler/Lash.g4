@@ -117,6 +117,7 @@ expressionStatement
 expression
     : primaryExpression                                          # PrimaryExpr
     | expression '|' expression                                  # PipeExpr
+    | expression FD_DUP                                          # FdDupExpr
     | expression (APPEND | ERR_APPEND | BOTH_APPEND | HERE_STRING | ERR_REDIRECT | BOTH_REDIRECT | READ_WRITE_REDIRECT) expression  # RedirectExpr
     | expression '[' expression ']'                              # IndexAccessExpr
     | ('!' | '-' | '+' | '#') expression                         # UnaryExpr
@@ -204,6 +205,10 @@ ERR_REDIRECT
 
 READ_WRITE_REDIRECT
     : '<>'
+    ;
+
+FD_DUP
+    : [0-9]+ '>&' ([0-9]+ | '-')
     ;
 
 APPEND

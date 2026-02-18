@@ -463,8 +463,18 @@ public partial class BashGenerator
 
     private string GenerateRedirectStatement(RedirectExpression redirect)
     {
-        var fileTarget = GenerateSingleShellArg(redirect.Right);
         var op = redirect.Operator;
+        if (IsFdDupOperator(op))
+        {
+            return redirect.Left switch
+            {
+                FunctionCallExpression call => $"{GenerateFunctionCallStatement(call)} {op}",
+                PipeExpression pipe => $"{GeneratePipeStatement(pipe)} {op}",
+                _ => $"echo {GenerateSingleShellArg(redirect.Left)} {op}"
+            };
+        }
+
+        var fileTarget = GenerateSingleShellArg(redirect.Right);
 
         return redirect.Left switch
         {
@@ -472,6 +482,25 @@ public partial class BashGenerator
             PipeExpression pipe => $"{GeneratePipeStatement(pipe)} {op} {fileTarget}",
             _ => $"echo {GenerateSingleShellArg(redirect.Left)} {op} {fileTarget}"
         };
+    }
+
+    private static bool IsFdDupOperator(string op)
+    {
+        if (op.Length < 4)
+            return false;
+
+        int i = 0;
+        while (i < op.Length && char.IsDigit(op[i]))
+            i++;
+
+        if (i == 0 || i + 2 > op.Length || op[i] != '>' || op[i + 1] != '&')
+            return false;
+
+        var target = op[(i + 2)..];
+        if (target == "-")
+            return true;
+
+        return target.Length > 0 && target.All(char.IsDigit);
     }
 
     private static bool TryGetPipeAssignment(PipeExpression expr, out string target, out Expression valueExpression)

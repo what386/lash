@@ -413,6 +413,24 @@ public class AstBuilder : LashBaseVisitor<AstNode>
         };
     }
 
+    public override AstNode VisitFdDupExpr(LashParser.FdDupExprContext context)
+    {
+        return new RedirectExpression
+        {
+            Line = context.Start.Line,
+            Column = context.Start.Column,
+            Left = Visit(context.expression()) as Expression ?? new NullLiteral(),
+            Operator = context.FD_DUP().GetText(),
+            Right = new NullLiteral
+            {
+                Line = context.Start.Line,
+                Column = context.Start.Column,
+                Type = ExpressionTypes.Unknown
+            },
+            Type = ExpressionTypes.Unknown
+        };
+    }
+
     public override AstNode VisitUnaryExpr(LashParser.UnaryExprContext context)
     {
         return new UnaryExpression

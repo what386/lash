@@ -398,6 +398,10 @@
           "named": true
         },
         {
+          "type": "fd_dup_expression",
+          "named": true
+        },
+        {
           "type": "index_access",
           "named": true
         },
@@ -445,6 +449,32 @@
           "named": true
         }
       ]
+    }
+  },
+  {
+    "type": "fd_dup_expression",
+    "named": true,
+    "fields": {
+      "left": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "expression",
+            "named": true
+          }
+        ]
+      },
+      "operator": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "fd_dup_operator",
+            "named": true
+          }
+        ]
+      }
     }
   },
   {
@@ -1364,6 +1394,10 @@
   {
     "type": "false",
     "named": false
+  },
+  {
+    "type": "fd_dup_operator",
+    "named": true
   },
   {
     "type": "fn",

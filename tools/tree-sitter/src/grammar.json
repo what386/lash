@@ -753,6 +753,10 @@
         },
         {
           "type": "SYMBOL",
+          "name": "fd_dup_expression"
+        },
+        {
+          "type": "SYMBOL",
           "name": "redirect_expression"
         },
         {
@@ -813,6 +817,31 @@
             "content": {
               "type": "SYMBOL",
               "name": "expression"
+            }
+          }
+        ]
+      }
+    },
+    "fd_dup_expression": {
+      "type": "PREC_LEFT",
+      "value": 1,
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "FIELD",
+            "name": "left",
+            "content": {
+              "type": "SYMBOL",
+              "name": "expression"
+            }
+          },
+          {
+            "type": "FIELD",
+            "name": "operator",
+            "content": {
+              "type": "SYMBOL",
+              "name": "fd_dup_operator"
             }
           }
         ]
@@ -1591,6 +1620,35 @@
           {
             "type": "STRING",
             "value": "]]"
+          }
+        ]
+      }
+    },
+    "fd_dup_operator": {
+      "type": "TOKEN",
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "PATTERN",
+            "value": "[0-9]+"
+          },
+          {
+            "type": "STRING",
+            "value": ">&"
+          },
+          {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "PATTERN",
+                "value": "[0-9]+"
+              },
+              {
+                "type": "STRING",
+                "value": "-"
+              }
+            ]
           }
         ]
       }

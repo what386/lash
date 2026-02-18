@@ -409,6 +409,9 @@ internal static class SpacingRules
 
     private static bool TryReadOperator(string line, int index, out string op, out int consume)
     {
+        if (TryReadFdDupOperator(line, index, out op, out consume))
+            return true;
+
         var threeChar = index + 2 < line.Length ? line.Substring(index, 3) : string.Empty;
         if (threeChar is "&>>" or "2>>" or "<<<")
         {
@@ -443,6 +446,44 @@ internal static class SpacingRules
         op = string.Empty;
         consume = 0;
         return false;
+    }
+
+    private static bool TryReadFdDupOperator(string line, int index, out string op, out int consume)
+    {
+        op = string.Empty;
+        consume = 0;
+
+        if (index >= line.Length || !char.IsDigit(line[index]))
+            return false;
+
+        int cursor = index;
+        while (cursor < line.Length && char.IsDigit(line[cursor]))
+            cursor++;
+
+        if (cursor + 1 >= line.Length || line[cursor] != '>' || line[cursor + 1] != '&')
+            return false;
+
+        int targetStart = cursor + 2;
+        if (targetStart >= line.Length)
+            return false;
+
+        if (line[targetStart] == '-')
+        {
+            consume = targetStart - index + 1;
+            op = line.Substring(index, consume);
+            return true;
+        }
+
+        int targetEnd = targetStart;
+        while (targetEnd < line.Length && char.IsDigit(line[targetEnd]))
+            targetEnd++;
+
+        if (targetEnd == targetStart)
+            return false;
+
+        consume = targetEnd - index;
+        op = line.Substring(index, consume);
+        return true;
     }
 
     private static bool IsTightOperator(string op)

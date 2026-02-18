@@ -117,12 +117,14 @@ public class TypeCheckerTests
     }
 
     [Fact]
-    public void TypeChecker_AllowsStdoutAndStdinRedirectionExpressionStatements()
+    public void TypeChecker_AllowsStdoutAndStdinAndFdDupRedirectionExpressionStatements()
     {
         var program = TestCompiler.ParseOrThrow(
             """
             write() > "out.log"
             feed() < "in.log"
+            feed() 3>&1
+            feed() 1>&-
             """);
 
         var diagnostics = new DiagnosticBag();

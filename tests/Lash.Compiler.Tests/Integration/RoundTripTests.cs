@@ -239,6 +239,28 @@ public class RoundTripTests
     }
 
     [Fact]
+    public void RoundTrip_FdDupRedirection_CanMirrorStdoutToStderrAndPreserveStdout()
+    {
+        var result = CompilerPipeline.Compile(
+            """
+            fn emit()
+                echo out
+            end
+
+            emit() 1>&2
+            emit() 3>&1
+            """);
+
+        Assert.False(result.Diagnostics.HasErrors, string.Join(Environment.NewLine, result.Diagnostics.GetErrors()));
+        var bash = Assert.IsType<string>(result.Bash);
+
+        var run = CompilerPipeline.RunBash(bash);
+        Assert.Equal(0, run.ExitCode);
+        Assert.Equal("out\n", run.StdOut);
+        Assert.Equal("out\n", run.StdErr);
+    }
+
+    [Fact]
     public void RoundTrip_BreakAndContinueBehaveLikeBashLoops()
     {
         var result = CompilerPipeline.Compile(

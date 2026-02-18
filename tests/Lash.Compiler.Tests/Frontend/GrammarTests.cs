@@ -211,6 +211,8 @@ public class GrammarTests
             both() &> "combined-truncate.log"
             readwrite() <> "rw.log"
             feed() <<< "payload"
+            dup() 3>&1
+            closeout() 1>&-
             """);
 
         Assert.All(program.Statements, s =>
@@ -227,6 +229,8 @@ public class GrammarTests
         var fifth = (RedirectExpression)((ExpressionStatement)program.Statements[4]).Expression;
         var sixth = (RedirectExpression)((ExpressionStatement)program.Statements[5]).Expression;
         var seventh = (RedirectExpression)((ExpressionStatement)program.Statements[6]).Expression;
+        var eighth = (RedirectExpression)((ExpressionStatement)program.Statements[7]).Expression;
+        var ninth = (RedirectExpression)((ExpressionStatement)program.Statements[8]).Expression;
         Assert.Equal(">>", first.Operator);
         Assert.Equal("2>>", second.Operator);
         Assert.Equal("&>>", third.Operator);
@@ -234,6 +238,8 @@ public class GrammarTests
         Assert.Equal("&>", fifth.Operator);
         Assert.Equal("<>", sixth.Operator);
         Assert.Equal("<<<", seventh.Operator);
+        Assert.Equal("3>&1", eighth.Operator);
+        Assert.Equal("1>&-", ninth.Operator);
     }
 
     [Fact]
