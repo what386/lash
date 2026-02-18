@@ -530,5 +530,19 @@
       "completed_at": "2026-02-18T20:04:08.851731779Z"
     },
     "version": null
+  },
+  {
+    "change": {
+      "description": "Implement subshell + wait syntax/codegen/tests with 'into' capture",
+      "priority": "High",
+      "tags": [
+        "feature",
+        "compiler",
+        "treesitter"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-18T20:29:51.582454142Z"
+    },
+    "version": null
   }
 ]
