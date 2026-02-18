@@ -559,5 +559,20 @@
       "completed_at": "2026-02-18T20:51:20.257393Z"
     },
     "version": null
+  },
+  {
+    "change": {
+      "description": "Expand warning analyzer with dead-code branch/loop/switch reachability diagnostics",
+      "priority": "High",
+      "tags": [
+        "feature",
+        "compiler",
+        "semantic",
+        "diagnostics"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-18T20:58:37.273894770Z"
+    },
+    "version": null
   }
 ]
