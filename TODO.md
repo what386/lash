@@ -41,6 +41,9 @@
 - [ ] Runtime: define Process handle contract for spawn (pid, wait/exit semantics) and add Bash helper coverage (high) #runtime #process #bash #feature
       @created 2026-02-07 02:07
 
+- [ ] Add branch elimination, stronger constant evaluation, and unused symbol diagnostics (high) #feature #compiler #semantic #diagnostics
+      @created 2026-02-18 23:37
+
 
 ## Completed
 
