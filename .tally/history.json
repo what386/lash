@@ -982,5 +982,20 @@
       "patch": 0,
       "is_prerelease": false
     }
+  },
+  {
+    "change": {
+      "description": "Add branch elimination, stronger constant evaluation, and unused symbol diagnostics",
+      "priority": "High",
+      "tags": [
+        "feature",
+        "compiler",
+        "semantic",
+        "diagnostics"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-18T23:48:02.884089581Z"
+    },
+    "version": null
   }
 ]
