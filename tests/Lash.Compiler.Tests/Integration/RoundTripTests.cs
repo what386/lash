@@ -405,4 +405,50 @@ public class RoundTripTests
         Assert.Equal(0, run.ExitCode);
         Assert.Equal("match\n", run.StdOut);
     }
+
+    [Fact]
+    public void RoundTrip_BackgroundSubshellWaitByPidCapturesStatus()
+    {
+        var result = CompilerPipeline.Compile(
+            """
+            let pid = 0
+            let status = 0
+            subshell into pid
+                sh "sleep 0.05"
+            end &
+            wait pid into status
+            echo "$status"
+            """);
+
+        Assert.False(result.Diagnostics.HasErrors, string.Join(Environment.NewLine, result.Diagnostics.GetErrors()));
+        var bash = Assert.IsType<string>(result.Bash);
+
+        var run = CompilerPipeline.RunBash(bash);
+        Assert.Equal(0, run.ExitCode);
+        Assert.Equal("0\n", run.StdOut);
+    }
+
+    [Fact]
+    public void RoundTrip_WaitJobsWaitsTrackedBackgroundSubshells()
+    {
+        var result = CompilerPipeline.Compile(
+            """
+            let status = 0
+            subshell
+                sh "sleep 0.03"
+            end &
+            subshell
+                sh "sleep 0.01"
+            end &
+            wait jobs into status
+            echo "$status"
+            """);
+
+        Assert.False(result.Diagnostics.HasErrors, string.Join(Environment.NewLine, result.Diagnostics.GetErrors()));
+        var bash = Assert.IsType<string>(result.Bash);
+
+        var run = CompilerPipeline.RunBash(bash);
+        Assert.Equal(0, run.ExitCode);
+        Assert.Equal("0\n", run.StdOut);
+    }
 }

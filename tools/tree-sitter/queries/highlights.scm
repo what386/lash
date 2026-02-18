@@ -21,6 +21,10 @@
 "in" @keyword.repeat
 "step" @keyword.repeat
 "while" @keyword.repeat
+"subshell" @keyword.repeat
+"wait" @keyword.repeat
+"into" @keyword
+"jobs" @keyword
 "sh" @keyword
 "shift" @keyword.repeat
 "enum" @keyword
@@ -102,6 +106,7 @@
 (redirect_expression operator: "&>" @operator)
 (redirect_expression operator: "2>" @operator)
 (redirect_expression operator: "<>" @operator)
+"&" @operator
 (range_expression ".." @operator)
 (additive_expression operator: _ @operator)
 (multiplicative_expression operator: _ @operator)

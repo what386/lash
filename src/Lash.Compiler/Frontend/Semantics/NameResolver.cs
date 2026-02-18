@@ -74,6 +74,10 @@ public sealed class NameResolver
                 case WhileLoop whileLoop:
                     CollectDeclarations(whileLoop.Body);
                     break;
+
+                case SubshellStatement subshellStatement:
+                    CollectDeclarations(subshellStatement.Body);
+                    break;
             }
         }
     }
@@ -182,6 +186,42 @@ public sealed class NameResolver
 
             case ShiftStatement shiftStatement when shiftStatement.Amount != null:
                 CheckExpression(shiftStatement.Amount);
+                break;
+
+            case SubshellStatement subshellStatement:
+                if (!string.IsNullOrEmpty(subshellStatement.IntoVariable))
+                {
+                    ValidateAssignmentTarget(
+                        new IdentifierExpression
+                        {
+                            Line = subshellStatement.Line,
+                            Column = subshellStatement.Column,
+                            Name = subshellStatement.IntoVariable!
+                        },
+                        isGlobal: false);
+                }
+
+                PushScope();
+                foreach (var nested in subshellStatement.Body)
+                    CheckStatement(nested);
+                PopScope();
+                break;
+
+            case WaitStatement waitStatement:
+                if (waitStatement.TargetKind == WaitTargetKind.Target && waitStatement.Target != null)
+                    CheckExpression(waitStatement.Target);
+
+                if (!string.IsNullOrEmpty(waitStatement.IntoVariable))
+                {
+                    ValidateAssignmentTarget(
+                        new IdentifierExpression
+                        {
+                            Line = waitStatement.Line,
+                            Column = waitStatement.Column,
+                            Name = waitStatement.IntoVariable!
+                        },
+                        isGlobal: false);
+                }
                 break;
 
             case ShellStatement shellStatement:

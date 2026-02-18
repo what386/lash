@@ -52,6 +52,14 @@ public partial class BashGenerator
                 GenerateShiftStatement(shiftStatement);
                 break;
 
+            case SubshellStatement subshellStatement:
+                GenerateSubshellStatement(subshellStatement);
+                break;
+
+            case WaitStatement waitStatement:
+                GenerateWaitStatement(waitStatement);
+                break;
+
             case BreakStatement:
                 Emit("break");
                 break;
@@ -628,6 +636,105 @@ public partial class BashGenerator
         Emit($"__lash_shift_n=$(( {amount} ))");
         EmitLine();
         Emit($"if (( __lash_shift_n > 0 )); then {ArgvRuntimeName}=(\"${{{ArgvRuntimeName}[@]:__lash_shift_n}}\"); fi");
+    }
+
+    private void GenerateSubshellStatement(SubshellStatement subshellStatement)
+    {
+        Emit("(");
+        indentLevel++;
+
+        foreach (var stmt in subshellStatement.Body)
+        {
+            EmitLine();
+            GenerateStatement(stmt);
+        }
+
+        indentLevel--;
+        EmitLine();
+        Emit(")");
+
+        if (subshellStatement.RunInBackground)
+        {
+            Emit(" &");
+
+            if (!string.IsNullOrEmpty(subshellStatement.IntoVariable))
+            {
+                EmitLine();
+                Emit($"{subshellStatement.IntoVariable}=$!");
+            }
+
+            if (needsTrackedJobs)
+            {
+                EmitLine();
+                Emit($"{TrackedJobsRuntimeName}+=(\"$!\")");
+            }
+
+            return;
+        }
+
+        if (!string.IsNullOrEmpty(subshellStatement.IntoVariable))
+        {
+            EmitLine();
+            Emit($"{subshellStatement.IntoVariable}=$?");
+        }
+    }
+
+    private void GenerateWaitStatement(WaitStatement waitStatement)
+    {
+        switch (waitStatement.TargetKind)
+        {
+            case WaitTargetKind.Jobs:
+                GenerateWaitJobsStatement(waitStatement);
+                return;
+
+            case WaitTargetKind.Target:
+                if (waitStatement.Target != null)
+                {
+                    var target = GenerateSingleShellArg(waitStatement.Target);
+                    Emit($"wait {target}");
+                }
+                else
+                {
+                    Emit("wait");
+                }
+                break;
+
+            default:
+                Emit("wait");
+                break;
+        }
+
+        if (!string.IsNullOrEmpty(waitStatement.IntoVariable))
+        {
+            EmitLine();
+            Emit($"{waitStatement.IntoVariable}=$?");
+        }
+    }
+
+    private void GenerateWaitJobsStatement(WaitStatement waitStatement)
+    {
+        if (!string.IsNullOrEmpty(waitStatement.IntoVariable))
+        {
+            Emit($"{waitStatement.IntoVariable}=0");
+            EmitLine();
+        }
+
+        Emit($"for {WaitPidRuntimeName} in \"${{{TrackedJobsRuntimeName}[@]}}\"; do");
+        indentLevel++;
+        EmitLine();
+        Emit($"wait \"${{{WaitPidRuntimeName}}}\"");
+
+        if (!string.IsNullOrEmpty(waitStatement.IntoVariable))
+        {
+            EmitLine();
+            Emit($"{waitStatement.IntoVariable}=$?");
+        }
+
+        indentLevel--;
+        EmitLine();
+        Emit("done");
+        EmitLine();
+        Emit($"{TrackedJobsRuntimeName}=()");
     }
 
     private static string EscapeCasePattern(string pattern)

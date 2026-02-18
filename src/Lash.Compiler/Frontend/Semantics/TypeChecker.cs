@@ -148,6 +148,47 @@ public sealed class TypeChecker
                     _ = ValidateNumberOperand("shift", shiftStatement.Amount, amountType);
                     break;
                 }
+            case SubshellStatement subshellStatement:
+                {
+                    if (!string.IsNullOrEmpty(subshellStatement.IntoVariable))
+                    {
+                        Assign(
+                            new IdentifierExpression
+                            {
+                                Line = subshellStatement.Line,
+                                Column = subshellStatement.Column,
+                                Name = subshellStatement.IntoVariable!,
+                                Type = ExpressionTypes.Unknown
+                            },
+                            ExpressionTypes.Number);
+                    }
+
+                    PushScope();
+                    foreach (var nested in subshellStatement.Body)
+                        CheckStatement(nested);
+                    PopScope();
+                    break;
+                }
+            case WaitStatement waitStatement:
+                {
+                    if (waitStatement.TargetKind == WaitTargetKind.Target && waitStatement.Target != null)
+                        _ = InferType(waitStatement.Target);
+
+                    if (!string.IsNullOrEmpty(waitStatement.IntoVariable))
+                    {
+                        Assign(
+                            new IdentifierExpression
+                            {
+                                Line = waitStatement.Line,
+                                Column = waitStatement.Column,
+                                Name = waitStatement.IntoVariable!,
+                                Type = ExpressionTypes.Unknown
+                            },
+                            ExpressionTypes.Number);
+                    }
+
+                    break;
+                }
             case ShellStatement shellStatement:
                 ValidateShellPayload(shellStatement.Command, shellStatement, "Statement 'sh'");
                 break;

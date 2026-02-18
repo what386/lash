@@ -247,6 +247,46 @@ public class AstBuilder : LashBaseVisitor<AstNode>
         };
     }
 
+    public override AstNode VisitSubshellStatement(LashParser.SubshellStatementContext context)
+    {
+        return new SubshellStatement
+        {
+            Line = context.Start.Line,
+            Column = context.Start.Column,
+            IntoVariable = context.IDENTIFIER()?.GetText(),
+            RunInBackground = context.AMP() != null,
+            Body = context.statement().Select(s => Visit(s) as Statement).Where(s => s != null).ToList()!
+        };
+    }
+
+    public override AstNode VisitWaitStatement(LashParser.WaitStatementContext context)
+    {
+        var targetKind = WaitTargetKind.Default;
+        Expression? target = null;
+
+        if (context.waitTarget() != null)
+        {
+            if (context.waitTarget()!.GetText() == "jobs")
+            {
+                targetKind = WaitTargetKind.Jobs;
+            }
+            else
+            {
+                targetKind = WaitTargetKind.Target;
+                target = Visit(context.waitTarget()!.expression()) as Expression ?? new NullLiteral();
+            }
+        }
+
+        return new WaitStatement
+        {
+            Line = context.Start.Line,
+            Column = context.Start.Column,
+            TargetKind = targetKind,
+            Target = target,
+            IntoVariable = context.IDENTIFIER()?.GetText()
+        };
+    }
+
     public override AstNode VisitBreakStatement(LashParser.BreakStatementContext context)
     {
         return new BreakStatement { Line = context.Start.Line, Column = context.Start.Column };

@@ -132,4 +132,39 @@ public class TypeCheckerTests
 
         Assert.DoesNotContain(diagnostics.GetErrors(), e => e.Code == "E100");
     }
+
+    [Fact]
+    public void TypeChecker_TreatsWaitIntoCaptureAsNumber()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            let pid = 1
+            let status = 0
+            wait pid into status
+            let next = status + 1
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new TypeChecker(diagnostics).Analyze(program);
+
+        Assert.DoesNotContain(diagnostics.GetErrors(), e => e.Code == "E100");
+    }
+
+    [Fact]
+    public void TypeChecker_TreatsSubshellIntoCaptureAsNumber()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            let pid = 0
+            subshell into pid
+                echo "work"
+            end &
+            let next = pid + 1
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new TypeChecker(diagnostics).Analyze(program);
+
+        Assert.DoesNotContain(diagnostics.GetErrors(), e => e.Code == "E100");
+    }
 }

@@ -454,4 +454,48 @@ public class BashGeneratorTests
         var bash = new BashGenerator().Generate(program);
         Assert.Contains("items+=(\"b\" \"c\")", bash);
     }
+
+    [Fact]
+    public void BashGenerator_EmitsSubshellAndWaitSyntax()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            let pid = 0
+            let status = 0
+            subshell into pid
+                echo hi
+            end &
+            wait pid into status
+            wait jobs into status
+            wait
+            """);
+
+        var bash = new BashGenerator().Generate(program);
+        Assert.Contains("declare -a __lash_jobs=()", bash);
+        Assert.Contains(") &", bash);
+        Assert.Contains("pid=$!", bash);
+        Assert.Contains("__lash_jobs+=(\"$!\")", bash);
+        Assert.Contains("wait \"${pid}\"", bash);
+        Assert.Contains("for __lash_wait_pid in \"${__lash_jobs[@]}\"; do", bash);
+        Assert.Contains("wait \"${__lash_wait_pid}\"", bash);
+        Assert.Contains("status=$?", bash);
+    }
+
+    [Fact]
+    public void BashGenerator_EmitsForegroundSubshellIntoAsExitStatusCapture()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            let status = 0
+            subshell into status
+                echo hi
+            end
+            """);
+
+        var bash = new BashGenerator().Generate(program);
+        Assert.Contains("(", bash);
+        Assert.Contains(")", bash);
+        Assert.Contains("status=$?", bash);
+        Assert.DoesNotContain("status=$!", bash);
+    }
 }

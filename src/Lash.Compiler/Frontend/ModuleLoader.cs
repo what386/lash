@@ -332,11 +332,15 @@ public static class ModuleLoader
     {
         return line.StartsWith("fn ", StringComparison.Ordinal)
                || line == "end"
+               || line.StartsWith("end ", StringComparison.Ordinal)
                || line.StartsWith("if ", StringComparison.Ordinal)
                || line.StartsWith("elif ", StringComparison.Ordinal)
                || line == "else"
                || line.StartsWith("for ", StringComparison.Ordinal)
                || line.StartsWith("while ", StringComparison.Ordinal)
+               || line.StartsWith("subshell", StringComparison.Ordinal)
+               || line == "wait"
+               || line.StartsWith("wait ", StringComparison.Ordinal)
                || line.StartsWith("switch ", StringComparison.Ordinal)
                || line.StartsWith("case ", StringComparison.Ordinal)
                || line.StartsWith("let ", StringComparison.Ordinal)

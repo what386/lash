@@ -1080,6 +1080,10 @@
           "named": true
         },
         {
+          "type": "subshell_statement",
+          "named": true
+        },
+        {
           "type": "switch_statement",
           "named": true
         },
@@ -1088,10 +1092,40 @@
           "named": true
         },
         {
+          "type": "wait_statement",
+          "named": true
+        },
+        {
           "type": "while_loop",
           "named": true
         }
       ]
+    }
+  },
+  {
+    "type": "subshell_statement",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "statement",
+            "named": true
+          }
+        ]
+      },
+      "into": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          }
+        ]
+      }
     }
   },
   {
@@ -1201,6 +1235,36 @@
     }
   },
   {
+    "type": "wait_statement",
+    "named": true,
+    "fields": {
+      "into": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          }
+        ]
+      },
+      "target": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "expression",
+            "named": true
+          },
+          {
+            "type": "jobs",
+            "named": false
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "while_loop",
     "named": true,
     "fields": {
@@ -1244,6 +1308,10 @@
   },
   {
     "type": "%",
+    "named": false
+  },
+  {
+    "type": "&",
     "named": false
   },
   {
@@ -1428,6 +1496,14 @@
     "named": true
   },
   {
+    "type": "into",
+    "named": false
+  },
+  {
+    "type": "jobs",
+    "named": false
+  },
+  {
     "type": "let",
     "named": false
   },
@@ -1469,11 +1545,19 @@
     "named": true
   },
   {
+    "type": "subshell",
+    "named": false
+  },
+  {
     "type": "switch",
     "named": false
   },
   {
     "type": "true",
+    "named": false
+  },
+  {
+    "type": "wait",
     "named": false
   },
   {

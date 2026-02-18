@@ -40,6 +40,8 @@ module.exports = grammar({
       $.switch_statement,
       $.for_loop,
       $.while_loop,
+      $.subshell_statement,
+      $.wait_statement,
       $.sh_statement,
       $.return_statement,
       $.shift_statement,
@@ -141,6 +143,20 @@ module.exports = grammar({
       field("condition", $.expression),
       field("body", $.block),
     ),
+
+    subshell_statement: $ => seq(
+      "subshell",
+      optional(seq("into", field("into", $.identifier))),
+      field("body", repeat($.statement)),
+      "end",
+      optional("&"),
+    ),
+
+    wait_statement: $ => prec.right(seq(
+      "wait",
+      optional(field("target", choice("jobs", $.expression))),
+      optional(seq("into", field("into", $.identifier))),
+    )),
 
     return_statement: $ => prec.right(seq(
       "return",

@@ -17,6 +17,8 @@ statement
     | commandStatement
     | returnStatement
     | shiftStatement
+    | subshellStatement
+    | waitStatement
     | breakStatement
     | continueStatement
     | expressionStatement
@@ -100,6 +102,19 @@ returnStatement
 
 shiftStatement
     : 'shift' expression?
+    ;
+
+subshellStatement
+    : 'subshell' ('into' IDENTIFIER)? statement* 'end' AMP?
+    ;
+
+waitStatement
+    : 'wait' waitTarget? ('into' IDENTIFIER)?
+    ;
+
+waitTarget
+    : 'jobs'
+    | expression
     ;
 
 breakStatement
@@ -209,6 +224,10 @@ READ_WRITE_REDIRECT
 
 FD_DUP
     : [0-9]+ '>&' ([0-9]+ | '-')
+    ;
+
+AMP
+    : '&'
     ;
 
 APPEND

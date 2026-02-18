@@ -182,4 +182,35 @@ public class NameResolverTests
 
         Assert.DoesNotContain(diagnostics.GetErrors(), e => e.Code == "E104");
     }
+
+    [Fact]
+    public void NameResolver_RejectsSubshellIntoUndeclaredVariable()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            subshell into pid
+                echo "hi"
+            end &
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new NameResolver(diagnostics).Analyze(program);
+
+        Assert.Contains(diagnostics.GetErrors(), e => e.Code == "E103" && e.Message.Contains("undeclared variable 'pid'", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void NameResolver_RejectsWaitIntoConstVariable()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            const status = 0
+            wait into status
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new NameResolver(diagnostics).Analyze(program);
+
+        Assert.Contains(diagnostics.GetErrors(), e => e.Code == "E101" && e.Message.Contains("Cannot assign to const variable 'status'", StringComparison.Ordinal));
+    }
 }

@@ -39,6 +39,8 @@ Lash is a lua-like language that transpiles directly to Bash with minimal runtim
   - `continue`
   - `return [expr]`
   - `shift [n]` (mutates current `argv` frame)
+  - `subshell [into name] ... end [&]`
+  - `wait [expr|jobs] [into name]`
 - Shell passthrough statement:
   - `sh $"...{var}..."` (emit the rendered command directly into generated bash)
 - Command statement:
@@ -115,3 +117,6 @@ Lash is a lua-like language that transpiles directly to Bash with minimal runtim
 - Target output is Bash.
 - Enums are compile-time lowered:
   - `EnumName::Member` → string literal `"EnumNameMember"`
+- `subshell ... end` lowers to a Bash subshell block `(...)`.
+- `subshell ... end &` launches in background; `subshell into pid ... end &` captures `$!`.
+- `wait` lowers directly to Bash `wait`; `wait jobs` drains tracked background subshell pids.

@@ -17,8 +17,11 @@ public partial class BashGenerator
     private const string IndentString = "    ";
     private const string GlobalScope = "<global>";
     private const string ArgvRuntimeName = "__lash_argv";
+    private const string TrackedJobsRuntimeName = "__lash_jobs";
+    private const string WaitPidRuntimeName = "__lash_wait_pid";
     private string currentContext = "<unknown>";
     private string? currentFunctionName;
+    private bool needsTrackedJobs;
 
     public IReadOnlyList<string> Warnings => warnings;
 
@@ -29,13 +32,17 @@ public partial class BashGenerator
         associativeVariables.Clear();
         functionLocalSymbols.Clear();
         indentLevel = 0;
+        needsTrackedJobs = false;
 
         new ComptimePipeline().Run(program);
         AnalyzeAssociativeVariables(program);
+        needsTrackedJobs = RequiresTrackedJobs(program.Statements);
 
         // Bash shebang
         EmitLine("#!/usr/bin/env bash");
         EmitLine($"declare -a {ArgvRuntimeName}=(\"$@\")");
+        if (needsTrackedJobs)
+            EmitLine($"declare -a {TrackedJobsRuntimeName}=()");
 
         // Generate code for each statement
         foreach (var stmt in program.Statements)
@@ -124,6 +131,9 @@ public partial class BashGenerator
                 case WhileLoop whileLoop:
                     CollectFunctionLocals(whileLoop.Body);
                     break;
+                case SubshellStatement subshellStatement:
+                    CollectFunctionLocals(subshellStatement.Body);
+                    break;
             }
         }
     }
@@ -163,6 +173,9 @@ public partial class BashGenerator
                     break;
                 case WhileLoop whileLoop:
                     CollectLocalDeclarations(whileLoop.Body, locals);
+                    break;
+                case SubshellStatement subshellStatement:
+                    CollectLocalDeclarations(subshellStatement.Body, locals);
                     break;
             }
         }
@@ -218,6 +231,12 @@ public partial class BashGenerator
                 case WhileLoop whileLoop:
                     CollectAssociativeUsages(whileLoop.Condition, functionName);
                     CollectAssociativeUsages(whileLoop.Body, functionName);
+                    break;
+                case SubshellStatement subshellStatement:
+                    CollectAssociativeUsages(subshellStatement.Body, functionName);
+                    break;
+                case WaitStatement waitStatement when waitStatement.TargetKind == WaitTargetKind.Target && waitStatement.Target != null:
+                    CollectAssociativeUsages(waitStatement.Target, functionName);
                     break;
                 case ReturnStatement returnStatement when returnStatement.Value != null:
                     CollectAssociativeUsages(returnStatement.Value, functionName);
@@ -324,6 +343,62 @@ public partial class BashGenerator
     {
         var scope = ResolveScopeForIdentifier(name, currentFunctionName, forceGlobal: false);
         return associativeVariables.Contains(ScopedVariableKey(scope, name));
+    }
+
+    private static bool RequiresTrackedJobs(IEnumerable<Statement> statements)
+    {
+        foreach (var statement in statements)
+        {
+            switch (statement)
+            {
+                case SubshellStatement subshellStatement:
+                    if (subshellStatement.RunInBackground)
+                        return true;
+                    if (RequiresTrackedJobs(subshellStatement.Body))
+                        return true;
+                    break;
+
+                case WaitStatement waitStatement when waitStatement.TargetKind == WaitTargetKind.Jobs:
+                    return true;
+
+                case FunctionDeclaration function:
+                    if (RequiresTrackedJobs(function.Body))
+                        return true;
+                    break;
+
+                case IfStatement ifStatement:
+                    if (RequiresTrackedJobs(ifStatement.ThenBlock))
+                        return true;
+                    foreach (var clause in ifStatement.ElifClauses)
+                    {
+                        if (RequiresTrackedJobs(clause.Body))
+                            return true;
+                    }
+                    if (RequiresTrackedJobs(ifStatement.ElseBlock))
+                        return true;
+                    break;
+
+                case SwitchStatement switchStatement:
+                    foreach (var clause in switchStatement.Cases)
+                    {
+                        if (RequiresTrackedJobs(clause.Body))
+                            return true;
+                    }
+                    break;
+
+                case ForLoop forLoop:
+                    if (RequiresTrackedJobs(forLoop.Body))
+                        return true;
+                    break;
+
+                case WhileLoop whileLoop:
+                    if (RequiresTrackedJobs(whileLoop.Body))
+                        return true;
+                    break;
+            }
+        }
+
+        return false;
     }
 
 }

@@ -302,6 +302,41 @@ public class GrammarTests
     }
 
     [Fact]
+    public void ModuleLoader_ParsesSubshellAndWaitStatements()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            let pid = 0
+            let status = 0
+            subshell into pid
+                echo "hi"
+            end &
+            wait pid into status
+            wait jobs
+            wait into status
+            """);
+
+        var subshell = Assert.IsType<SubshellStatement>(program.Statements[2]);
+        Assert.Equal("pid", subshell.IntoVariable);
+        Assert.True(subshell.RunInBackground);
+        Assert.Single(subshell.Body);
+
+        var waitPid = Assert.IsType<WaitStatement>(program.Statements[3]);
+        Assert.Equal(WaitTargetKind.Target, waitPid.TargetKind);
+        Assert.Equal("status", waitPid.IntoVariable);
+        var waitTarget = Assert.IsType<IdentifierExpression>(waitPid.Target);
+        Assert.Equal("pid", waitTarget.Name);
+
+        var waitJobs = Assert.IsType<WaitStatement>(program.Statements[4]);
+        Assert.Equal(WaitTargetKind.Jobs, waitJobs.TargetKind);
+        Assert.Null(waitJobs.Target);
+
+        var waitAll = Assert.IsType<WaitStatement>(program.Statements[5]);
+        Assert.Equal(WaitTargetKind.Default, waitAll.TargetKind);
+        Assert.Equal("status", waitAll.IntoVariable);
+    }
+
+    [Fact]
     public void ModuleLoader_ParsesStringKeyedIndexAssignment()
     {
         var program = TestCompiler.ParseOrThrow(

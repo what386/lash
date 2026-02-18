@@ -272,4 +272,31 @@ public class FormatterRulesTests
         var formatted = LashFormatter.Format(input);
         Assert.Equal(expected.Replace("\r\n", "\n") + "\n", formatted);
     }
+
+    [Fact]
+    public void Formatter_FormatsSubshellAndWaitStatements()
+    {
+        const string input =
+            """
+            subshell into pid
+            echo "hi"
+            end &
+            wait pid into status
+            wait jobs into status
+            wait into status
+            """;
+
+        const string expected =
+            """
+            subshell into pid
+                echo "hi"
+            end &
+            wait pid into status
+            wait jobs into status
+            wait into status
+            """;
+
+        var formatted = LashFormatter.Format(input);
+        Assert.Equal(expected.Replace("\r\n", "\n") + "\n", formatted);
+    }
 }

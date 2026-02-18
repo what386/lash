@@ -9,7 +9,7 @@ internal static class IndentationRules
         RegexOptions.Compiled);
 
     private static readonly Regex TrailingIndentPattern = new(
-        @"^(fn|if|elif|else|for|while|switch|case|enum)\b",
+        @"^(fn|if|elif|else|for|while|switch|case|enum|subshell)\b",
         RegexOptions.Compiled);
 
     public static int GetLeadingDeductions(string line)
