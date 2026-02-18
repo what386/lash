@@ -1,4 +1,4 @@
-# TODO — lash v0.7.1
+# TODO — lash v0.2.0
 
 @created: 2026-02-06
 @modified: 2026-02-18
@@ -47,68 +47,85 @@
 - [x] Simplify language surface to match examples/general-overview.lash and reject unsupported syntax (high) #release #spec #parser #codegen
       @created 2026-02-17 15:21
       @completed 2026-02-17 15:33
+      @completed_version 0.2.0
 
 - [x] Align tree-sitter grammar with simplified Lash syntax and regenerate parser artifacts (high) #parser #treesitter #spec
       @created 2026-02-17 16:02
       @completed 2026-02-17 16:05
+      @completed_version 0.2.0
 
 - [x] Remove runtime helper emission for direct Bash transpilation (high) #codegen #spec
       @created 2026-02-17 16:08
       @completed 2026-02-17 16:08
+      @completed_version 0.2.0
 
 - [x] Remove semantic type system and preprocessor from compiler pipeline (high) #refactor #compiler #spec
       @created 2026-02-17 16:11
       @completed 2026-02-17 16:12
+      @completed_version 0.2.0
 
 - [x] Lower Enum.Member to compile-time string literals in Bash codegen (high) #codegen #enums #spec
       @created 2026-02-17 16:14
       @completed 2026-02-17 16:14
+      @completed_version 0.2.0
 
 - [x] Use native Bash array indexing/assignment in codegen (remove lash_index_* dependency) (high) #codegen #arrays #spec
       @created 2026-02-17 16:16
       @completed 2026-02-17 16:16
+      @completed_version 0.2.0
 
 - [x] Remove dead AST type classes no longer used by syntax-swap compiler (high) #refactor #types #spec
       @created 2026-02-17 16:18
       @completed 2026-02-17 16:18
+      @completed_version 0.2.0
 
 - [x] Remove truly unreferenced AST/diagnostics elements after syntax-swap simplification (high) #cleanup #refactor
       @created 2026-02-17 16:20
       @completed 2026-02-17 16:20
+      @completed_version 0.2.0
 
 - [x] Aggressively strip legacy language constructs from grammar/AST/codegen for syntax-swap compiler (high) #cleanup #compiler #spec
       @created 2026-02-17 17:28
       @completed 2026-02-17 17:28
+      @completed_version 0.2.0
 
 - [x] Implement focused v1 Bash parity: argv/shift, external capture, += concat, associative arrays, switch glob patterns (high) #feature #parser #semantic #codegen #testing
       @created 2026-02-18 03:28
       @completed 2026-02-18 03:38
+      @completed_version 0.2.0
 
 - [x] Add here-string operator (<<<) support in Lash parser/codegen/tests (high) #feature #compiler
       @created 2026-02-18 19:34
       @completed 2026-02-18 19:36
+      @completed_version 0.2.0
 
 - [x] Update tree-sitter grammar and highlights for here-string (<<<) redirection (high) #feature #treesitter
       @created 2026-02-18 19:37
       @completed 2026-02-18 19:38
+      @completed_version 0.2.0
 
 - [x] Add non-append redirection support (>, <, 2>, &>, <>) in Lash compiler/formatter/tests (high) #feature #compiler
       @created 2026-02-18 19:54
       @completed 2026-02-18 19:57
+      @completed_version 0.2.0
 
 - [x] Add fd-dup redirection support (n>&m, n>&-) in Lash compiler/formatter/tree-sitter/tests (high) #feature #compiler #treesitter
       @created 2026-02-18 20:03
       @completed 2026-02-18 20:04
+      @completed_version 0.2.0
 
 - [x] Implement subshell + wait syntax/codegen/tests with 'into' capture (high) #feature #compiler #treesitter
       @created 2026-02-18 20:19
       @completed 2026-02-18 20:29
+      @completed_version 0.2.0
 
 - [x] Refactor diagnostic code taxonomy and add compile-time feasibility/flow/safety analyzers (high) #feature #compiler #semantic #diagnostics
       @created 2026-02-18 20:41
       @completed 2026-02-18 20:51
+      @completed_version 0.2.0
 
 - [x] Expand warning analyzer with dead-code branch/loop/switch reachability diagnostics (high) #feature #compiler #semantic #diagnostics
       @created 2026-02-18 20:58
       @completed 2026-02-18 20:58
+      @completed_version 0.2.0
 

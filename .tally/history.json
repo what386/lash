@@ -350,7 +350,12 @@
       "commit": null,
       "completed_at": "2026-02-17T15:33:21.184958422Z"
     },
-    "version": null
+    "version": {
+      "major": 0,
+      "minor": 2,
+      "patch": 0,
+      "is_prerelease": false
+    }
   },
   {
     "change": {
@@ -364,7 +369,12 @@
       "commit": null,
       "completed_at": "2026-02-17T16:05:16.290807491Z"
     },
-    "version": null
+    "version": {
+      "major": 0,
+      "minor": 2,
+      "patch": 0,
+      "is_prerelease": false
+    }
   },
   {
     "change": {
@@ -377,7 +387,12 @@
       "commit": null,
       "completed_at": "2026-02-17T16:08:36.468173141Z"
     },
-    "version": null
+    "version": {
+      "major": 0,
+      "minor": 2,
+      "patch": 0,
+      "is_prerelease": false
+    }
   },
   {
     "change": {
@@ -391,7 +406,12 @@
       "commit": null,
       "completed_at": "2026-02-17T16:12:46.519920384Z"
     },
-    "version": null
+    "version": {
+      "major": 0,
+      "minor": 2,
+      "patch": 0,
+      "is_prerelease": false
+    }
   },
   {
     "change": {
@@ -405,7 +425,12 @@
       "commit": null,
       "completed_at": "2026-02-17T16:14:19.357602600Z"
     },
-    "version": null
+    "version": {
+      "major": 0,
+      "minor": 2,
+      "patch": 0,
+      "is_prerelease": false
+    }
   },
   {
     "change": {
@@ -419,7 +444,12 @@
       "commit": null,
       "completed_at": "2026-02-17T16:16:56.864319286Z"
     },
-    "version": null
+    "version": {
+      "major": 0,
+      "minor": 2,
+      "patch": 0,
+      "is_prerelease": false
+    }
   },
   {
     "change": {
@@ -433,7 +463,12 @@
       "commit": null,
       "completed_at": "2026-02-17T16:18:26.141341631Z"
     },
-    "version": null
+    "version": {
+      "major": 0,
+      "minor": 2,
+      "patch": 0,
+      "is_prerelease": false
+    }
   },
   {
     "change": {
@@ -446,7 +481,12 @@
       "commit": null,
       "completed_at": "2026-02-17T16:20:25.782110834Z"
     },
-    "version": null
+    "version": {
+      "major": 0,
+      "minor": 2,
+      "patch": 0,
+      "is_prerelease": false
+    }
   },
   {
     "change": {
@@ -460,7 +500,12 @@
       "commit": null,
       "completed_at": "2026-02-17T17:28:50.520450907Z"
     },
-    "version": null
+    "version": {
+      "major": 0,
+      "minor": 2,
+      "patch": 0,
+      "is_prerelease": false
+    }
   },
   {
     "change": {
@@ -476,7 +521,12 @@
       "commit": null,
       "completed_at": "2026-02-18T03:38:52.227156414Z"
     },
-    "version": null
+    "version": {
+      "major": 0,
+      "minor": 2,
+      "patch": 0,
+      "is_prerelease": false
+    }
   },
   {
     "change": {
@@ -489,7 +539,12 @@
       "commit": null,
       "completed_at": "2026-02-18T19:36:51.316891606Z"
     },
-    "version": null
+    "version": {
+      "major": 0,
+      "minor": 2,
+      "patch": 0,
+      "is_prerelease": false
+    }
   },
   {
     "change": {
@@ -502,7 +557,12 @@
       "commit": null,
       "completed_at": "2026-02-18T19:38:22.790798179Z"
     },
-    "version": null
+    "version": {
+      "major": 0,
+      "minor": 2,
+      "patch": 0,
+      "is_prerelease": false
+    }
   },
   {
     "change": {
@@ -515,7 +575,12 @@
       "commit": null,
       "completed_at": "2026-02-18T19:57:06.370493098Z"
     },
-    "version": null
+    "version": {
+      "major": 0,
+      "minor": 2,
+      "patch": 0,
+      "is_prerelease": false
+    }
   },
   {
     "change": {
@@ -529,7 +594,12 @@
       "commit": null,
       "completed_at": "2026-02-18T20:04:08.851731779Z"
     },
-    "version": null
+    "version": {
+      "major": 0,
+      "minor": 2,
+      "patch": 0,
+      "is_prerelease": false
+    }
   },
   {
     "change": {
@@ -543,7 +613,12 @@
       "commit": null,
       "completed_at": "2026-02-18T20:29:51.582454142Z"
     },
-    "version": null
+    "version": {
+      "major": 0,
+      "minor": 2,
+      "patch": 0,
+      "is_prerelease": false
+    }
   },
   {
     "change": {
@@ -558,7 +633,12 @@
       "commit": null,
       "completed_at": "2026-02-18T20:51:20.257393Z"
     },
-    "version": null
+    "version": {
+      "major": 0,
+      "minor": 2,
+      "patch": 0,
+      "is_prerelease": false
+    }
   },
   {
     "change": {
@@ -573,6 +653,334 @@
       "commit": null,
       "completed_at": "2026-02-18T20:58:37.273894770Z"
     },
-    "version": null
+    "version": {
+      "major": 0,
+      "minor": 2,
+      "patch": 0,
+      "is_prerelease": false
+    }
+  },
+  {
+    "change": {
+      "description": "Simplify language surface to match examples/general-overview.lash and reject unsupported syntax",
+      "priority": "High",
+      "tags": [
+        "release",
+        "spec",
+        "parser",
+        "codegen"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-17T15:33:00Z"
+    },
+    "version": {
+      "major": 0,
+      "minor": 2,
+      "patch": 0,
+      "is_prerelease": false
+    }
+  },
+  {
+    "change": {
+      "description": "Align tree-sitter grammar with simplified Lash syntax and regenerate parser artifacts",
+      "priority": "High",
+      "tags": [
+        "parser",
+        "treesitter",
+        "spec"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-17T16:05:00Z"
+    },
+    "version": {
+      "major": 0,
+      "minor": 2,
+      "patch": 0,
+      "is_prerelease": false
+    }
+  },
+  {
+    "change": {
+      "description": "Remove runtime helper emission for direct Bash transpilation",
+      "priority": "High",
+      "tags": [
+        "codegen",
+        "spec"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-17T16:08:00Z"
+    },
+    "version": {
+      "major": 0,
+      "minor": 2,
+      "patch": 0,
+      "is_prerelease": false
+    }
+  },
+  {
+    "change": {
+      "description": "Remove semantic type system and preprocessor from compiler pipeline",
+      "priority": "High",
+      "tags": [
+        "refactor",
+        "compiler",
+        "spec"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-17T16:12:00Z"
+    },
+    "version": {
+      "major": 0,
+      "minor": 2,
+      "patch": 0,
+      "is_prerelease": false
+    }
+  },
+  {
+    "change": {
+      "description": "Lower Enum.Member to compile-time string literals in Bash codegen",
+      "priority": "High",
+      "tags": [
+        "codegen",
+        "enums",
+        "spec"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-17T16:14:00Z"
+    },
+    "version": {
+      "major": 0,
+      "minor": 2,
+      "patch": 0,
+      "is_prerelease": false
+    }
+  },
+  {
+    "change": {
+      "description": "Use native Bash array indexing/assignment in codegen (remove lash_index_* dependency)",
+      "priority": "High",
+      "tags": [
+        "codegen",
+        "arrays",
+        "spec"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-17T16:16:00Z"
+    },
+    "version": {
+      "major": 0,
+      "minor": 2,
+      "patch": 0,
+      "is_prerelease": false
+    }
+  },
+  {
+    "change": {
+      "description": "Remove dead AST type classes no longer used by syntax-swap compiler",
+      "priority": "High",
+      "tags": [
+        "refactor",
+        "types",
+        "spec"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-17T16:18:00Z"
+    },
+    "version": {
+      "major": 0,
+      "minor": 2,
+      "patch": 0,
+      "is_prerelease": false
+    }
+  },
+  {
+    "change": {
+      "description": "Remove truly unreferenced AST/diagnostics elements after syntax-swap simplification",
+      "priority": "High",
+      "tags": [
+        "cleanup",
+        "refactor"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-17T16:20:00Z"
+    },
+    "version": {
+      "major": 0,
+      "minor": 2,
+      "patch": 0,
+      "is_prerelease": false
+    }
+  },
+  {
+    "change": {
+      "description": "Aggressively strip legacy language constructs from grammar/AST/codegen for syntax-swap compiler",
+      "priority": "High",
+      "tags": [
+        "cleanup",
+        "compiler",
+        "spec"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-17T17:28:00Z"
+    },
+    "version": {
+      "major": 0,
+      "minor": 2,
+      "patch": 0,
+      "is_prerelease": false
+    }
+  },
+  {
+    "change": {
+      "description": "Implement focused v1 Bash parity: argv/shift, external capture, += concat, associative arrays, switch glob patterns",
+      "priority": "High",
+      "tags": [
+        "feature",
+        "parser",
+        "semantic",
+        "codegen",
+        "testing"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-18T03:38:00Z"
+    },
+    "version": {
+      "major": 0,
+      "minor": 2,
+      "patch": 0,
+      "is_prerelease": false
+    }
+  },
+  {
+    "change": {
+      "description": "Add here-string operator (<<<) support in Lash parser/codegen/tests",
+      "priority": "High",
+      "tags": [
+        "feature",
+        "compiler"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-18T19:36:00Z"
+    },
+    "version": {
+      "major": 0,
+      "minor": 2,
+      "patch": 0,
+      "is_prerelease": false
+    }
+  },
+  {
+    "change": {
+      "description": "Update tree-sitter grammar and highlights for here-string (<<<) redirection",
+      "priority": "High",
+      "tags": [
+        "feature",
+        "treesitter"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-18T19:38:00Z"
+    },
+    "version": {
+      "major": 0,
+      "minor": 2,
+      "patch": 0,
+      "is_prerelease": false
+    }
+  },
+  {
+    "change": {
+      "description": "Add non-append redirection support (>, <, 2>, &>, <>) in Lash compiler/formatter/tests",
+      "priority": "High",
+      "tags": [
+        "feature",
+        "compiler"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-18T19:57:00Z"
+    },
+    "version": {
+      "major": 0,
+      "minor": 2,
+      "patch": 0,
+      "is_prerelease": false
+    }
+  },
+  {
+    "change": {
+      "description": "Add fd-dup redirection support (n>&m, n>&-) in Lash compiler/formatter/tree-sitter/tests",
+      "priority": "High",
+      "tags": [
+        "feature",
+        "compiler",
+        "treesitter"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-18T20:04:00Z"
+    },
+    "version": {
+      "major": 0,
+      "minor": 2,
+      "patch": 0,
+      "is_prerelease": false
+    }
+  },
+  {
+    "change": {
+      "description": "Implement subshell + wait syntax/codegen/tests with 'into' capture",
+      "priority": "High",
+      "tags": [
+        "feature",
+        "compiler",
+        "treesitter"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-18T20:29:00Z"
+    },
+    "version": {
+      "major": 0,
+      "minor": 2,
+      "patch": 0,
+      "is_prerelease": false
+    }
+  },
+  {
+    "change": {
+      "description": "Refactor diagnostic code taxonomy and add compile-time feasibility/flow/safety analyzers",
+      "priority": "High",
+      "tags": [
+        "feature",
+        "compiler",
+        "semantic",
+        "diagnostics"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-18T20:51:00Z"
+    },
+    "version": {
+      "major": 0,
+      "minor": 2,
+      "patch": 0,
+      "is_prerelease": false
+    }
+  },
+  {
+    "change": {
+      "description": "Expand warning analyzer with dead-code branch/loop/switch reachability diagnostics",
+      "priority": "High",
+      "tags": [
+        "feature",
+        "compiler",
+        "semantic",
+        "diagnostics"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-18T20:58:00Z"
+    },
+    "version": {
+      "major": 0,
+      "minor": 2,
+      "patch": 0,
+      "is_prerelease": false
+    }
   }
 ]
