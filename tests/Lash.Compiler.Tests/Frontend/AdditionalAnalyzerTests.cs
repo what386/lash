@@ -99,4 +99,67 @@ public class AdditionalAnalyzerTests
         Assert.Contains(warnings, w => w.Code == DiagnosticCodes.UnreachableStatement);
         Assert.Contains(warnings, w => w.Code == DiagnosticCodes.WaitJobsWithoutTrackedJobs);
     }
+
+    [Fact]
+    public void WarningAnalyzer_EmitsDeadBranchWarningsForConstantIfConditions()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            if true
+                echo "then"
+            else
+                echo "else"
+            end
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new WarningAnalyzer(diagnostics).Analyze(program);
+
+        Assert.Contains(
+            diagnostics.GetWarnings(),
+            w => w.Code == DiagnosticCodes.UnreachableStatement
+                 && w.Message.Contains("always true", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void WarningAnalyzer_EmitsDeadLoopBodyWarningForConstantFalseWhile()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            while false
+                echo "never"
+            end
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new WarningAnalyzer(diagnostics).Analyze(program);
+
+        Assert.Contains(
+            diagnostics.GetWarnings(),
+            w => w.Code == DiagnosticCodes.UnreachableStatement
+                 && w.Message.Contains("always false", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void WarningAnalyzer_EmitsDeadCaseWarningsForConstantSwitchValue()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            switch 2
+                case 1:
+                    echo "one"
+                case 2:
+                    echo "two"
+                case 3:
+                    echo "three"
+            end
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new WarningAnalyzer(diagnostics).Analyze(program);
+
+        var warnings = diagnostics.GetWarnings().Where(w => w.Code == DiagnosticCodes.UnreachableStatement).ToList();
+        Assert.Contains(warnings, w => w.Message.Contains("can never match", StringComparison.Ordinal));
+        Assert.Contains(warnings, w => w.Message.Contains("earlier case always matches", StringComparison.Ordinal));
+    }
 }
