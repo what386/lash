@@ -94,7 +94,10 @@
 
 ; Operators
 (pipe_expression "|" @operator)
-(redirect_expression operator: _ @operator)
+(redirect_expression operator: "&>>" @operator)
+(redirect_expression operator: "2>>" @operator)
+(redirect_expression operator: ">>" @operator)
+(redirect_expression operator: "<<<" @operator)
 (range_expression ".." @operator)
 (additive_expression operator: _ @operator)
 (multiplicative_expression operator: _ @operator)

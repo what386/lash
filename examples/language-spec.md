@@ -74,7 +74,7 @@ Lash is a lua-like language that transpiles directly to Bash with minimal runtim
   - comparison: `==`, `!=`, `<`, `>`, `<=`, `>=`
   - logical: `&&`, `||`
   - pipe: `|`
-  - append redirection: `>>`, `2>>`, `&>>`
+  - redirection: `>>`, `2>>`, `&>>`, `<<<`
   - append assignment: `+=`
 
 ### Type model (coarse)
@@ -101,6 +101,7 @@ Lash is a lua-like language that transpiles directly to Bash with minimal runtim
   - `>>` append stdout
   - `2>>` append stderr
   - `&>>` append both
+  - `<<<` here-string (feed string/expression value to stdin)
 
 ### Code generation notes
 

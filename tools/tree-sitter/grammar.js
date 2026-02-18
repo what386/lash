@@ -201,7 +201,7 @@ module.exports = grammar({
 
     redirect_expression: $ => prec.left(1, seq(
       field("left", $.expression),
-      field("operator", choice("&>>", "2>>", ">>")),
+      field("operator", choice("&>>", "2>>", ">>", "<<<")),
       field("right", $.expression),
     )),
 
