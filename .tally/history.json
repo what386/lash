@@ -503,5 +503,18 @@
       "completed_at": "2026-02-18T19:38:22.790798179Z"
     },
     "version": null
+  },
+  {
+    "change": {
+      "description": "Add non-append redirection support (>, <, 2>, &>, <>) in Lash compiler/formatter/tests",
+      "priority": "High",
+      "tags": [
+        "feature",
+        "compiler"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-18T19:57:06.370493098Z"
+    },
+    "version": null
   }
 ]
