@@ -490,5 +490,18 @@
       "completed_at": "2026-02-18T19:36:51.316891606Z"
     },
     "version": null
+  },
+  {
+    "change": {
+      "description": "Update tree-sitter grammar and highlights for here-string (<<<) redirection",
+      "priority": "High",
+      "tags": [
+        "feature",
+        "treesitter"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-18T19:38:22.790798179Z"
+    },
+    "version": null
   }
 ]
