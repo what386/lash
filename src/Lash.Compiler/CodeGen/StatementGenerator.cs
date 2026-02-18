@@ -369,6 +369,10 @@ public partial class BashGenerator
     {
         switch (expression)
         {
+            case BinaryExpression binaryExpression when IsComparisonRedirect(binaryExpression):
+                Emit(GenerateBinaryRedirectStatement(binaryExpression));
+                return;
+
             case FunctionCallExpression call:
                 Emit(GenerateFunctionCallStatement(call));
                 return;
@@ -383,6 +387,26 @@ public partial class BashGenerator
         }
 
         Emit(GenerateExpression(expression));
+    }
+
+    private static bool IsComparisonRedirect(BinaryExpression binaryExpression)
+    {
+        return binaryExpression.Operator is ">" or "<";
+    }
+
+    private string GenerateBinaryRedirectStatement(BinaryExpression binaryExpression)
+    {
+        var redirect = new RedirectExpression
+        {
+            Line = binaryExpression.Line,
+            Column = binaryExpression.Column,
+            Left = binaryExpression.Left,
+            Operator = binaryExpression.Operator,
+            Right = binaryExpression.Right,
+            Type = binaryExpression.Type
+        };
+
+        return GenerateRedirectStatement(redirect);
     }
 
     private void GenerateShellStatement(ShellStatement shellStatement)

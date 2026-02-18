@@ -124,6 +124,11 @@ public class FormatterRulesTests
             write()>>"out.log"
             write()2>>"err.log"
             write()&>>"all.log"
+            write()>"out-truncate.log"
+            write()2>"err-truncate.log"
+            write()&>"all-truncate.log"
+            feed()<"input.log"
+            feed()<>"rw.log"
             feed()<<<"payload"
             """;
 
@@ -132,6 +137,11 @@ public class FormatterRulesTests
             write() >> "out.log"
             write() 2>> "err.log"
             write() &>> "all.log"
+            write() > "out-truncate.log"
+            write() 2> "err-truncate.log"
+            write() &> "all-truncate.log"
+            feed() < "input.log"
+            feed() <> "rw.log"
             feed() <<< "payload"
             """;
 

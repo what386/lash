@@ -74,7 +74,7 @@ Lash is a lua-like language that transpiles directly to Bash with minimal runtim
   - comparison: `==`, `!=`, `<`, `>`, `<=`, `>=`
   - logical: `&&`, `||`
   - pipe: `|`
-  - redirection: `>>`, `2>>`, `&>>`, `<<<`
+  - redirection: `>`, `2>`, `&>`, `<`, `<>`, `>>`, `2>>`, `&>>`, `<<<`
   - append assignment: `+=`
 
 ### Type model (coarse)
@@ -97,10 +97,15 @@ Lash is a lua-like language that transpiles directly to Bash with minimal runtim
 ### Pipe and redirection behavior
 
 - Pipe (`|`) supports value-flow patterns used by the transpiler, including assignment sink forms.
-- Append redirection operators are supported as expression operators:
+- Redirection operators are supported for function/pipe expression statements:
+  - `>` truncate-write stdout
+  - `2>` truncate-write stderr
+  - `&>` truncate-write both stdout+stderr
+  - `<` redirect stdin from file
+  - `<>` open read/write file for stdin
   - `>>` append stdout
   - `2>>` append stderr
-  - `&>>` append both
+  - `&>>` append both stdout+stderr
   - `<<<` here-string (feed string/expression value to stdin)
 
 ### Code generation notes

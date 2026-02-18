@@ -298,6 +298,11 @@ public class BashGeneratorTests
             write() >> "out.log"
             write() 2>> "err.log"
             write() &>> "all.log"
+            write() > "out-truncate.log"
+            write() 2> "err-truncate.log"
+            write() &> "all-truncate.log"
+            feed() < "input.log"
+            feed() <> "rw.log"
             feed() <<< "payload"
             """);
 
@@ -305,6 +310,11 @@ public class BashGeneratorTests
         Assert.Contains("write >> \"out.log\"", bash);
         Assert.Contains("write 2>> \"err.log\"", bash);
         Assert.Contains("write &>> \"all.log\"", bash);
+        Assert.Contains("write > \"out-truncate.log\"", bash);
+        Assert.Contains("write 2> \"err-truncate.log\"", bash);
+        Assert.Contains("write &> \"all-truncate.log\"", bash);
+        Assert.Contains("feed < \"input.log\"", bash);
+        Assert.Contains("feed <> \"rw.log\"", bash);
         Assert.Contains("feed <<< \"payload\"", bash);
     }
 

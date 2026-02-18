@@ -418,7 +418,7 @@ internal static class SpacingRules
         }
 
         var twoChar = index + 1 < line.Length ? line.Substring(index, 2) : string.Empty;
-        if (twoChar is ">>" or "::")
+        if (twoChar is ">>" or "2>" or "&>" or "<>" or "::")
         {
             op = twoChar;
             consume = 2;

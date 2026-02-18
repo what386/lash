@@ -117,7 +117,7 @@ expressionStatement
 expression
     : primaryExpression                                          # PrimaryExpr
     | expression '|' expression                                  # PipeExpr
-    | expression (APPEND | ERR_APPEND | BOTH_APPEND | HERE_STRING) expression  # RedirectExpr
+    | expression (APPEND | ERR_APPEND | BOTH_APPEND | HERE_STRING | ERR_REDIRECT | BOTH_REDIRECT | READ_WRITE_REDIRECT) expression  # RedirectExpr
     | expression '[' expression ']'                              # IndexAccessExpr
     | ('!' | '-' | '+' | '#') expression                         # UnaryExpr
     | expression ('*' | '/' | '%') expression                    # MultiplicativeExpr
@@ -192,6 +192,18 @@ ERR_APPEND
 
 HERE_STRING
     : '<<<'
+    ;
+
+BOTH_REDIRECT
+    : '&>'
+    ;
+
+ERR_REDIRECT
+    : '2>'
+    ;
+
+READ_WRITE_REDIRECT
+    : '<>'
     ;
 
 APPEND

@@ -158,6 +158,67 @@ public class RoundTripTests
     }
 
     [Fact]
+    public void RoundTrip_TruncatingAndInputRedirections_WorkForStdoutStderrCombinedAndInput()
+    {
+        var outPath = Path.Combine(Path.GetTempPath(), $"lash-out-truncate-{Guid.NewGuid():N}.txt");
+        var errPath = Path.Combine(Path.GetTempPath(), $"lash-err-truncate-{Guid.NewGuid():N}.txt");
+        var allPath = Path.Combine(Path.GetTempPath(), $"lash-all-truncate-{Guid.NewGuid():N}.txt");
+        var inputPath = Path.Combine(Path.GetTempPath(), $"lash-input-{Guid.NewGuid():N}.txt");
+
+        File.WriteAllText(inputPath, "payload\n");
+
+        try
+        {
+            var source =
+                $"""
+                fn produce()
+                    echo out
+                    echo err 1>&2
+                end
+
+                fn feed()
+                    cat
+                end
+
+                produce() > "{outPath}"
+                produce() 2> "{errPath}"
+                produce() &> "{allPath}"
+                feed() < "{inputPath}"
+                feed() <> "{inputPath}"
+                """;
+
+            var result = CompilerPipeline.Compile(source);
+            Assert.False(result.Diagnostics.HasErrors, string.Join(Environment.NewLine, result.Diagnostics.GetErrors()));
+            var bash = Assert.IsType<string>(result.Bash);
+
+            var run = CompilerPipeline.RunBash(bash);
+            Assert.Equal(0, run.ExitCode);
+            Assert.Equal("out\npayload\npayload\n", run.StdOut);
+
+            var outText = File.ReadAllText(outPath);
+            var errText = File.ReadAllText(errPath);
+            var allText = File.ReadAllText(allPath);
+
+            Assert.Contains("out", outText, StringComparison.Ordinal);
+            Assert.DoesNotContain("err", outText, StringComparison.Ordinal);
+            Assert.Contains("err", errText, StringComparison.Ordinal);
+            Assert.Contains("out", allText, StringComparison.Ordinal);
+            Assert.Contains("err", allText, StringComparison.Ordinal);
+        }
+        finally
+        {
+            if (File.Exists(outPath))
+                File.Delete(outPath);
+            if (File.Exists(errPath))
+                File.Delete(errPath);
+            if (File.Exists(allPath))
+                File.Delete(allPath);
+            if (File.Exists(inputPath))
+                File.Delete(inputPath);
+        }
+    }
+
+    [Fact]
     public void RoundTrip_HereString_RedirectsInputToFunctionCall()
     {
         var result = CompilerPipeline.Compile(

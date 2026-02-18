@@ -207,6 +207,9 @@ public class GrammarTests
             write() >> "out.log"
             warn() 2>> "err.log"
             both() &>> "combined.log"
+            warn() 2> "err-truncate.log"
+            both() &> "combined-truncate.log"
+            readwrite() <> "rw.log"
             feed() <<< "payload"
             """);
 
@@ -221,10 +224,34 @@ public class GrammarTests
         var second = (RedirectExpression)((ExpressionStatement)program.Statements[1]).Expression;
         var third = (RedirectExpression)((ExpressionStatement)program.Statements[2]).Expression;
         var fourth = (RedirectExpression)((ExpressionStatement)program.Statements[3]).Expression;
+        var fifth = (RedirectExpression)((ExpressionStatement)program.Statements[4]).Expression;
+        var sixth = (RedirectExpression)((ExpressionStatement)program.Statements[5]).Expression;
+        var seventh = (RedirectExpression)((ExpressionStatement)program.Statements[6]).Expression;
         Assert.Equal(">>", first.Operator);
         Assert.Equal("2>>", second.Operator);
         Assert.Equal("&>>", third.Operator);
-        Assert.Equal("<<<", fourth.Operator);
+        Assert.Equal("2>", fourth.Operator);
+        Assert.Equal("&>", fifth.Operator);
+        Assert.Equal("<>", sixth.Operator);
+        Assert.Equal("<<<", seventh.Operator);
+    }
+
+    [Fact]
+    public void ModuleLoader_ParsesStdoutAndStdinTruncatingRedirectionAsBinaryExpressions()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            write() > "out.log"
+            feed() < "in.log"
+            """);
+
+        var first = Assert.IsType<BinaryExpression>(((ExpressionStatement)program.Statements[0]).Expression);
+        var second = Assert.IsType<BinaryExpression>(((ExpressionStatement)program.Statements[1]).Expression);
+
+        Assert.Equal(">", first.Operator);
+        Assert.Equal("<", second.Operator);
+        Assert.IsType<FunctionCallExpression>(first.Left);
+        Assert.IsType<FunctionCallExpression>(second.Left);
     }
 
     [Fact]

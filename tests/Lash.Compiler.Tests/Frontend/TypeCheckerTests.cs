@@ -115,4 +115,19 @@ public class TypeCheckerTests
 
         Assert.Contains(diagnostics.GetErrors(), e => e.Code == "E100" && e.Message.Contains("Cannot mix numeric and string keys", StringComparison.Ordinal));
     }
+
+    [Fact]
+    public void TypeChecker_AllowsStdoutAndStdinRedirectionExpressionStatements()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            write() > "out.log"
+            feed() < "in.log"
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new TypeChecker(diagnostics).Analyze(program);
+
+        Assert.DoesNotContain(diagnostics.GetErrors(), e => e.Code == "E100");
+    }
 }

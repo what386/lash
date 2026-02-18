@@ -152,9 +152,22 @@ public sealed class TypeChecker
                 ValidateShellPayload(shellStatement.Command, shellStatement, "Statement 'sh'");
                 break;
             case ExpressionStatement expressionStatement:
+                if (expressionStatement.Expression is BinaryExpression binary &&
+                    IsComparisonRedirect(binary))
+                {
+                    _ = InferType(binary.Left);
+                    _ = InferType(binary.Right);
+                    break;
+                }
+
                 InferType(expressionStatement.Expression);
                 break;
         }
+    }
+
+    private static bool IsComparisonRedirect(BinaryExpression binaryExpression)
+    {
+        return binaryExpression.Operator is ">" or "<";
     }
 
     private void CheckAppendAssignment(Assignment assignment)
