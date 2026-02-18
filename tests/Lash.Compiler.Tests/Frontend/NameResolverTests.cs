@@ -20,7 +20,7 @@ public class NameResolverTests
         var diagnostics = new DiagnosticBag();
         new NameResolver(diagnostics).Analyze(program);
 
-        Assert.Contains(diagnostics.GetErrors(), e => e.Code == "E101" && e.Message.Contains("Cannot assign to const variable 'x'", StringComparison.Ordinal));
+        Assert.Contains(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.InvalidAssignmentTarget && e.Message.Contains("Cannot assign to const variable 'x'", StringComparison.Ordinal));
         Assert.DoesNotContain(diagnostics.GetErrors(), e => e.Message.Contains("Type error:", StringComparison.Ordinal));
     }
 
@@ -38,7 +38,7 @@ public class NameResolverTests
         var diagnostics = new DiagnosticBag();
         new NameResolver(diagnostics).Analyze(program);
 
-        Assert.Contains(diagnostics.GetErrors(), e => e.Code == "E101" && e.Message.Contains("Cannot assign to const variable 'x'", StringComparison.Ordinal));
+        Assert.Contains(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.InvalidAssignmentTarget && e.Message.Contains("Cannot assign to const variable 'x'", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -55,7 +55,7 @@ public class NameResolverTests
         var diagnostics = new DiagnosticBag();
         new NameResolver(diagnostics).Analyze(program);
 
-        Assert.DoesNotContain(diagnostics.GetErrors(), e => e.Code == "E101");
+        Assert.DoesNotContain(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.InvalidAssignmentTarget);
     }
 
     [Fact]
@@ -73,7 +73,7 @@ public class NameResolverTests
         var diagnostics = new DiagnosticBag();
         new NameResolver(diagnostics).Analyze(program);
 
-        Assert.Contains(diagnostics.GetErrors(), e => e.Code == "E102" && e.Message.Contains("Unknown enum member 'AccountType::Savings'", StringComparison.Ordinal));
+        Assert.Contains(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.UndeclaredVariable && e.Message.Contains("Unknown enum member 'AccountType::Savings'", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -87,7 +87,7 @@ public class NameResolverTests
         var diagnostics = new DiagnosticBag();
         new NameResolver(diagnostics).Analyze(program);
 
-        Assert.Contains(diagnostics.GetErrors(), e => e.Code == "E103" && e.Message.Contains("undeclared variable 'y'", StringComparison.Ordinal));
+        Assert.Contains(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.UndeclaredVariable && e.Message.Contains("undeclared variable 'y'", StringComparison.Ordinal));
         Assert.DoesNotContain(diagnostics.GetErrors(), e => e.Message.Contains("Type error:", StringComparison.Ordinal));
     }
 
@@ -102,7 +102,7 @@ public class NameResolverTests
         var diagnostics = new DiagnosticBag();
         new NameResolver(diagnostics).Analyze(program);
 
-        Assert.Contains(diagnostics.GetErrors(), e => e.Code == "E103" && e.Message.Contains("undeclared variable 'y'", StringComparison.Ordinal));
+        Assert.Contains(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.UndeclaredVariable && e.Message.Contains("undeclared variable 'y'", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -121,7 +121,7 @@ public class NameResolverTests
         var diagnostics = new DiagnosticBag();
         new NameResolver(diagnostics).Analyze(program);
 
-        var arityErrors = diagnostics.GetErrors().Where(e => e.Code == "E104").ToList();
+        var arityErrors = diagnostics.GetErrors().Where(e => e.Code == DiagnosticCodes.FunctionArityMismatch).ToList();
         Assert.Equal(2, arityErrors.Count);
         Assert.All(arityErrors, error => Assert.Contains("Function 'greet' expects 1..2", error.Message, StringComparison.Ordinal));
     }
@@ -137,7 +137,7 @@ public class NameResolverTests
         var diagnostics = new DiagnosticBag();
         new NameResolver(diagnostics).Analyze(program);
 
-        Assert.Contains(diagnostics.GetErrors(), e => e.Code == "E104" && e.Message.Contains("Unknown function 'missing'", StringComparison.Ordinal));
+        Assert.Contains(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.UnknownFunction && e.Message.Contains("Unknown function 'missing'", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -152,7 +152,7 @@ public class NameResolverTests
         var diagnostics = new DiagnosticBag();
         new NameResolver(diagnostics).Analyze(program);
 
-        Assert.DoesNotContain(diagnostics.GetErrors(), e => e.Code == "E103");
+        Assert.DoesNotContain(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.UndeclaredVariable);
     }
 
     [Fact]
@@ -166,7 +166,7 @@ public class NameResolverTests
         var diagnostics = new DiagnosticBag();
         new NameResolver(diagnostics).Analyze(program);
 
-        Assert.Contains(diagnostics.GetErrors(), e => e.Code == "E101" && e.Message.Contains("built-in variable 'argv'", StringComparison.Ordinal));
+        Assert.Contains(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.InvalidAssignmentTarget && e.Message.Contains("built-in variable 'argv'", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -180,7 +180,7 @@ public class NameResolverTests
         var diagnostics = new DiagnosticBag();
         new NameResolver(diagnostics).Analyze(program);
 
-        Assert.DoesNotContain(diagnostics.GetErrors(), e => e.Code == "E104");
+        Assert.DoesNotContain(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.UnknownFunction);
     }
 
     [Fact]
@@ -196,7 +196,7 @@ public class NameResolverTests
         var diagnostics = new DiagnosticBag();
         new NameResolver(diagnostics).Analyze(program);
 
-        Assert.Contains(diagnostics.GetErrors(), e => e.Code == "E103" && e.Message.Contains("undeclared variable 'pid'", StringComparison.Ordinal));
+        Assert.Contains(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.UndeclaredVariable && e.Message.Contains("undeclared variable 'pid'", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -211,6 +211,67 @@ public class NameResolverTests
         var diagnostics = new DiagnosticBag();
         new NameResolver(diagnostics).Analyze(program);
 
-        Assert.Contains(diagnostics.GetErrors(), e => e.Code == "E101" && e.Message.Contains("Cannot assign to const variable 'status'", StringComparison.Ordinal));
+        Assert.Contains(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.InvalidAssignmentTarget && e.Message.Contains("Cannot assign to const variable 'status'", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void NameResolver_RejectsReturnOutsideFunction()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            return 1
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new NameResolver(diagnostics).Analyze(program);
+
+        Assert.Contains(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.InvalidControlFlowContext && e.Message.Contains("'return' can only be used inside a function", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void NameResolver_RejectsDuplicateVariableDeclarationInSameScope()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            let x = 1
+            let x = 2
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new NameResolver(diagnostics).Analyze(program);
+
+        Assert.Contains(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.DuplicateDeclaration && e.Message.Contains("Duplicate declaration of 'x'", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void NameResolver_RejectsDuplicateFunctionParameters()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            fn greet(a, a)
+                return a
+            end
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new NameResolver(diagnostics).Analyze(program);
+
+        Assert.Contains(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.DuplicateDeclaration && e.Message.Contains("Duplicate declaration of 'a'", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void NameResolver_RejectsRequiredParameterAfterDefaultParameter()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            fn greet(a = "hi", b)
+                return b
+            end
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new NameResolver(diagnostics).Analyze(program);
+
+        Assert.Contains(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.InvalidParameterDeclaration && e.Message.Contains("cannot appear after defaulted parameters", StringComparison.Ordinal));
     }
 }

@@ -9,16 +9,20 @@ public sealed class NameResolver
 {
     private readonly DiagnosticBag diagnostics;
     private readonly Dictionary<string, SymbolInfo> globalScope;
+    private readonly HashSet<string> globalDeclared = new(StringComparer.Ordinal);
     private readonly Dictionary<string, HashSet<string>> enums = new(StringComparer.Ordinal);
     private readonly Dictionary<string, FunctionInfo> functions = new(StringComparer.Ordinal);
     private readonly Stack<Dictionary<string, SymbolInfo>> scopes = new();
+    private readonly Stack<HashSet<string>> declaredInScope = new();
     private int loopDepth;
+    private int functionDepth;
 
     public NameResolver(DiagnosticBag diagnostics)
     {
         this.diagnostics = diagnostics;
         globalScope = new Dictionary<string, SymbolInfo>(StringComparer.Ordinal);
         scopes.Push(globalScope);
+        declaredInScope.Push(globalDeclared);
     }
 
     public void Analyze(ProgramNode program)
@@ -38,21 +42,32 @@ public sealed class NameResolver
                 case FunctionDeclaration function:
                     if (functions.ContainsKey(function.Name))
                     {
-                        Report(function, $"Duplicate function declaration '{function.Name}'.", "E104");
+                        Report(
+                            function,
+                            $"Duplicate function declaration '{function.Name}'.",
+                            DiagnosticCodes.DuplicateDeclaration);
                     }
                     else
                     {
-                         var required = function.Parameters.Count(p => p.DefaultValue == null);
-                         functions[function.Name] = new FunctionInfo(function.Parameters.Count, required);
+                        var required = function.Parameters.Count(p => p.DefaultValue == null);
+                        functions[function.Name] = new FunctionInfo(function.Parameters.Count, required);
                     }
+
                     CollectDeclarations(function.Body);
                     break;
 
                 case EnumDeclaration enumDeclaration:
                     if (enums.ContainsKey(enumDeclaration.Name))
-                        Report(enumDeclaration, $"Duplicate enum declaration '{enumDeclaration.Name}'.", "E102");
+                    {
+                        Report(
+                            enumDeclaration,
+                            $"Duplicate enum declaration '{enumDeclaration.Name}'.",
+                            DiagnosticCodes.DuplicateDeclaration);
+                    }
                     else
+                    {
                         enums[enumDeclaration.Name] = new HashSet<string>(enumDeclaration.Members, StringComparer.Ordinal);
+                    }
                     break;
 
                 case IfStatement ifStatement:
@@ -90,10 +105,14 @@ public sealed class NameResolver
                 CheckExpression(variable.Value);
                 if (IsBuiltinIdentifier(variable.Name))
                 {
-                    Report(variable, $"Cannot declare built-in variable '{variable.Name}'.", "E101");
+                    Report(
+                        variable,
+                        $"Cannot declare built-in variable '{variable.Name}'.",
+                        DiagnosticCodes.InvalidAssignmentTarget);
                     break;
                 }
-                Declare(variable.Name, variable.Kind == VariableDeclaration.VarKind.Const, variable.IsGlobal);
+
+                Declare(variable.Name, variable.Kind == VariableDeclaration.VarKind.Const, variable, variable.IsGlobal);
                 break;
 
             case EnumDeclaration:
@@ -153,7 +172,7 @@ public sealed class NameResolver
 
                 PushScope();
                 loopDepth++;
-                Declare(forLoop.Variable, isConst: false);
+                Declare(forLoop.Variable, isConst: false, forLoop);
                 foreach (var nested in forLoop.Body)
                     CheckStatement(nested);
                 loopDepth--;
@@ -172,16 +191,35 @@ public sealed class NameResolver
 
             case BreakStatement:
                 if (loopDepth == 0)
-                    Report(statement, "'break' can only be used inside a loop.", "E105");
+                {
+                    Report(
+                        statement,
+                        "'break' can only be used inside a loop.",
+                        DiagnosticCodes.InvalidControlFlowContext);
+                }
                 break;
 
             case ContinueStatement:
                 if (loopDepth == 0)
-                    Report(statement, "'continue' can only be used inside a loop.", "E105");
+                {
+                    Report(
+                        statement,
+                        "'continue' can only be used inside a loop.",
+                        DiagnosticCodes.InvalidControlFlowContext);
+                }
                 break;
 
-            case ReturnStatement returnStatement when returnStatement.Value != null:
-                CheckExpression(returnStatement.Value);
+            case ReturnStatement returnStatement:
+                if (functionDepth == 0)
+                {
+                    Report(
+                        returnStatement,
+                        "'return' can only be used inside a function.",
+                        DiagnosticCodes.InvalidControlFlowContext);
+                }
+
+                if (returnStatement.Value != null)
+                    CheckExpression(returnStatement.Value);
                 break;
 
             case ShiftStatement shiftStatement when shiftStatement.Amount != null:
@@ -237,19 +275,42 @@ public sealed class NameResolver
     private void CheckFunction(FunctionDeclaration function)
     {
         PushScope();
+        functionDepth++;
+        bool sawDefault = false;
 
         foreach (var parameter in function.Parameters)
         {
             if (IsBuiltinIdentifier(parameter.Name))
-                Report(parameter, $"Cannot declare built-in variable '{parameter.Name}'.", "E101");
-            if (parameter.DefaultValue != null)
+            {
+                Report(
+                    parameter,
+                    $"Cannot declare built-in variable '{parameter.Name}'.",
+                    DiagnosticCodes.InvalidAssignmentTarget);
+            }
+
+            if (parameter.DefaultValue == null)
+            {
+                if (sawDefault)
+                {
+                    Report(
+                        parameter,
+                        $"Required parameter '{parameter.Name}' cannot appear after defaulted parameters.",
+                        DiagnosticCodes.InvalidParameterDeclaration);
+                }
+            }
+            else
+            {
+                sawDefault = true;
                 CheckExpression(parameter.DefaultValue);
-            Declare(parameter.Name, isConst: false);
+            }
+
+            Declare(parameter.Name, isConst: false, parameter);
         }
 
         foreach (var statement in function.Body)
             CheckStatement(statement);
 
+        functionDepth--;
         PopScope();
     }
 
@@ -322,7 +383,10 @@ public sealed class NameResolver
 
         if (!functions.TryGetValue(functionCall.FunctionName, out var functionInfo))
         {
-            Report(functionCall, $"Unknown function '{functionCall.FunctionName}'.", "E104");
+            Report(
+                functionCall,
+                $"Unknown function '{functionCall.FunctionName}'.",
+                DiagnosticCodes.UnknownFunction);
             return;
         }
 
@@ -332,7 +396,7 @@ public sealed class NameResolver
             Report(
                 functionCall,
                 $"Function '{functionCall.FunctionName}' expects {FormatArity(functionInfo.RequiredParameterCount, functionInfo.ParameterCount)}, got {actual}.",
-                "E104");
+                DiagnosticCodes.FunctionArityMismatch);
         }
     }
 
@@ -344,14 +408,20 @@ public sealed class NameResolver
         if (TryResolveSymbol(identifier.Name, out _))
             return;
 
-        Report(identifier, $"Use of undeclared variable '{identifier.Name}'.", "E103");
+        Report(
+            identifier,
+            $"Use of undeclared variable '{identifier.Name}'.",
+            DiagnosticCodes.UndeclaredVariable);
     }
 
     private void ValidateAssignmentTarget(IdentifierExpression identifier, bool isGlobal)
     {
         if (IsBuiltinIdentifier(identifier.Name))
         {
-            Report(identifier, $"Cannot assign to built-in variable '{identifier.Name}'.", "E101");
+            Report(
+                identifier,
+                $"Cannot assign to built-in variable '{identifier.Name}'.",
+                DiagnosticCodes.InvalidAssignmentTarget);
             return;
         }
 
@@ -359,24 +429,40 @@ public sealed class NameResolver
         {
             if (!globalScope.TryGetValue(identifier.Name, out var symbol))
             {
-                Report(identifier, $"Use of undeclared variable '{identifier.Name}'.", "E103");
+                Report(
+                    identifier,
+                    $"Use of undeclared variable '{identifier.Name}'.",
+                    DiagnosticCodes.UndeclaredVariable);
                 return;
             }
 
             if (symbol.IsConst)
-                Report(identifier, $"Cannot assign to const variable '{identifier.Name}'.", "E101");
+            {
+                Report(
+                    identifier,
+                    $"Cannot assign to const variable '{identifier.Name}'.",
+                    DiagnosticCodes.InvalidAssignmentTarget);
+            }
 
             return;
         }
 
         if (!TryResolveSymbol(identifier.Name, out var resolved))
         {
-            Report(identifier, $"Use of undeclared variable '{identifier.Name}'.", "E103");
+            Report(
+                identifier,
+                $"Use of undeclared variable '{identifier.Name}'.",
+                DiagnosticCodes.UndeclaredVariable);
             return;
         }
 
         if (resolved.IsConst)
-            Report(identifier, $"Cannot assign to const variable '{identifier.Name}'.", "E101");
+        {
+            Report(
+                identifier,
+                $"Cannot assign to const variable '{identifier.Name}'.",
+                DiagnosticCodes.InvalidAssignmentTarget);
+        }
     }
 
     private void ValidateIndexAssignmentTarget(IndexAccessExpression indexAccess)
@@ -385,36 +471,69 @@ public sealed class NameResolver
         CheckExpression(indexAccess.Index);
 
         if (indexAccess.Array is IdentifierExpression identifier && IsBuiltinIdentifier(identifier.Name))
-            Report(indexAccess, $"Cannot assign to built-in variable '{identifier.Name}'.", "E101");
+        {
+            Report(
+                indexAccess,
+                $"Cannot assign to built-in variable '{identifier.Name}'.",
+                DiagnosticCodes.InvalidAssignmentTarget);
+        }
     }
 
     private void ValidateEnumAccess(EnumAccessExpression enumAccess)
     {
         if (!enums.TryGetValue(enumAccess.EnumName, out var members))
         {
-            Report(enumAccess, $"Unknown enum '{enumAccess.EnumName}'.", "E102");
+            Report(
+                enumAccess,
+                $"Unknown enum '{enumAccess.EnumName}'.",
+                DiagnosticCodes.UndeclaredVariable);
             return;
         }
 
         if (!members.Contains(enumAccess.MemberName))
-            Report(enumAccess, $"Unknown enum member '{enumAccess.EnumName}::{enumAccess.MemberName}'.", "E102");
+        {
+            Report(
+                enumAccess,
+                $"Unknown enum member '{enumAccess.EnumName}::{enumAccess.MemberName}'.",
+                DiagnosticCodes.UndeclaredVariable);
+        }
     }
 
     private void PushScope()
     {
         scopes.Push(new Dictionary<string, SymbolInfo>(scopes.Peek(), StringComparer.Ordinal));
+        declaredInScope.Push(new HashSet<string>(StringComparer.Ordinal));
     }
 
     private void PopScope()
     {
         scopes.Pop();
+        declaredInScope.Pop();
     }
 
-    private void Declare(string name, bool isConst, bool isGlobal = false)
+    private void Declare(string name, bool isConst, AstNode node, bool isGlobal = false)
     {
         if (isGlobal)
         {
+            if (!globalDeclared.Add(name))
+            {
+                Report(
+                    node,
+                    $"Duplicate declaration of '{name}' in the same scope.",
+                    DiagnosticCodes.DuplicateDeclaration);
+                return;
+            }
+
             globalScope[name] = new SymbolInfo(isConst);
+            return;
+        }
+
+        if (!declaredInScope.Peek().Add(name))
+        {
+            Report(
+                node,
+                $"Duplicate declaration of '{name}' in the same scope.",
+                DiagnosticCodes.DuplicateDeclaration);
             return;
         }
 

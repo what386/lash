@@ -96,6 +96,15 @@ Lash is a lua-like language that transpiles directly to Bash with minimal runtim
   - numeric operators require numeric operands
   - `#` requires an array or string operand to return its length
 
+### Diagnostics (code families)
+
+- `E000-E001`: lex/parse diagnostics
+- `E110-E116`: name/declaration/scope diagnostics
+- `E200-E202`: type and semantic compatibility diagnostics
+- `E300-E303`: flow and constant-safety diagnostics
+- `E400-E401`: codegen-feasibility diagnostics (constructs that cannot be lowered to Bash)
+- `W500-W502`: non-fatal warnings (unreachable code, shadowing, and empty `wait jobs`)
+
 ### Pipe and redirection behavior
 
 - Pipe (`|`) supports value-flow patterns used by the transpiler, including assignment sink forms.

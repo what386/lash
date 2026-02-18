@@ -174,6 +174,6 @@ public class DiagnosticErrorListener : BaseErrorListener
             SyntaxErrorFormatter.FormatParserError(offendingSymbol, msg),
             line,
             charPositionInLine,
-            "E001");
+            DiagnosticCodes.ParseSyntaxError);
     }
 }

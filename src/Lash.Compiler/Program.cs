@@ -59,12 +59,37 @@ public static class Program
             return 1;
         }
 
+        new DefiniteAssignmentAnalyzer(diagnostics).Analyze(program);
+        if (diagnostics.HasErrors)
+        {
+            diagnostics.PrintToConsole();
+            return 1;
+        }
+
+        new ConstantSafetyAnalyzer(diagnostics).Analyze(program);
+        if (diagnostics.HasErrors)
+        {
+            diagnostics.PrintToConsole();
+            return 1;
+        }
+
+        new CodegenFeasibilityAnalyzer(diagnostics).Analyze(program);
+        if (diagnostics.HasErrors)
+        {
+            diagnostics.PrintToConsole();
+            return 1;
+        }
+
+        new WarningAnalyzer(diagnostics).Analyze(program);
+
         if (options.PrintAst)
         {
             Console.WriteLine($"Parsed: {path}");
             Console.WriteLine("AST:");
             AstPrinter.Print(program);
         }
+
+        PrintWarnings(diagnostics);
 
         if (options.CheckOnly)
             return 0;
@@ -95,6 +120,16 @@ public static class Program
         }
 
         return 0;
+    }
+
+    private static void PrintWarnings(DiagnosticBag diagnostics)
+    {
+        foreach (var warning in diagnostics.GetWarnings())
+        {
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.Error.WriteLine(warning.ToString());
+            Console.ResetColor();
+        }
     }
 
     private static void PrintUsage()

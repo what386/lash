@@ -1,5 +1,6 @@
 using Lash.Compiler.Ast.Expressions;
 using Lash.Compiler.Ast.Statements;
+using Lash.Compiler.Diagnostics;
 using Lash.Compiler.Tests.TestSupport;
 using Xunit;
 
@@ -359,6 +360,6 @@ public class GrammarTests
             """);
 
         Assert.False(result.Success);
-        Assert.Contains(result.Diagnostics.GetErrors(), d => d.Code == "E001");
+        Assert.Contains(result.Diagnostics.GetErrors(), d => d.Code == DiagnosticCodes.ParseSyntaxError);
     }
 }

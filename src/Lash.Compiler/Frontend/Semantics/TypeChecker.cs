@@ -215,7 +215,7 @@ public sealed class TypeChecker
     {
         if (assignment.Target is not IdentifierExpression identifier)
         {
-            Report(assignment, "Operator '+=' only supports variable targets.");
+            Report(assignment, "Operator '+=' only supports variable targets.", DiagnosticCodes.TypeMismatch);
             return;
         }
 
@@ -223,10 +223,10 @@ public sealed class TypeChecker
         var rightType = InferType(assignment.Value);
 
         if (IsKnown(leftType) && !IsArray(leftType))
-            Report(identifier, $"Operator '+=' expects an array target, got {FormatType(leftType)}.");
+            Report(identifier, $"Operator '+=' expects an array target, got {FormatType(leftType)}.", DiagnosticCodes.TypeMismatch);
 
         if (IsKnown(rightType) && !IsArray(rightType))
-            Report(assignment.Value, $"Operator '+=' expects an array value, got {FormatType(rightType)}.");
+            Report(assignment.Value, $"Operator '+=' expects an array value, got {FormatType(rightType)}.", DiagnosticCodes.TypeMismatch);
 
         Assign(identifier, ExpressionTypes.Array, assignment.IsGlobal);
 
@@ -298,7 +298,7 @@ public sealed class TypeChecker
         }
 
         if (IsKnown(arrayType) && !IsArray(arrayType))
-            Report(indexAccess.Array, $"Index access expects an array, got {FormatType(arrayType)}.");
+            Report(indexAccess.Array, $"Index access expects an array, got {FormatType(arrayType)}.", DiagnosticCodes.InvalidIndexOrContainerUsage);
 
         return ExpressionTypes.Unknown;
     }
@@ -342,7 +342,7 @@ public sealed class TypeChecker
                 if (IsNumber(leftType) && IsNumber(rightType))
                     return ExpressionTypes.Number;
                 if (IsKnown(leftType) && IsKnown(rightType))
-                    Report(binary, $"Cannot add {FormatType(leftType)} and {FormatType(rightType)}.");
+                    Report(binary, $"Cannot add {FormatType(leftType)} and {FormatType(rightType)}.", DiagnosticCodes.TypeMismatch);
                 return ExpressionTypes.Unknown;
 
             case "-":
@@ -404,7 +404,7 @@ public sealed class TypeChecker
         if (IsNumber(type))
             return ExpressionTypes.Number;
 
-        Report(operand, $"Operator '{op}' expects a number, got {FormatType(type)}.");
+        Report(operand, $"Operator '{op}' expects a number, got {FormatType(type)}.", DiagnosticCodes.TypeMismatch);
         return ExpressionTypes.Unknown;
     }
 
@@ -415,7 +415,7 @@ public sealed class TypeChecker
         if (IsArray(type))
             return ExpressionTypes.Number;
 
-        Report(operand, $"Operator '#' expects an array, got {FormatType(type)}.");
+        Report(operand, $"Operator '#' expects an array, got {FormatType(type)}.", DiagnosticCodes.TypeMismatch);
         return ExpressionTypes.Unknown;
     }
 
@@ -427,7 +427,7 @@ public sealed class TypeChecker
             return;
         }
 
-        Report(node, $"{context} expects a string literal command.");
+        Report(node, $"{context} expects a string literal command.", DiagnosticCodes.InvalidShellPayload);
     }
 
     private void ValidateAndTrackContainerKeyKind(
@@ -442,14 +442,14 @@ public sealed class TypeChecker
         var containerType = Resolve(identifier.Name);
         if (IsKnown(containerType) && !IsArray(containerType))
         {
-            Report(location, $"Index access expects an array, got {FormatType(containerType)}.");
+            Report(location, $"Index access expects an array, got {FormatType(containerType)}.", DiagnosticCodes.InvalidIndexOrContainerUsage);
             return;
         }
 
         var existing = ResolveContainerMode(identifier.Name);
         if (existing != ContainerKeyKind.Unknown && existing != keyKind)
         {
-            Report(location, $"Cannot mix numeric and string keys for '{identifier.Name}'.");
+            Report(location, $"Cannot mix numeric and string keys for '{identifier.Name}'.", DiagnosticCodes.InvalidIndexOrContainerUsage);
             return;
         }
 
@@ -491,17 +491,17 @@ public sealed class TypeChecker
     private void ValidateBothNumbers(Expression location, ExpressionType leftType, ExpressionType rightType)
     {
         if (IsKnown(leftType) && !IsNumber(leftType))
-            Report(location, $"Expected number, got {FormatType(leftType)}.");
+            Report(location, $"Expected number, got {FormatType(leftType)}.", DiagnosticCodes.TypeMismatch);
         if (IsKnown(rightType) && !IsNumber(rightType))
-            Report(location, $"Expected number, got {FormatType(rightType)}.");
+            Report(location, $"Expected number, got {FormatType(rightType)}.", DiagnosticCodes.TypeMismatch);
     }
 
     private void ValidateLogical(Expression location, ExpressionType leftType, ExpressionType rightType)
     {
         if (IsKnown(leftType) && (IsString(leftType) || IsArray(leftType)))
-            Report(location, $"Logical operator expects bool/number, got {FormatType(leftType)}.");
+            Report(location, $"Logical operator expects bool/number, got {FormatType(leftType)}.", DiagnosticCodes.TypeMismatch);
         if (IsKnown(rightType) && (IsString(rightType) || IsArray(rightType)))
-            Report(location, $"Logical operator expects bool/number, got {FormatType(rightType)}.");
+            Report(location, $"Logical operator expects bool/number, got {FormatType(rightType)}.", DiagnosticCodes.TypeMismatch);
     }
 
     private void PushScope()
@@ -602,7 +602,7 @@ public sealed class TypeChecker
         return ContainerKeyKind.Unknown;
     }
 
-    private void Report(AstNode node, string message, string code = "E100")
+    private void Report(AstNode node, string message, string code = DiagnosticCodes.TypeMismatch)
     {
         diagnostics.AddError($"Type error: {message}", node.Line, node.Column, code);
     }

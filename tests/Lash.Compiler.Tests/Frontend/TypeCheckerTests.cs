@@ -21,7 +21,7 @@ public class TypeCheckerTests
         var diagnostics = new DiagnosticBag();
         new TypeChecker(diagnostics).Analyze(program);
 
-        Assert.Contains(diagnostics.GetErrors(), e => e.Code == "E100" && e.Message.Contains("Cannot add number and string", StringComparison.Ordinal));
+        Assert.Contains(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.TypeMismatch && e.Message.Contains("Cannot add number and string", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -37,7 +37,7 @@ public class TypeCheckerTests
         var diagnostics = new DiagnosticBag();
         new TypeChecker(diagnostics).Analyze(program);
 
-        Assert.DoesNotContain(diagnostics.GetErrors(), e => e.Code == "E100");
+        Assert.DoesNotContain(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.TypeMismatch);
     }
 
     [Fact]
@@ -52,7 +52,7 @@ public class TypeCheckerTests
         var diagnostics = new DiagnosticBag();
         new TypeChecker(diagnostics).Analyze(program);
 
-        Assert.Contains(diagnostics.GetErrors(), e => e.Code == "E100" && e.Message.Contains("Operator '#' expects an array", StringComparison.Ordinal));
+        Assert.Contains(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.TypeMismatch && e.Message.Contains("Operator '#' expects an array", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -67,7 +67,7 @@ public class TypeCheckerTests
         var diagnostics = new DiagnosticBag();
         new TypeChecker(diagnostics).Analyze(program);
 
-        Assert.DoesNotContain(diagnostics.GetErrors(), e => e.Code == "E100");
+        Assert.DoesNotContain(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.TypeMismatch);
     }
 
     [Fact]
@@ -82,7 +82,7 @@ public class TypeCheckerTests
         var diagnostics = new DiagnosticBag();
         new TypeChecker(diagnostics).Analyze(program);
 
-        Assert.DoesNotContain(diagnostics.GetErrors(), e => e.Code == "E100");
+        Assert.DoesNotContain(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.TypeMismatch);
     }
 
     [Fact]
@@ -97,7 +97,7 @@ public class TypeCheckerTests
         var diagnostics = new DiagnosticBag();
         new TypeChecker(diagnostics).Analyze(program);
 
-        Assert.Contains(diagnostics.GetErrors(), e => e.Code == "E100" && e.Message.Contains("expects an array value", StringComparison.Ordinal));
+        Assert.Contains(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.TypeMismatch && e.Message.Contains("expects an array value", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -113,7 +113,7 @@ public class TypeCheckerTests
         var diagnostics = new DiagnosticBag();
         new TypeChecker(diagnostics).Analyze(program);
 
-        Assert.Contains(diagnostics.GetErrors(), e => e.Code == "E100" && e.Message.Contains("Cannot mix numeric and string keys", StringComparison.Ordinal));
+        Assert.Contains(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.InvalidIndexOrContainerUsage && e.Message.Contains("Cannot mix numeric and string keys", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -130,7 +130,7 @@ public class TypeCheckerTests
         var diagnostics = new DiagnosticBag();
         new TypeChecker(diagnostics).Analyze(program);
 
-        Assert.DoesNotContain(diagnostics.GetErrors(), e => e.Code == "E100");
+        Assert.DoesNotContain(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.TypeMismatch);
     }
 
     [Fact]
@@ -147,7 +147,7 @@ public class TypeCheckerTests
         var diagnostics = new DiagnosticBag();
         new TypeChecker(diagnostics).Analyze(program);
 
-        Assert.DoesNotContain(diagnostics.GetErrors(), e => e.Code == "E100");
+        Assert.DoesNotContain(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.TypeMismatch);
     }
 
     [Fact]
@@ -165,6 +165,6 @@ public class TypeCheckerTests
         var diagnostics = new DiagnosticBag();
         new TypeChecker(diagnostics).Analyze(program);
 
-        Assert.DoesNotContain(diagnostics.GetErrors(), e => e.Code == "E100");
+        Assert.DoesNotContain(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.TypeMismatch);
     }
 }

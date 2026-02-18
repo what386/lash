@@ -29,6 +29,20 @@ internal static class CompilerPipeline
             if (diagnostics.HasErrors)
                 return new PipelineResult(true, program, diagnostics, null, Array.Empty<string>());
 
+            new DefiniteAssignmentAnalyzer(diagnostics).Analyze(program);
+            if (diagnostics.HasErrors)
+                return new PipelineResult(true, program, diagnostics, null, Array.Empty<string>());
+
+            new ConstantSafetyAnalyzer(diagnostics).Analyze(program);
+            if (diagnostics.HasErrors)
+                return new PipelineResult(true, program, diagnostics, null, Array.Empty<string>());
+
+            new CodegenFeasibilityAnalyzer(diagnostics).Analyze(program);
+            if (diagnostics.HasErrors)
+                return new PipelineResult(true, program, diagnostics, null, Array.Empty<string>());
+
+            new WarningAnalyzer(diagnostics).Analyze(program);
+
             var generator = new BashGenerator();
             var bash = generator.Generate(program);
             return new PipelineResult(true, program, diagnostics, bash, generator.Warnings);

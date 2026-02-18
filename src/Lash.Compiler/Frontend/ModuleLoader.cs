@@ -621,7 +621,7 @@ internal sealed class LoaderLexerErrorListener : IAntlrErrorListener<int>
             Message = SyntaxErrorFormatter.FormatLexerError(msg),
             Line = line,
             Column = charPositionInLine,
-            Code = "E000",
+            Code = DiagnosticCodes.LexInvalidToken,
             FilePath = path
         });
     }
@@ -653,7 +653,7 @@ internal sealed class LoaderParserErrorListener : BaseErrorListener
             Message = SyntaxErrorFormatter.FormatParserError(offendingSymbol, msg),
             Line = line,
             Column = charPositionInLine,
-            Code = "E001",
+            Code = DiagnosticCodes.ParseSyntaxError,
             FilePath = path
         });
     }

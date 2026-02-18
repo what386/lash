@@ -1,3 +1,4 @@
+using Lash.Compiler.Diagnostics;
 using Lash.Compiler.Tests.TestSupport;
 using Xunit;
 
@@ -16,7 +17,7 @@ public class SemanticPipelineTests
             """);
 
         Assert.True(result.Diagnostics.HasErrors);
-        Assert.Contains(result.Diagnostics.GetErrors(), e => e.Code == "E100" && e.Message.Contains("Cannot add number and string", StringComparison.Ordinal));
+        Assert.Contains(result.Diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.TypeMismatch && e.Message.Contains("Cannot add number and string", StringComparison.Ordinal));
         Assert.Null(result.Bash);
     }
 
@@ -30,7 +31,7 @@ public class SemanticPipelineTests
             """);
 
         Assert.True(result.Diagnostics.HasErrors);
-        Assert.Contains(result.Diagnostics.GetErrors(), e => e.Code == "E101" && e.Message.Contains("Cannot assign to const variable 'x'", StringComparison.Ordinal));
+        Assert.Contains(result.Diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.InvalidAssignmentTarget && e.Message.Contains("Cannot assign to const variable 'x'", StringComparison.Ordinal));
         Assert.Null(result.Bash);
     }
 
@@ -44,7 +45,7 @@ public class SemanticPipelineTests
             """);
 
         Assert.True(result.Diagnostics.HasErrors);
-        Assert.Contains(result.Diagnostics.GetErrors(), e => e.Code == "E100" && e.Message.Contains("Operator '#' expects an array", StringComparison.Ordinal));
+        Assert.Contains(result.Diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.TypeMismatch && e.Message.Contains("Operator '#' expects an array", StringComparison.Ordinal));
         Assert.Null(result.Bash);
     }
 
@@ -77,7 +78,7 @@ public class SemanticPipelineTests
             """);
 
         Assert.True(result.Diagnostics.HasErrors);
-        Assert.Contains(result.Diagnostics.GetErrors(), e => e.Code == "E102" && e.Message.Contains("Unknown enum member 'AccountType::Savings'", StringComparison.Ordinal));
+        Assert.Contains(result.Diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.UndeclaredVariable && e.Message.Contains("Unknown enum member 'AccountType::Savings'", StringComparison.Ordinal));
         Assert.Null(result.Bash);
     }
 
@@ -90,7 +91,7 @@ public class SemanticPipelineTests
             """);
 
         Assert.True(result.Diagnostics.HasErrors);
-        Assert.Contains(result.Diagnostics.GetErrors(), e => e.Code == "E105" && e.Message.Contains("'break' can only be used inside a loop", StringComparison.Ordinal));
+        Assert.Contains(result.Diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.InvalidControlFlowContext && e.Message.Contains("'break' can only be used inside a loop", StringComparison.Ordinal));
         Assert.Null(result.Bash);
     }
 
@@ -103,7 +104,7 @@ public class SemanticPipelineTests
             """);
 
         Assert.True(result.Diagnostics.HasErrors);
-        Assert.Contains(result.Diagnostics.GetErrors(), e => e.Code == "E105" && e.Message.Contains("'continue' can only be used inside a loop", StringComparison.Ordinal));
+        Assert.Contains(result.Diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.InvalidControlFlowContext && e.Message.Contains("'continue' can only be used inside a loop", StringComparison.Ordinal));
         Assert.Null(result.Bash);
     }
 
@@ -118,7 +119,21 @@ public class SemanticPipelineTests
             """);
 
         Assert.True(result.Diagnostics.HasErrors);
-        Assert.Contains(result.Diagnostics.GetErrors(), e => e.Code == "E100" && e.Message.Contains("Cannot mix numeric and string keys", StringComparison.Ordinal));
+        Assert.Contains(result.Diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.InvalidIndexOrContainerUsage && e.Message.Contains("Cannot mix numeric and string keys", StringComparison.Ordinal));
         Assert.Null(result.Bash);
+    }
+
+    [Fact]
+    public void SemanticPipeline_ReportsWarningsWithoutFailingCompilation()
+    {
+        var result = CompilerPipeline.Compile(
+            """
+            wait jobs
+            """);
+
+        Assert.False(result.Diagnostics.HasErrors);
+        Assert.True(result.Diagnostics.HasWarnings);
+        Assert.Contains(result.Diagnostics.GetWarnings(), w => w.Code == DiagnosticCodes.WaitJobsWithoutTrackedJobs);
+        Assert.NotNull(result.Bash);
     }
 }
