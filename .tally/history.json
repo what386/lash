@@ -477,5 +477,18 @@
       "completed_at": "2026-02-18T03:38:52.227156414Z"
     },
     "version": null
+  },
+  {
+    "change": {
+      "description": "Add here-string operator (<<<) support in Lash parser/codegen/tests",
+      "priority": "High",
+      "tags": [
+        "feature",
+        "compiler"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-18T19:36:51.316891606Z"
+    },
+    "version": null
   }
 ]

@@ -41,9 +41,6 @@
 - [ ] Runtime: define Process handle contract for spawn (pid, wait/exit semantics) and add Bash helper coverage (high) #runtime #process #bash #feature
       @created 2026-02-07 02:07
 
-- [ ] Add here-string operator (<<<) support in Lash parser/codegen/tests (high) #feature #compiler
-      @created 2026-02-18 19:34
-
 
 ## Completed
 
@@ -86,4 +83,8 @@
 - [x] Implement focused v1 Bash parity: argv/shift, external capture, += concat, associative arrays, switch glob patterns (high) #feature #parser #semantic #codegen #testing
       @created 2026-02-18 03:28
       @completed 2026-02-18 03:38
+
+- [x] Add here-string operator (<<<) support in Lash parser/codegen/tests (high) #feature #compiler
+      @created 2026-02-18 19:34
+      @completed 2026-02-18 19:36
 
