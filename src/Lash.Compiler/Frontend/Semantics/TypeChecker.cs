@@ -1,0 +1,569 @@
+namespace Lash.Compiler.Frontend.Semantics;
+
+using Lash.Compiler.Ast;
+using Lash.Compiler.Ast.Expressions;
+using Lash.Compiler.Ast.Statements;
+using Lash.Compiler.Ast.Types;
+using Lash.Compiler.Diagnostics;
+
+public sealed class TypeChecker
+{
+    private readonly DiagnosticBag diagnostics;
+    private readonly Dictionary<string, ExpressionType> globalScope;
+    private readonly Dictionary<string, ContainerKeyKind> globalContainerModes;
+    private readonly Stack<Dictionary<string, ExpressionType>> scopes = new();
+    private readonly Stack<Dictionary<string, ContainerKeyKind>> containerModes = new();
+
+    public TypeChecker(DiagnosticBag diagnostics)
+    {
+        this.diagnostics = diagnostics;
+        globalScope = new Dictionary<string, ExpressionType>(StringComparer.Ordinal)
+        {
+            ["argv"] = ExpressionTypes.Array
+        };
+        globalContainerModes = new Dictionary<string, ContainerKeyKind>(StringComparer.Ordinal)
+        {
+            ["argv"] = ContainerKeyKind.Numeric
+        };
+        scopes.Push(globalScope);
+        containerModes.Push(globalContainerModes);
+    }
+
+    public void Analyze(ProgramNode program)
+    {
+        foreach (var statement in program.Statements)
+            CheckStatement(statement);
+    }
+
+    private void CheckStatement(Statement statement)
+    {
+        switch (statement)
+        {
+            case VariableDeclaration variable:
+                {
+                    var valueType = InferType(variable.Value);
+                    Declare(variable.Name, valueType, variable.IsGlobal);
+
+                    if (IsArray(valueType))
+                    {
+                        var mode = InferContainerKindFromExpression(variable.Value);
+                        if (mode != ContainerKeyKind.Unknown)
+                            DeclareContainerMode(variable.Name, mode, variable.IsGlobal);
+                    }
+
+                    break;
+                }
+            case Assignment assignment:
+                {
+                    if (assignment.Operator == "+=")
+                    {
+                        CheckAppendAssignment(assignment);
+                        break;
+                    }
+
+                    var valueType = InferType(assignment.Value);
+                    if (assignment.Target is IdentifierExpression ident)
+                    {
+                        Assign(ident, valueType, assignment.IsGlobal);
+
+                        if (IsArray(valueType))
+                        {
+                            var mode = InferContainerKindFromExpression(assignment.Value);
+                            if (mode != ContainerKeyKind.Unknown)
+                                SetContainerMode(ident.Name, mode, assignment.IsGlobal);
+                        }
+                    }
+                    else if (assignment.Target is IndexAccessExpression indexTarget)
+                    {
+                        InferType(indexTarget);
+                        if (indexTarget.Array is IdentifierExpression arrayIdent)
+                        {
+                            Assign(arrayIdent, ExpressionTypes.Array, assignment.IsGlobal);
+                            var keyType = InferType(indexTarget.Index);
+                            var keyKind = InferKeyKind(indexTarget.Index, keyType);
+                            ValidateAndTrackContainerKeyKind(arrayIdent, keyKind, indexTarget, assignment.IsGlobal);
+                        }
+                    }
+
+                    break;
+                }
+            case FunctionDeclaration function:
+                CheckFunction(function);
+                break;
+            case IfStatement ifStatement:
+                InferType(ifStatement.Condition);
+                PushScope();
+                foreach (var nested in ifStatement.ThenBlock)
+                    CheckStatement(nested);
+                PopScope();
+
+                foreach (var elifClause in ifStatement.ElifClauses)
+                {
+                    InferType(elifClause.Condition);
+                    PushScope();
+                    foreach (var nested in elifClause.Body)
+                        CheckStatement(nested);
+                    PopScope();
+                }
+
+                PushScope();
+                foreach (var nested in ifStatement.ElseBlock)
+                    CheckStatement(nested);
+                PopScope();
+                break;
+            case SwitchStatement switchStatement:
+                InferType(switchStatement.Value);
+                foreach (var clause in switchStatement.Cases)
+                {
+                    InferType(clause.Pattern);
+                    PushScope();
+                    foreach (var nested in clause.Body)
+                        CheckStatement(nested);
+                    PopScope();
+                }
+                break;
+            case ForLoop forLoop:
+                PushScope();
+                Declare(forLoop.Variable, ExpressionTypes.Number);
+                InferType(forLoop.Range);
+                if (forLoop.Step != null)
+                    InferType(forLoop.Step);
+                foreach (var nested in forLoop.Body)
+                    CheckStatement(nested);
+                PopScope();
+                break;
+            case WhileLoop whileLoop:
+                InferType(whileLoop.Condition);
+                PushScope();
+                foreach (var nested in whileLoop.Body)
+                    CheckStatement(nested);
+                PopScope();
+                break;
+            case ReturnStatement returnStatement when returnStatement.Value != null:
+                InferType(returnStatement.Value);
+                break;
+            case ShiftStatement shiftStatement when shiftStatement.Amount != null:
+                {
+                    var amountType = InferType(shiftStatement.Amount);
+                    _ = ValidateNumberOperand("shift", shiftStatement.Amount, amountType);
+                    break;
+                }
+            case ShellStatement shellStatement:
+                ValidateShellPayload(shellStatement.Command, shellStatement, "Statement 'sh'");
+                break;
+            case ExpressionStatement expressionStatement:
+                InferType(expressionStatement.Expression);
+                break;
+        }
+    }
+
+    private void CheckAppendAssignment(Assignment assignment)
+    {
+        if (assignment.Target is not IdentifierExpression identifier)
+        {
+            Report(assignment, "Operator '+=' only supports variable targets.");
+            return;
+        }
+
+        var leftType = Resolve(identifier.Name);
+        var rightType = InferType(assignment.Value);
+
+        if (IsKnown(leftType) && !IsArray(leftType))
+            Report(identifier, $"Operator '+=' expects an array target, got {FormatType(leftType)}.");
+
+        if (IsKnown(rightType) && !IsArray(rightType))
+            Report(assignment.Value, $"Operator '+=' expects an array value, got {FormatType(rightType)}.");
+
+        Assign(identifier, ExpressionTypes.Array, assignment.IsGlobal);
+
+        var rhsMode = InferContainerKindFromExpression(assignment.Value);
+        if (rhsMode != ContainerKeyKind.Unknown)
+            ValidateAndTrackContainerKeyKind(identifier, rhsMode, assignment, assignment.IsGlobal);
+    }
+
+    private void CheckFunction(FunctionDeclaration function)
+    {
+        PushScope();
+
+        foreach (var parameter in function.Parameters)
+        {
+            var parameterType = parameter.DefaultValue != null ? InferType(parameter.DefaultValue) : ExpressionTypes.Unknown;
+            Declare(parameter.Name, parameterType);
+        }
+
+        foreach (var statement in function.Body)
+            CheckStatement(statement);
+
+        PopScope();
+    }
+
+    private ExpressionType InferType(Expression expression)
+    {
+        if (!IsUnknown(expression.Type))
+            return expression.Type;
+
+        var type = expression switch
+        {
+            LiteralExpression literal => literal.Type,
+            NullLiteral => ExpressionTypes.Unknown,
+            ArrayLiteral => ExpressionTypes.Array,
+            IdentifierExpression identifier => InferIdentifierType(identifier),
+            EnumAccessExpression => ExpressionTypes.String,
+            IndexAccessExpression indexAccess => InferIndexAccessType(indexAccess),
+            FunctionCallExpression functionCall => InferFunctionCallType(functionCall),
+            ShellCaptureExpression shellCapture => InferShellCaptureType(shellCapture),
+            UnaryExpression unary => InferUnaryType(unary),
+            BinaryExpression binary => InferBinaryType(binary),
+            PipeExpression pipe => InferPipeType(pipe),
+            RedirectExpression redirect => InferRedirectType(redirect),
+            RangeExpression => ExpressionTypes.Array,
+            _ => ExpressionTypes.Unknown
+        };
+
+        expression.Type = type;
+        return type;
+    }
+
+    private ExpressionType InferIdentifierType(IdentifierExpression identifier)
+    {
+        if (string.Equals(identifier.Name, "argv", StringComparison.Ordinal))
+            return ExpressionTypes.Array;
+
+        return Resolve(identifier.Name);
+    }
+
+    private ExpressionType InferIndexAccessType(IndexAccessExpression indexAccess)
+    {
+        var arrayType = InferType(indexAccess.Array);
+        var indexType = InferType(indexAccess.Index);
+
+        if (indexAccess.Array is IdentifierExpression identifier)
+        {
+            var keyKind = InferKeyKind(indexAccess.Index, indexType);
+            ValidateAndTrackContainerKeyKind(identifier, keyKind, indexAccess);
+        }
+
+        if (IsKnown(arrayType) && !IsArray(arrayType))
+            Report(indexAccess.Array, $"Index access expects an array, got {FormatType(arrayType)}.");
+
+        return ExpressionTypes.Unknown;
+    }
+
+    private ExpressionType InferFunctionCallType(FunctionCallExpression functionCall)
+    {
+        foreach (var argument in functionCall.Arguments)
+            _ = InferType(argument);
+
+        return ExpressionTypes.Unknown;
+    }
+
+    private ExpressionType InferShellCaptureType(ShellCaptureExpression shellCapture)
+    {
+        ValidateShellPayload(shellCapture.Command, shellCapture, "Expression '$sh'");
+        return ExpressionTypes.Unknown;
+    }
+
+    private ExpressionType InferUnaryType(UnaryExpression unary)
+    {
+        var operandType = InferType(unary.Operand);
+        return unary.Operator switch
+        {
+            "!" => ExpressionTypes.Bool,
+            "-" or "+" => ValidateNumberOperand(unary.Operator, unary.Operand, operandType),
+            "#" => ValidateLengthOperand(unary.Operand, operandType),
+            _ => ExpressionTypes.Unknown
+        };
+    }
+
+    private ExpressionType InferBinaryType(BinaryExpression binary)
+    {
+        var leftType = InferType(binary.Left);
+        var rightType = InferType(binary.Right);
+
+        switch (binary.Operator)
+        {
+            case "+":
+                if (IsString(leftType) && IsString(rightType))
+                    return ExpressionTypes.String;
+                if (IsNumber(leftType) && IsNumber(rightType))
+                    return ExpressionTypes.Number;
+                if (IsKnown(leftType) && IsKnown(rightType))
+                    Report(binary, $"Cannot add {FormatType(leftType)} and {FormatType(rightType)}.");
+                return ExpressionTypes.Unknown;
+
+            case "-":
+            case "*":
+            case "/":
+            case "%":
+                ValidateBothNumbers(binary, leftType, rightType);
+                return ExpressionTypes.Number;
+
+            case "<":
+            case ">":
+            case "<=":
+            case ">=":
+                ValidateBothNumbers(binary, leftType, rightType);
+                return ExpressionTypes.Bool;
+
+            case "==":
+            case "!=":
+                return ExpressionTypes.Bool;
+
+            case "&&":
+            case "||":
+                ValidateLogical(binary, leftType, rightType);
+                return ExpressionTypes.Bool;
+
+            case "..":
+                ValidateBothNumbers(binary, leftType, rightType);
+                return ExpressionTypes.Array;
+
+            default:
+                return ExpressionTypes.Unknown;
+        }
+    }
+
+    private ExpressionType InferPipeType(PipeExpression pipe)
+    {
+        var leftType = InferType(pipe.Left);
+        if (pipe.Right is IdentifierExpression target)
+        {
+            Assign(target, leftType);
+            return leftType;
+        }
+
+        _ = InferType(pipe.Right);
+        return ExpressionTypes.Unknown;
+    }
+
+    private ExpressionType InferRedirectType(RedirectExpression redirect)
+    {
+        _ = InferType(redirect.Left);
+        _ = InferType(redirect.Right);
+        return ExpressionTypes.Unknown;
+    }
+
+    private ExpressionType ValidateNumberOperand(string op, Expression operand, ExpressionType type)
+    {
+        if (IsUnknown(type))
+            return ExpressionTypes.Number;
+        if (IsNumber(type))
+            return ExpressionTypes.Number;
+
+        Report(operand, $"Operator '{op}' expects a number, got {FormatType(type)}.");
+        return ExpressionTypes.Unknown;
+    }
+
+    private ExpressionType ValidateLengthOperand(Expression operand, ExpressionType type)
+    {
+        if (IsUnknown(type))
+            return ExpressionTypes.Number;
+        if (IsArray(type))
+            return ExpressionTypes.Number;
+
+        Report(operand, $"Operator '#' expects an array, got {FormatType(type)}.");
+        return ExpressionTypes.Unknown;
+    }
+
+    private void ValidateShellPayload(Expression command, AstNode node, string context)
+    {
+        if (command is LiteralExpression literal &&
+            literal.LiteralType is PrimitiveType { PrimitiveKind: PrimitiveType.Kind.String })
+        {
+            return;
+        }
+
+        Report(node, $"{context} expects a string literal command.");
+    }
+
+    private void ValidateAndTrackContainerKeyKind(
+        IdentifierExpression identifier,
+        ContainerKeyKind keyKind,
+        AstNode location,
+        bool isGlobalHint = false)
+    {
+        if (keyKind == ContainerKeyKind.Unknown)
+            return;
+
+        var containerType = Resolve(identifier.Name);
+        if (IsKnown(containerType) && !IsArray(containerType))
+        {
+            Report(location, $"Index access expects an array, got {FormatType(containerType)}.");
+            return;
+        }
+
+        var existing = ResolveContainerMode(identifier.Name);
+        if (existing != ContainerKeyKind.Unknown && existing != keyKind)
+        {
+            Report(location, $"Cannot mix numeric and string keys for '{identifier.Name}'.");
+            return;
+        }
+
+        SetContainerMode(identifier.Name, keyKind, isGlobalHint);
+    }
+
+    private static ContainerKeyKind InferKeyKind(Expression keyExpression, ExpressionType keyType)
+    {
+        if (keyExpression is LiteralExpression literal && literal.LiteralType is PrimitiveType primitive)
+        {
+            return primitive.PrimitiveKind switch
+            {
+                PrimitiveType.Kind.Int => ContainerKeyKind.Numeric,
+                PrimitiveType.Kind.String => ContainerKeyKind.String,
+                _ => ContainerKeyKind.Unknown
+            };
+        }
+
+        if (IsNumber(keyType))
+            return ContainerKeyKind.Numeric;
+        if (IsString(keyType))
+            return ContainerKeyKind.String;
+
+        return ContainerKeyKind.Unknown;
+    }
+
+    private ContainerKeyKind InferContainerKindFromExpression(Expression expression)
+    {
+        return expression switch
+        {
+            IdentifierExpression identifier => ResolveContainerMode(identifier.Name),
+            ArrayLiteral arrayLiteral when arrayLiteral.Elements.Count == 0 => ContainerKeyKind.Unknown,
+            ArrayLiteral => ContainerKeyKind.Numeric,
+            RangeExpression => ContainerKeyKind.Numeric,
+            _ => ContainerKeyKind.Unknown
+        };
+    }
+
+    private void ValidateBothNumbers(Expression location, ExpressionType leftType, ExpressionType rightType)
+    {
+        if (IsKnown(leftType) && !IsNumber(leftType))
+            Report(location, $"Expected number, got {FormatType(leftType)}.");
+        if (IsKnown(rightType) && !IsNumber(rightType))
+            Report(location, $"Expected number, got {FormatType(rightType)}.");
+    }
+
+    private void ValidateLogical(Expression location, ExpressionType leftType, ExpressionType rightType)
+    {
+        if (IsKnown(leftType) && (IsString(leftType) || IsArray(leftType)))
+            Report(location, $"Logical operator expects bool/number, got {FormatType(leftType)}.");
+        if (IsKnown(rightType) && (IsString(rightType) || IsArray(rightType)))
+            Report(location, $"Logical operator expects bool/number, got {FormatType(rightType)}.");
+    }
+
+    private void PushScope()
+    {
+        scopes.Push(new Dictionary<string, ExpressionType>(scopes.Peek(), StringComparer.Ordinal));
+        containerModes.Push(new Dictionary<string, ContainerKeyKind>(containerModes.Peek(), StringComparer.Ordinal));
+    }
+
+    private void PopScope()
+    {
+        scopes.Pop();
+        containerModes.Pop();
+    }
+
+    private void Declare(string name, ExpressionType type, bool isGlobal = false)
+    {
+        if (isGlobal)
+        {
+            globalScope[name] = type;
+            return;
+        }
+
+        scopes.Peek()[name] = type;
+    }
+
+    private void DeclareContainerMode(string name, ContainerKeyKind mode, bool isGlobal = false)
+    {
+        if (isGlobal)
+        {
+            globalContainerModes[name] = mode;
+            return;
+        }
+
+        containerModes.Peek()[name] = mode;
+    }
+
+    private void Assign(IdentifierExpression target, ExpressionType type, bool isGlobal = false)
+    {
+        var name = target.Name;
+
+        if (isGlobal)
+        {
+            globalScope[name] = type;
+            return;
+        }
+
+        foreach (var scope in scopes)
+        {
+            if (!scope.ContainsKey(name))
+                continue;
+
+            scope[name] = type;
+            return;
+        }
+
+        scopes.Peek()[name] = type;
+    }
+
+    private void SetContainerMode(string name, ContainerKeyKind mode, bool isGlobal = false)
+    {
+        if (isGlobal)
+        {
+            globalContainerModes[name] = mode;
+            return;
+        }
+
+        foreach (var modeScope in containerModes)
+        {
+            if (!modeScope.ContainsKey(name))
+                continue;
+
+            modeScope[name] = mode;
+            return;
+        }
+
+        containerModes.Peek()[name] = mode;
+    }
+
+    private ExpressionType Resolve(string name)
+    {
+        foreach (var scope in scopes)
+        {
+            if (scope.TryGetValue(name, out var type))
+                return type;
+        }
+
+        return ExpressionTypes.Unknown;
+    }
+
+    private ContainerKeyKind ResolveContainerMode(string name)
+    {
+        foreach (var scope in containerModes)
+        {
+            if (scope.TryGetValue(name, out var mode))
+                return mode;
+        }
+
+        return ContainerKeyKind.Unknown;
+    }
+
+    private void Report(AstNode node, string message, string code = "E100")
+    {
+        diagnostics.AddError($"Type error: {message}", node.Line, node.Column, code);
+    }
+
+    private static bool IsKnown(ExpressionType type) => !IsUnknown(type);
+    private static bool IsUnknown(ExpressionType type) => type is UnknownType;
+    private static bool IsNumber(ExpressionType type) => type is NumberType;
+    private static bool IsString(ExpressionType type) => type is StringType;
+    private static bool IsArray(ExpressionType type) => type is ArrayType;
+    private static string FormatType(ExpressionType type) => type.ToString();
+
+    private enum ContainerKeyKind
+    {
+        Unknown,
+        Numeric,
+        String
+    }
+}

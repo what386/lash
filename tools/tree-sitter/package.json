@@ -1,0 +1,20 @@
+{
+  "name": "tree-sitter-lash",
+  "version": "0.1.0",
+  "description": "Tree-sitter grammar for Lash",
+  "main": "grammar.js",
+  "license": "MIT",
+  "keywords": [
+    "tree-sitter",
+    "lash",
+    "grammar"
+  ],
+  "scripts": {
+    "generate": "tree-sitter generate",
+    "test": "tree-sitter test"
+  },
+  "devDependencies": {
+    "tree-sitter-cli": "^0.25.10"
+  }
+}
+

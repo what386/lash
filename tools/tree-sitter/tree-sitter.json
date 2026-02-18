@@ -1,0 +1,33 @@
+{
+  "$schema": "https://tree-sitter.github.io/tree-sitter/assets/schemas/config.schema.json",
+  "grammars": [
+    {
+      "name": "lash",
+      "camelcase": "Lash",
+      "title": "Lash",
+      "scope": "source.lash",
+      "file-types": [
+        "lash"
+      ],
+      "injection-regex": "^lash$",
+      "class-name": "TreeSitterLash"
+    }
+  ],
+  "metadata": {
+    "version": "0.1.0",
+    "license": "MIT",
+    "description": "a small typed language that transpiles to Bash.",
+    "authors": [
+      {
+        "name": "what386",
+        "url": "https://github.com/what386"
+      }
+    ],
+    "links": {
+      "repository": "https://github.com/what386/lash"
+    }
+  },
+  "bindings": {
+    "c": true
+  }
+}

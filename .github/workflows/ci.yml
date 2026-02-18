@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - "feature/**"
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.0.x"
+
+      - name: Build compiler
+        run: dotnet build src/Lash.Compiler/Lash.Compiler.csproj --configuration Release --verbosity minimal
+
+      - name: Run compiler tests
+        run: dotnet test tests/Lash.Compiler.Tests/Lash.Compiler.Tests.csproj --configuration Release --verbosity minimal
