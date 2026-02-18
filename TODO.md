@@ -41,6 +41,9 @@
 - [ ] Runtime: define Process handle contract for spawn (pid, wait/exit semantics) and add Bash helper coverage (high) #runtime #process #bash #feature
       @created 2026-02-07 02:07
 
+- [ ] Add non-append redirection support (>, <, 2>, &>, <>) in Lash compiler/formatter/tests (high) #feature #compiler
+      @created 2026-02-18 19:54
+
 
 ## Completed
 
