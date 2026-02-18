@@ -158,6 +158,26 @@ public class RoundTripTests
     }
 
     [Fact]
+    public void RoundTrip_HereString_RedirectsInputToFunctionCall()
+    {
+        var result = CompilerPipeline.Compile(
+            """
+            fn feed()
+                cat
+            end
+
+            feed() <<< "payload"
+            """);
+
+        Assert.False(result.Diagnostics.HasErrors, string.Join(Environment.NewLine, result.Diagnostics.GetErrors()));
+        var bash = Assert.IsType<string>(result.Bash);
+
+        var run = CompilerPipeline.RunBash(bash);
+        Assert.Equal(0, run.ExitCode);
+        Assert.Equal("payload\n", run.StdOut);
+    }
+
+    [Fact]
     public void RoundTrip_BreakAndContinueBehaveLikeBashLoops()
     {
         var result = CompilerPipeline.Compile(

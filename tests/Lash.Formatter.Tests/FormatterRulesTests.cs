@@ -117,13 +117,14 @@ public class FormatterRulesTests
     }
 
     [Fact]
-    public void Formatter_FormatsAppendRedirectionOperatorsAsAtomicTokens()
+    public void Formatter_FormatsRedirectionOperatorsAsAtomicTokens()
     {
         const string input =
             """
             write()>>"out.log"
             write()2>>"err.log"
             write()&>>"all.log"
+            feed()<<<"payload"
             """;
 
         const string expected =
@@ -131,6 +132,7 @@ public class FormatterRulesTests
             write() >> "out.log"
             write() 2>> "err.log"
             write() &>> "all.log"
+            feed() <<< "payload"
             """;
 
         var formatted = LashFormatter.Format(input);

@@ -207,6 +207,7 @@ public class GrammarTests
             write() >> "out.log"
             warn() 2>> "err.log"
             both() &>> "combined.log"
+            feed() <<< "payload"
             """);
 
         Assert.All(program.Statements, s =>
@@ -219,9 +220,11 @@ public class GrammarTests
         var first = (RedirectExpression)((ExpressionStatement)program.Statements[0]).Expression;
         var second = (RedirectExpression)((ExpressionStatement)program.Statements[1]).Expression;
         var third = (RedirectExpression)((ExpressionStatement)program.Statements[2]).Expression;
+        var fourth = (RedirectExpression)((ExpressionStatement)program.Statements[3]).Expression;
         Assert.Equal(">>", first.Operator);
         Assert.Equal("2>>", second.Operator);
         Assert.Equal("&>>", third.Operator);
+        Assert.Equal("<<<", fourth.Operator);
     }
 
     [Fact]

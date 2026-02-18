@@ -410,7 +410,7 @@ internal static class SpacingRules
     private static bool TryReadOperator(string line, int index, out string op, out int consume)
     {
         var threeChar = index + 2 < line.Length ? line.Substring(index, 3) : string.Empty;
-        if (threeChar is "&>>" or "2>>")
+        if (threeChar is "&>>" or "2>>" or "<<<")
         {
             op = threeChar;
             consume = 3;

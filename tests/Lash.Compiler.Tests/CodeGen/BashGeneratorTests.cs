@@ -282,7 +282,7 @@ public class BashGeneratorTests
     }
 
     [Fact]
-    public void BashGenerator_EmitsAppendRedirectionOperators()
+    public void BashGenerator_EmitsRedirectionOperators()
     {
         var program = TestCompiler.ParseOrThrow(
             """
@@ -291,15 +291,21 @@ public class BashGeneratorTests
                 echo "err" 1>&2
             end
 
+            fn feed()
+                cat
+            end
+
             write() >> "out.log"
             write() 2>> "err.log"
             write() &>> "all.log"
+            feed() <<< "payload"
             """);
 
         var bash = new BashGenerator().Generate(program);
         Assert.Contains("write >> \"out.log\"", bash);
         Assert.Contains("write 2>> \"err.log\"", bash);
         Assert.Contains("write &>> \"all.log\"", bash);
+        Assert.Contains("feed <<< \"payload\"", bash);
     }
 
     [Fact]
