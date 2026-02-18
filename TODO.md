@@ -133,3 +133,7 @@
       @created 2026-02-18 23:37
       @completed 2026-02-18 23:48
 
+- [x] Add fun example .lash programs under examples #docs #examples
+      @created 2026-02-18 23:52
+      @completed 2026-02-18 23:52
+
