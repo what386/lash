@@ -41,9 +41,6 @@
 - [ ] Runtime: define Process handle contract for spawn (pid, wait/exit semantics) and add Bash helper coverage (high) #runtime #process #bash #feature
       @created 2026-02-07 02:07
 
-- [ ] Refactor preprocessor structure and implement @if/@elif/@else/@endif directive engine (high) #feature #compiler #preprocessor
-      @created 2026-02-19 01:35
-
 
 ## Completed
 
@@ -150,4 +147,8 @@
 - [x] Fix formatter switch/case indentation and preserve compile exit code in lash run (high) #bug #formatter #cli
       @created 2026-02-19 01:25
       @completed 2026-02-19 01:29
+
+- [x] Refactor preprocessor structure and implement @if/@elif/@else/@endif directive engine (high) #feature #compiler #preprocessor
+      @created 2026-02-19 01:35
+      @completed 2026-02-19 01:42
 
