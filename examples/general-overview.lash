@@ -10,8 +10,15 @@ echo "Targetting Linux"
 @warning "Unknown target"
 @end
 
+// raw bash block
 @raw
-echo "raw block says hello"
+for i in {1..5}; do
+  if [ "$i" -eq 3 ]; then
+    echo "$i (middle)"
+  else
+    echo "$i"
+  fi
+done
 @end
 
 fn greet(name, greeting = "Hello")
