@@ -32,14 +32,7 @@ module.exports = grammar({
     // -------------------------------------------------------------------------
 
     statement: $ => choice(
-      $.preprocessor_if_directive,
-      $.preprocessor_elif_directive,
-      $.preprocessor_else_directive,
-      $.preprocessor_endif_directive,
-      $.preprocessor_define_directive,
-      $.preprocessor_undef_directive,
-      $.preprocessor_error_directive,
-      $.preprocessor_warning_directive,
+      $.preprocessor_directive,
       $.variable_declaration,
       $.enum_declaration,
       $.assignment,
@@ -62,6 +55,17 @@ module.exports = grammar({
     sh_statement: $ => seq(
       "sh",
       field("command", $.expression),
+    ),
+
+    preprocessor_directive: $ => choice(
+      $.preprocessor_if_directive,
+      $.preprocessor_elif_directive,
+      $.preprocessor_else_directive,
+      $.preprocessor_endif_directive,
+      $.preprocessor_define_directive,
+      $.preprocessor_undef_directive,
+      $.preprocessor_error_directive,
+      $.preprocessor_warning_directive,
     ),
 
     preprocessor_if_directive: $ => seq(

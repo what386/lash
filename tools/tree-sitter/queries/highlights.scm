@@ -2,14 +2,14 @@
 (shebang) @keyword.directive
 
 ; Preprocessor directives
-"@if" @keyword.directive
-"@elif" @keyword.directive
-"@else" @keyword.directive
-"@endif" @keyword.directive
-"@define" @keyword.directive
-"@undef" @keyword.directive
-"@error" @keyword.directive
-"@warning" @keyword.directive
+(preprocessor_if_directive) @keyword.directive
+(preprocessor_elif_directive) @keyword.directive
+(preprocessor_else_directive) @keyword.directive
+(preprocessor_endif_directive) @keyword.directive
+(preprocessor_define_directive) @keyword.directive
+(preprocessor_undef_directive) @keyword.directive
+(preprocessor_error_directive) @keyword.directive
+(preprocessor_warning_directive) @keyword.directive
 
 (preprocessor_define_directive
   name: (identifier) @constant)
