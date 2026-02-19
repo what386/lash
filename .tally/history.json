@@ -1111,7 +1111,12 @@
       "commit": null,
       "completed_at": "2026-02-19T01:29:24.979057497Z"
     },
-    "version": null
+    "version": {
+      "major": 0,
+      "minor": 4,
+      "patch": 0,
+      "is_prerelease": false
+    }
   },
   {
     "change": {
@@ -1125,7 +1130,12 @@
       "commit": null,
       "completed_at": "2026-02-19T01:42:45.694995360Z"
     },
-    "version": null
+    "version": {
+      "major": 0,
+      "minor": 4,
+      "patch": 0,
+      "is_prerelease": false
+    }
   },
   {
     "change": {
@@ -1139,6 +1149,68 @@
       "commit": null,
       "completed_at": "2026-02-19T01:54:26.673488362Z"
     },
-    "version": null
+    "version": {
+      "major": 0,
+      "minor": 4,
+      "patch": 0,
+      "is_prerelease": false
+    }
+  },
+  {
+    "change": {
+      "description": "Fix formatter switch/case indentation and preserve compile exit code in lash run",
+      "priority": "High",
+      "tags": [
+        "bug",
+        "formatter",
+        "cli"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-19T01:29:00Z"
+    },
+    "version": {
+      "major": 0,
+      "minor": 4,
+      "patch": 0,
+      "is_prerelease": false
+    }
+  },
+  {
+    "change": {
+      "description": "Refactor preprocessor structure and implement @if/@elif/@else/@endif directive engine",
+      "priority": "High",
+      "tags": [
+        "feature",
+        "compiler",
+        "preprocessor"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-19T01:42:00Z"
+    },
+    "version": {
+      "major": 0,
+      "minor": 4,
+      "patch": 0,
+      "is_prerelease": false
+    }
+  },
+  {
+    "change": {
+      "description": "Finish Preprocessing migration and split directives into stateful handlers",
+      "priority": "High",
+      "tags": [
+        "feature",
+        "compiler",
+        "preprocessor"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-19T01:54:00Z"
+    },
+    "version": {
+      "major": 0,
+      "minor": 4,
+      "patch": 0,
+      "is_prerelease": false
+    }
   }
 ]

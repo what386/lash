@@ -1,4 +1,4 @@
-# TODO — lash v0.3.0
+# TODO — lash v0.4.0
 
 @created: 2026-02-06
 @modified: 2026-02-19
@@ -147,12 +147,15 @@
 - [x] Fix formatter switch/case indentation and preserve compile exit code in lash run (high) #bug #formatter #cli
       @created 2026-02-19 01:25
       @completed 2026-02-19 01:29
+      @completed_version 0.4.0
 
 - [x] Refactor preprocessor structure and implement @if/@elif/@else/@endif directive engine (high) #feature #compiler #preprocessor
       @created 2026-02-19 01:35
       @completed 2026-02-19 01:42
+      @completed_version 0.4.0
 
 - [x] Finish Preprocessing migration and split directives into stateful handlers (high) #feature #compiler #preprocessor
       @created 2026-02-19 01:50
       @completed 2026-02-19 01:54
+      @completed_version 0.4.0
 
