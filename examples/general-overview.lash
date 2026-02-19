@@ -93,9 +93,11 @@ end
 // subshell background + wait
 let bg_pid = 0
 let bg_status = 0
+
 subshell into bg_pid
     sh "sleep 0.01"
 end &
+
 wait bg_pid into bg_status
 wait jobs into bg_status
 echo $"background status: {bg_status}"
