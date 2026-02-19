@@ -120,6 +120,9 @@
 (for_loop
   variable: (identifier) @variable)
 
+(into_binding
+  name: (identifier) @variable)
+
 ; Enum declarations
 (enum_declaration
   name: (identifier) @type)

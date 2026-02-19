@@ -658,6 +658,36 @@
     }
   },
   {
+    "type": "into_binding",
+    "named": true,
+    "fields": {
+      "mode": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "const",
+            "named": false
+          },
+          {
+            "type": "let",
+            "named": false
+          }
+        ]
+      },
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "logical_expression",
     "named": true,
     "fields": {
@@ -1298,7 +1328,7 @@
         "required": false,
         "types": [
           {
-            "type": "identifier",
+            "type": "into_binding",
             "named": true
           }
         ]
@@ -1420,7 +1450,7 @@
         "required": false,
         "types": [
           {
-            "type": "identifier",
+            "type": "into_binding",
             "named": true
           }
         ]

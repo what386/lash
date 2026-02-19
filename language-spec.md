@@ -38,10 +38,12 @@ Lash is a lua-like language that transpiles directly to Bash with minimal runtim
 - `@import` resolves relative paths from the file containing the directive.
 - Repeated imports are allowed; each `@import` pastes the target file again.
 - Import recursion/cycles are currently not detected by the preprocessor.
-- `@import <path> into <name>` imports file text into an existing variable by emitting an assignment to a multiline string literal.
+- `@import <path> into <name>` imports file text into a variable by emitting an assignment to a multiline string literal.
+- `@import <path> into [let|const] <name>` controls the create-kind when the target does not already exist.
 - `@import` (both forms) is only valid at file/preprocessor scope, not inside runtime Lash blocks (`if/fn/for/while/switch/enum/subshell`).
 - `@raw` copies enclosed lines literally into generated Bash, and directives inside `@raw` are not evaluated.
 - Directives are line-based: they must begin a logical line (indentation allowed).
+- `into` creates the variable when missing (default `let`), otherwise it assigns to the existing variable.
 
 ### Top-level statements
 
@@ -68,8 +70,8 @@ Lash is a lua-like language that transpiles directly to Bash with minimal runtim
   - `continue`
   - `return [expr]`
   - `shift [n]` (mutates current `argv` frame)
-  - `subshell [into name] ... end [&]`
-  - `wait [expr|jobs] [into name]`
+  - `subshell [into [let|const] name] ... end [&]`
+  - `wait [expr|jobs] [into [let|const] name]`
 - Shell passthrough statement:
   - `sh $"...{var}..."` (emit the rendered command directly into generated bash)
 - Command statement:

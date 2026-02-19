@@ -202,7 +202,7 @@ module.exports = grammar({
 
     subshell_statement: $ => seq(
       "subshell",
-      optional(seq("into", field("into", $.identifier))),
+      optional(field("into", $.into_binding)),
       field("body", repeat($.statement)),
       "end",
       optional("&"),
@@ -211,8 +211,14 @@ module.exports = grammar({
     wait_statement: $ => prec.right(seq(
       "wait",
       optional(field("target", choice("jobs", $.expression))),
-      optional(seq("into", field("into", $.identifier))),
+      optional(field("into", $.into_binding)),
     )),
+
+    into_binding: $ => seq(
+      "into",
+      optional(field("mode", choice("let", "const"))),
+      field("name", $.identifier),
+    ),
 
     return_statement: $ => prec.right(seq(
       "return",

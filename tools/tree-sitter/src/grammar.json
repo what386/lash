@@ -856,21 +856,12 @@
           "type": "CHOICE",
           "members": [
             {
-              "type": "SEQ",
-              "members": [
-                {
-                  "type": "STRING",
-                  "value": "into"
-                },
-                {
-                  "type": "FIELD",
-                  "name": "into",
-                  "content": {
-                    "type": "SYMBOL",
-                    "name": "identifier"
-                  }
-                }
-              ]
+              "type": "FIELD",
+              "name": "into",
+              "content": {
+                "type": "SYMBOL",
+                "name": "into_binding"
+              }
             },
             {
               "type": "BLANK"
@@ -945,21 +936,12 @@
             "type": "CHOICE",
             "members": [
               {
-                "type": "SEQ",
-                "members": [
-                  {
-                    "type": "STRING",
-                    "value": "into"
-                  },
-                  {
-                    "type": "FIELD",
-                    "name": "into",
-                    "content": {
-                      "type": "SYMBOL",
-                      "name": "identifier"
-                    }
-                  }
-                ]
+                "type": "FIELD",
+                "name": "into",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "into_binding"
+                }
               },
               {
                 "type": "BLANK"
@@ -968,6 +950,48 @@
           }
         ]
       }
+    },
+    "into_binding": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "into"
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "FIELD",
+              "name": "mode",
+              "content": {
+                "type": "CHOICE",
+                "members": [
+                  {
+                    "type": "STRING",
+                    "value": "let"
+                  },
+                  {
+                    "type": "STRING",
+                    "value": "const"
+                  }
+                ]
+              }
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        },
+        {
+          "type": "FIELD",
+          "name": "name",
+          "content": {
+            "type": "SYMBOL",
+            "name": "identifier"
+          }
+        }
+      ]
     },
     "return_statement": {
       "type": "PREC_RIGHT",
