@@ -5,8 +5,12 @@ using Lash.Compiler.Diagnostics;
 internal sealed class PreprocessorState
 {
     private readonly DirectiveExpressionEvaluator evaluator;
+    private readonly Stack<RawFrame> rawBlocks = new();
+    private readonly Stack<PreprocessorBlockFrame> blocks = new();
+    private readonly Queue<ImportRequest> pendingImports = new();
+    private readonly Stack<string?> fileScopes = new();
 
-    public PreprocessorState(DiagnosticBag diagnostics, DirectiveExpressionEvaluator evaluator)
+    public PreprocessorState(DiagnosticBag diagnostics, DirectiveExpressionEvaluator evaluator, string? entryPath)
     {
         Diagnostics = diagnostics;
         this.evaluator = evaluator;
@@ -22,13 +26,32 @@ internal sealed class PreprocessorState
 
     public int CurrentColumn { get; private set; }
 
-    public bool IsDirectiveContext => !InBlockComment && !InMultilineString;
+    public bool IsDirectiveContext => !IsInRawBlock && !InBlockComment && !InMultilineString;
 
     public bool IsCurrentActive => Conditionals.Count == 0 || Conditionals.Peek().IsActive;
+
+    public int RuntimeBlockDepth { get; private set; }
+
+    public bool IsInRawBlock => rawBlocks.Count > 0;
+
+    public bool ShouldEmitRawContent => rawBlocks.Count > 0 && rawBlocks.Peek().ShouldEmit;
+
+    public string? CurrentFilePath => fileScopes.Count == 0 ? null : fileScopes.Peek();
 
     private bool InBlockComment { get; set; }
 
     private bool InMultilineString { get; set; }
+
+    public void PushFileScope(string? filePath)
+    {
+        fileScopes.Push(string.IsNullOrWhiteSpace(filePath) ? null : Path.GetFullPath(filePath));
+    }
+
+    public void PopFileScope()
+    {
+        if (fileScopes.Count > 0)
+            fileScopes.Pop();
+    }
 
     public void SetLocation(int line, int column)
     {
@@ -51,15 +74,136 @@ internal sealed class PreprocessorState
         return evaluator.TryEvaluate(expression, Symbols, out value, out error);
     }
 
-    public void ReportUnclosedConditionals()
+    public void PushConditional(ConditionalFrame frame)
     {
-        foreach (var frame in Conditionals)
+        Conditionals.Push(frame);
+        blocks.Push(new PreprocessorBlockFrame(PreprocessorBlockKind.Conditional, frame.StartLine, frame.StartColumn));
+    }
+
+    public void EnterRaw(bool shouldEmit)
+    {
+        rawBlocks.Push(new RawFrame(shouldEmit, CurrentLine, CurrentColumn));
+        blocks.Push(new PreprocessorBlockFrame(PreprocessorBlockKind.Raw, CurrentLine, CurrentColumn));
+    }
+
+    public bool TryCloseTopBlock(out string error)
+    {
+        if (blocks.Count == 0)
         {
-            Diagnostics.AddError(
-                $"Missing '@endif' for '@if' started on line {frame.StartLine}.",
-                frame.StartLine,
-                frame.StartColumn);
+            error = "@end without matching @if or @raw.";
+            return false;
         }
+
+        var block = blocks.Pop();
+        if (block.Kind == PreprocessorBlockKind.Conditional)
+        {
+            if (Conditionals.Count == 0)
+            {
+                error = "Internal preprocessor error: missing conditional frame for @end.";
+                return false;
+            }
+
+            Conditionals.Pop();
+            error = string.Empty;
+            return true;
+        }
+
+        if (rawBlocks.Count == 0)
+        {
+            error = "Internal preprocessor error: missing raw frame for @end.";
+            return false;
+        }
+
+        rawBlocks.Pop();
+        error = string.Empty;
+        return true;
+    }
+
+    public void EnqueueImport(ImportRequest request)
+    {
+        pendingImports.Enqueue(request);
+    }
+
+    public bool TryDequeueImport(out ImportRequest request)
+    {
+        return pendingImports.TryDequeue(out request);
+    }
+
+    public bool TryResolveImportPath(string argument, out string fullPath, out string error)
+    {
+        fullPath = string.Empty;
+        var trimmed = argument.Trim();
+        if (trimmed.Length == 0)
+        {
+            error = "@import requires a file path.";
+            return false;
+        }
+
+        if (!TryParseImportPath(trimmed, out var parsedPath, out error))
+            return false;
+
+        try
+        {
+            var baseDir = CurrentFilePath is not null
+                ? Path.GetDirectoryName(CurrentFilePath) ?? Directory.GetCurrentDirectory()
+                : Directory.GetCurrentDirectory();
+
+            fullPath = Path.IsPathRooted(parsedPath)
+                ? Path.GetFullPath(parsedPath)
+                : Path.GetFullPath(Path.Combine(baseDir, parsedPath));
+
+            error = string.Empty;
+            return true;
+        }
+        catch (Exception ex)
+        {
+            error = $"Invalid @import path '{parsedPath}': {ex.Message}";
+            return false;
+        }
+    }
+
+    public void ReportUnclosedBlocks()
+    {
+        foreach (var block in blocks)
+        {
+            if (block.Kind == PreprocessorBlockKind.Conditional)
+            {
+                Diagnostics.AddError(
+                    $"Missing '@end' for '@if' started on line {block.StartLine}.",
+                    block.StartLine,
+                    block.StartColumn);
+            }
+            else
+            {
+                Diagnostics.AddError(
+                    $"Missing '@end' for '@raw' started on line {block.StartLine}.",
+                    block.StartLine,
+                    block.StartColumn);
+            }
+        }
+    }
+
+    public void UpdateRuntimeBlockDepth(string line, bool isActiveLine, bool isDirectiveContext)
+    {
+        if (!isActiveLine || !isDirectiveContext)
+            return;
+
+        var trimmed = line.Trim();
+        if (trimmed.Length == 0
+            || trimmed.StartsWith("//", StringComparison.Ordinal)
+            || trimmed.StartsWith("/*", StringComparison.Ordinal)
+            || trimmed.StartsWith("*", StringComparison.Ordinal)
+            || trimmed.StartsWith("*/", StringComparison.Ordinal))
+            return;
+
+        if (IsRuntimeBlockStart(trimmed))
+        {
+            RuntimeBlockDepth++;
+            return;
+        }
+
+        if (IsRuntimeBlockEnd(trimmed) && RuntimeBlockDepth > 0)
+            RuntimeBlockDepth--;
     }
 
     public void UpdateLexicalState(string line)
@@ -105,6 +249,74 @@ internal sealed class PreprocessorState
             }
         }
     }
+
+    private static bool TryParseImportPath(string text, out string path, out string error)
+    {
+        path = string.Empty;
+
+        if (text.Length == 0)
+        {
+            error = "@import requires a file path.";
+            return false;
+        }
+
+        var quote = text[0];
+        if (quote is '"' or '\'')
+        {
+            if (text.Length < 2 || text[^1] != quote)
+            {
+                error = "unterminated quoted path";
+                return false;
+            }
+
+            path = text[1..^1];
+            if (path.Length == 0)
+            {
+                error = "@import path cannot be empty.";
+                return false;
+            }
+
+            error = string.Empty;
+            return true;
+        }
+
+        if (text.Any(char.IsWhiteSpace))
+        {
+            error = "unquoted @import paths cannot contain whitespace";
+            return false;
+        }
+
+        path = text;
+        error = string.Empty;
+        return true;
+    }
+
+    private static bool IsRuntimeBlockStart(string line)
+    {
+        return HasKeywordPrefix(line, "fn")
+            || HasKeywordPrefix(line, "if")
+            || HasKeywordPrefix(line, "for")
+            || HasKeywordPrefix(line, "while")
+            || HasKeywordPrefix(line, "switch")
+            || HasKeywordPrefix(line, "enum")
+            || HasKeywordPrefix(line, "subshell");
+    }
+
+    private static bool IsRuntimeBlockEnd(string line)
+    {
+        return line == "end" || line.StartsWith("end ", StringComparison.Ordinal);
+    }
+
+    private static bool HasKeywordPrefix(string line, string keyword)
+    {
+        if (!line.StartsWith(keyword, StringComparison.Ordinal))
+            return false;
+
+        if (line.Length == keyword.Length)
+            return true;
+
+        return char.IsWhiteSpace(line[keyword.Length]) || line[keyword.Length] == '(';
+    }
 }
 
 internal readonly record struct ConditionalFrame(
@@ -114,3 +326,23 @@ internal readonly record struct ConditionalFrame(
     bool ElseSeen,
     int StartLine,
     int StartColumn);
+
+internal enum PreprocessorBlockKind
+{
+    Conditional,
+    Raw
+}
+
+internal readonly record struct PreprocessorBlockFrame(
+    PreprocessorBlockKind Kind,
+    int StartLine,
+    int StartColumn);
+
+internal readonly record struct RawFrame(
+    bool ShouldEmit,
+    int StartLine,
+    int StartColumn);
+
+internal readonly record struct ImportRequest(
+    string PathExpression,
+    string? IntoVariable);

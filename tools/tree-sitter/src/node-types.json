@@ -841,7 +841,7 @@
           "named": true
         },
         {
-          "type": "preprocessor_endif_directive",
+          "type": "preprocessor_end_directive",
           "named": true
         },
         {
@@ -850,6 +850,14 @@
         },
         {
           "type": "preprocessor_if_directive",
+          "named": true
+        },
+        {
+          "type": "preprocessor_import_directive",
+          "named": true
+        },
+        {
+          "type": "preprocessor_raw_directive",
           "named": true
         },
         {
@@ -900,6 +908,22 @@
     "named": true,
     "fields": {
       "condition": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "preprocessor_directive_argument",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "preprocessor_import_directive",
+    "named": true,
+    "fields": {
+      "path": {
         "multiple": false,
         "required": true,
         "types": [
@@ -1584,6 +1608,10 @@
     "named": false
   },
   {
+    "type": "@import",
+    "named": false
+  },
+  {
     "type": "@undef",
     "named": false
   },
@@ -1706,7 +1734,11 @@
     "named": true
   },
   {
-    "type": "preprocessor_endif_directive",
+    "type": "preprocessor_end_directive",
+    "named": true
+  },
+  {
+    "type": "preprocessor_raw_directive",
     "named": true
   },
   {

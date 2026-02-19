@@ -5,6 +5,7 @@ using Lash.Compiler.Ast;
 using Lash.Compiler.Ast.Expressions;
 using Lash.Compiler.Ast.Statements;
 using Lash.Compiler.Ast.Types;
+using Lash.Compiler.Preprocessing;
 
 public class AstBuilder : LashBaseVisitor<AstNode>
 {
@@ -324,12 +325,14 @@ public class AstBuilder : LashBaseVisitor<AstNode>
         var script = raw.StartsWith(marker, StringComparison.Ordinal)
             ? raw[marker.Length..].TrimStart()
             : raw;
+        var isRawLiteral = RawCommandEncoding.TryDecode(script, out var decodedScript);
 
         return new CommandStatement
         {
             Line = context.Start.Line,
             Column = context.Start.Column,
-            Script = script
+            Script = decodedScript,
+            IsRawLiteral = isRawLiteral
         };
     }
 

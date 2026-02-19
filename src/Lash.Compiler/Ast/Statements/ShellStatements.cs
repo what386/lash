@@ -16,6 +16,7 @@ public class ExpressionStatement : Statement
 public class CommandStatement : Statement
 {
     public string Script { get; set; } = string.Empty;
+    public bool IsRawLiteral { get; set; }
 }
 
 public class ShellStatement : Statement

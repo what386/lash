@@ -36,10 +36,7 @@ public static class ModuleLoader
             return false;
         }
 
-        source = new SourcePreprocessor().Process(source, diagnostics);
-        var normalized = Normalizer.Normalize(source);
-
-        source = new DirectiveProcessor().Process(normalized, diagnostics);
+        source = new SourcePreprocessor().Process(source, diagnostics, path);
 
         source = NormalizeSimplifiedSyntax(source);
         if (diagnostics.HasErrors)
@@ -309,7 +306,11 @@ public static class ModuleLoader
     private static string RewriteBareCommandLine(string line)
     {
         var trimmed = line.Trim();
-        if (trimmed.Length == 0 || trimmed.StartsWith("//", StringComparison.Ordinal))
+        if (trimmed.Length == 0
+            || trimmed.StartsWith("//", StringComparison.Ordinal)
+            || trimmed.StartsWith("/*", StringComparison.Ordinal)
+            || trimmed.StartsWith("*/", StringComparison.Ordinal)
+            || trimmed.StartsWith("*", StringComparison.Ordinal))
             return line;
 
         if (IsKnownStatementPrefix(trimmed))

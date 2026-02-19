@@ -77,7 +77,7 @@ public partial class BashGenerator
                 break;
 
             case CommandStatement commandStmt:
-                Emit(RenderCommandStatement(commandStmt.Script));
+                Emit(RenderCommandStatement(commandStmt));
                 break;
 
             default:
@@ -136,8 +136,12 @@ public partial class BashGenerator
         Emit($"{varDecl.Name}={value}");
     }
 
-    private string RenderCommandStatement(string script)
+    private string RenderCommandStatement(CommandStatement commandStatement)
     {
+        if (commandStatement.IsRawLiteral)
+            return commandStatement.Script;
+
+        var script = commandStatement.Script;
         if (!script.Contains("$\"", StringComparison.Ordinal))
             return script;
 

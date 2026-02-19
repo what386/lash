@@ -14,7 +14,9 @@ internal sealed class DirectiveProcessor
             new IfDirective(),
             new ElifDirective(),
             new ElseDirective(),
-            new EndifDirective(),
+            new EndDirective(),
+            new ImportDirective(),
+            new RawDirective(),
             new DefineDirective(),
             new UndefDirective(),
             new ErrorDirective(),
@@ -24,37 +26,60 @@ internal sealed class DirectiveProcessor
         directives = builtIns.ToDictionary(static d => d.Name, StringComparer.Ordinal);
     }
 
-    public string Process(string source, DiagnosticBag diagnostics)
+    public string Process(string source, DiagnosticBag diagnostics, string? sourcePath = null)
     {
-        var lines = source.Split('\n');
-        var output = new string[lines.Length];
-        var state = new PreprocessorState(diagnostics, new DirectiveExpressionEvaluator());
-
-        for (int i = 0; i < lines.Length; i++)
-        {
-            var line = lines[i];
-            var trimmedStart = line.TrimStart();
-            var column = line.Length - trimmedStart.Length + 1;
-            state.SetLocation(i + 1, column);
-
-            if (state.IsDirectiveContext && TryParseDirective(trimmedStart, out var directive))
-            {
-                if (directives.TryGetValue(directive.Name, out var handler))
-                    handler.Apply(directive, state);
-                else
-                    state.AddError($"Unknown directive '@{directive.Name}'.");
-
-                output[i] = string.Empty;
-                state.UpdateLexicalState(line);
-                continue;
-            }
-
-            output[i] = state.IsCurrentActive ? line : string.Empty;
-            state.UpdateLexicalState(line);
-        }
-
-        state.ReportUnclosedConditionals();
+        var normalized = Normalizer.Normalize(source);
+        var output = new List<string>();
+        var state = new PreprocessorState(diagnostics, new DirectiveExpressionEvaluator(), sourcePath);
+        ProcessSource(normalized, sourcePath, state, output);
+        state.ReportUnclosedBlocks();
         return string.Join('\n', output);
+    }
+
+    private void ProcessSource(string source, string? sourcePath, PreprocessorState state, List<string> output)
+    {
+        state.PushFileScope(sourcePath);
+        try
+        {
+            var lines = source.Split('\n');
+            for (int i = 0; i < lines.Length; i++)
+            {
+                var line = lines[i];
+                var trimmedStart = line.TrimStart();
+                var column = line.Length - trimmedStart.Length + 1;
+                var isDirectiveContext = state.IsDirectiveContext;
+                var isActiveLine = state.IsCurrentActive;
+                state.SetLocation(i + 1, column);
+
+                if (state.IsInRawBlock)
+                {
+                    if (TryParseDirective(trimmedStart, out var rawDirective) &&
+                        string.Equals(rawDirective.Name, "end", StringComparison.Ordinal))
+                    {
+                        ProcessDirective(rawDirective, state, output);
+                        continue;
+                    }
+
+                    output.Add(state.ShouldEmitRawContent ? RawCommandEncoding.Encode(line) : string.Empty);
+                    continue;
+                }
+
+                if (isDirectiveContext && TryParseDirective(trimmedStart, out var directive))
+                {
+                    ProcessDirective(directive, state, output);
+                    state.UpdateLexicalState(line);
+                    continue;
+                }
+
+                output.Add(isActiveLine ? line : string.Empty);
+                state.UpdateRuntimeBlockDepth(line, isActiveLine, isDirectiveContext);
+                state.UpdateLexicalState(line);
+            }
+        }
+        finally
+        {
+            state.PopFileScope();
+        }
     }
 
     private static bool TryParseDirective(string trimmedLine, out Directive directive)
@@ -76,6 +101,210 @@ internal sealed class DirectiveProcessor
         var name = trimmedLine[1..cursor];
         var arguments = Normalizer.StripTrailingLineComment(trimmedLine[cursor..]).Trim();
         directive = new Directive(name, arguments);
+        return true;
+    }
+
+    private void ProcessDirective(Directive directive, PreprocessorState state, List<string> output)
+    {
+        if (string.Equals(directive.Name, "endif", StringComparison.Ordinal))
+        {
+            state.AddError("@endif is not supported. Use '@end'.");
+            output.Add(string.Empty);
+            return;
+        }
+
+        if (directives.TryGetValue(directive.Name, out var handler))
+        {
+            handler.Apply(directive, state);
+        }
+        else
+        {
+            state.AddError($"Unknown directive '@{directive.Name}'.");
+        }
+
+        var replacedByImport = false;
+        while (state.TryDequeueImport(out var importRequest))
+        {
+            replacedByImport = true;
+            ProcessImport(importRequest, state, output);
+        }
+
+        if (!replacedByImport)
+            output.Add(string.Empty);
+    }
+
+    private void ProcessImport(ImportRequest importRequest, PreprocessorState state, List<string> output)
+    {
+        if (!state.TryResolveImportPath(importRequest.PathExpression, out var fullPath, out var error))
+        {
+            state.AddError(error);
+            return;
+        }
+
+        if (!File.Exists(fullPath))
+        {
+            state.AddError($"@import file not found: {fullPath}");
+            return;
+        }
+
+        string importSource;
+        try
+        {
+            importSource = File.ReadAllText(fullPath);
+        }
+        catch (Exception ex)
+        {
+            state.AddError($"Failed to read imported file '{fullPath}': {ex.Message}");
+            return;
+        }
+
+        if (importRequest.IntoVariable is not null)
+        {
+            EmitImportIntoAssignment(importRequest.IntoVariable, importSource, state, output);
+            return;
+        }
+
+        var normalized = Normalizer.Normalize(importSource);
+        ProcessSource(normalized, fullPath, state, output);
+    }
+
+    private static void EmitImportIntoAssignment(string variableName, string content, PreprocessorState state, List<string> output)
+    {
+        var normalizedContent = content.Replace("\r\n", "\n", StringComparison.Ordinal)
+            .Replace('\r', '\n');
+
+        if (normalizedContent.Contains("]]", StringComparison.Ordinal))
+        {
+            state.AddError($"@import into '{variableName}' cannot represent content containing ']]' in a multiline string literal.");
+            return;
+        }
+
+        var lines = normalizedContent.Split('\n');
+        if (lines.Length == 1)
+        {
+            output.Add($"{variableName} = [[{lines[0]}]]");
+            return;
+        }
+
+        output.Add($"{variableName} = [[{lines[0]}");
+        for (int i = 1; i < lines.Length - 1; i++)
+            output.Add(lines[i]);
+        output.Add($"{lines[^1]}]]");
+    }
+
+    public static bool TryParseImportArguments(string text, out string pathExpression, out string? intoVariable, out string error)
+    {
+        pathExpression = string.Empty;
+        intoVariable = null;
+
+        var trimmed = text.Trim();
+        if (trimmed.Length == 0)
+        {
+            error = "missing import path";
+            return false;
+        }
+
+        if (!TrySplitImportInto(trimmed, out var leftPath, out var rightVariable, out error))
+            return false;
+
+        pathExpression = leftPath;
+        if (rightVariable is null)
+        {
+            error = string.Empty;
+            return true;
+        }
+
+        if (!TryParseSymbolName(rightVariable, out var variableName, out var symbolError))
+        {
+            error = $"invalid 'into' target: {symbolError}";
+            return false;
+        }
+
+        intoVariable = variableName;
+        error = string.Empty;
+        return true;
+    }
+
+    private static bool TrySplitImportInto(string text, out string pathExpression, out string? variableName, out string error)
+    {
+        pathExpression = string.Empty;
+        variableName = null;
+        var inSingleQuote = false;
+        var inDoubleQuote = false;
+        var escaped = false;
+
+        for (int i = 0; i <= text.Length - 4; i++)
+        {
+            var c = text[i];
+
+            if (inDoubleQuote)
+            {
+                if (escaped)
+                {
+                    escaped = false;
+                    continue;
+                }
+
+                if (c == '\\')
+                {
+                    escaped = true;
+                    continue;
+                }
+
+                if (c == '"')
+                    inDoubleQuote = false;
+
+                continue;
+            }
+
+            if (inSingleQuote)
+            {
+                if (c == '\'')
+                    inSingleQuote = false;
+                continue;
+            }
+
+            if (c == '"')
+            {
+                inDoubleQuote = true;
+                continue;
+            }
+
+            if (c == '\'')
+            {
+                inSingleQuote = true;
+                continue;
+            }
+
+            if (!text.AsSpan(i, 4).SequenceEqual("into".AsSpan()))
+                continue;
+
+            var hasLeftBoundary = i == 0 || char.IsWhiteSpace(text[i - 1]);
+            var rightIndex = i + 4;
+            var hasRightBoundary = rightIndex == text.Length || char.IsWhiteSpace(text[rightIndex]);
+            if (!hasLeftBoundary || !hasRightBoundary)
+                continue;
+
+            pathExpression = text[..i].Trim();
+            variableName = text[rightIndex..].Trim();
+            if (pathExpression.Length == 0)
+            {
+                error = "missing import path before 'into'";
+                return false;
+            }
+
+            if (variableName.Length == 0)
+            {
+                error = "missing variable name after 'into'";
+                return false;
+            }
+
+            error = string.Empty;
+            return true;
+        }
+
+        pathExpression = text;
+        error = string.Empty;
         return true;
     }
 

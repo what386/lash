@@ -61,7 +61,9 @@ module.exports = grammar({
       $.preprocessor_if_directive,
       $.preprocessor_elif_directive,
       $.preprocessor_else_directive,
-      $.preprocessor_endif_directive,
+      $.preprocessor_end_directive,
+      $.preprocessor_import_directive,
+      $.preprocessor_raw_directive,
       $.preprocessor_define_directive,
       $.preprocessor_undef_directive,
       $.preprocessor_error_directive,
@@ -80,7 +82,14 @@ module.exports = grammar({
 
     preprocessor_else_directive: _ => "@else",
 
-    preprocessor_endif_directive: _ => "@endif",
+    preprocessor_end_directive: _ => "@end",
+
+    preprocessor_import_directive: $ => seq(
+      "@import",
+      field("path", $.preprocessor_directive_argument),
+    ),
+
+    preprocessor_raw_directive: _ => "@raw",
 
     preprocessor_define_directive: $ => seq(
       "@define",

@@ -18,7 +18,9 @@ Lash is a lua-like language that transpiles directly to Bash with minimal runtim
 
 - Lash supports `@`-prefixed preprocessor directives evaluated before parsing.
 - Supported directives:
-  - conditionals: `@if`, `@elif`, `@else`, `@endif`
+  - conditionals: `@if`, `@elif`, `@else`, `@end`
+  - textual include: `@import <path>`
+  - literal passthrough: `@raw ... @end`
   - symbols: `@define`, `@undef`
   - diagnostics: `@error`, `@warning`
 - Directives are compile-time only and do not exist at runtime.
@@ -33,6 +35,13 @@ Lash is a lua-like language that transpiles directly to Bash with minimal runtim
   - `@define NAME=value`
   - `@define NAME value`
 - Inactive conditional branches are stripped before the parser runs.
+- `@import` resolves relative paths from the file containing the directive.
+- Repeated imports are allowed; each `@import` pastes the target file again.
+- Import recursion/cycles are currently not detected by the preprocessor.
+- `@import <path> into <name>` imports file text into an existing variable by emitting an assignment to a multiline string literal.
+- `@import` (both forms) is only valid at file/preprocessor scope, not inside runtime Lash blocks (`if/fn/for/while/switch/enum/subshell`).
+- `@raw` copies enclosed lines literally into generated Bash, and directives inside `@raw` are not evaluated.
+- Directives are line-based: they must begin a logical line (indentation allowed).
 
 ### Top-level statements
 

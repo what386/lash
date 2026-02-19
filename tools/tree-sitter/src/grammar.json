@@ -154,7 +154,15 @@
         },
         {
           "type": "SYMBOL",
-          "name": "preprocessor_endif_directive"
+          "name": "preprocessor_end_directive"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "preprocessor_import_directive"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "preprocessor_raw_directive"
         },
         {
           "type": "SYMBOL",
@@ -212,9 +220,30 @@
       "type": "STRING",
       "value": "@else"
     },
-    "preprocessor_endif_directive": {
+    "preprocessor_end_directive": {
       "type": "STRING",
-      "value": "@endif"
+      "value": "@end"
+    },
+    "preprocessor_import_directive": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "@import"
+        },
+        {
+          "type": "FIELD",
+          "name": "path",
+          "content": {
+            "type": "SYMBOL",
+            "name": "preprocessor_directive_argument"
+          }
+        }
+      ]
+    },
+    "preprocessor_raw_directive": {
+      "type": "STRING",
+      "value": "@raw"
     },
     "preprocessor_define_directive": {
       "type": "SEQ",

@@ -2,12 +2,17 @@
 // Quick runnable overview of current Lash syntax.
 
 @define TARGET linux
+@import "overview-snippet.lash"
 
 @if defined(TARGET) && TARGET == "linux"
 echo "Targetting Linux"
 @else
 @warning "Unknown target"
-@endif
+@end
+
+@raw
+echo "raw block says hello"
+@end
 
 fn greet(name, greeting = "Hello")
     return greeting + ", " + name

@@ -4,12 +4,8 @@ using Lash.Compiler.Diagnostics;
 
 internal sealed class SourcePreprocessor
 {
-    public string Process(string source, DiagnosticBag diagnostics)
+    public string Process(string source, DiagnosticBag diagnostics, string? sourcePath = null)
     {
-        var normalized = Normalizer.Normalize(source);
-
-        var afterDirectives = new DirectiveProcessor().Process(normalized, diagnostics);
-
-        return afterDirectives;
+        return new DirectiveProcessor().Process(source, diagnostics, sourcePath);
     }
 }

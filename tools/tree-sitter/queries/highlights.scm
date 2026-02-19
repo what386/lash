@@ -5,11 +5,16 @@
 (preprocessor_if_directive) @keyword.directive
 (preprocessor_elif_directive) @keyword.directive
 (preprocessor_else_directive) @keyword.directive
-(preprocessor_endif_directive) @keyword.directive
+(preprocessor_end_directive) @keyword.directive
+(preprocessor_import_directive) @keyword.directive
+(preprocessor_raw_directive) @keyword.directive
 (preprocessor_define_directive) @keyword.directive
 (preprocessor_undef_directive) @keyword.directive
 (preprocessor_error_directive) @keyword.directive
 (preprocessor_warning_directive) @keyword.directive
+
+(preprocessor_import_directive
+  path: (preprocessor_directive_argument) @string.special)
 
 (preprocessor_define_directive
   name: (identifier) @constant)

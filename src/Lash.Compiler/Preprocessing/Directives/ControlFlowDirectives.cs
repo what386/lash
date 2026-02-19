@@ -9,20 +9,20 @@ internal sealed class IfDirective : IPreprocessorDirective
         if (string.IsNullOrWhiteSpace(directive.Arguments))
         {
             state.AddError("@if requires a condition expression.");
-            state.Conditionals.Push(new ConditionalFrame(state.IsCurrentActive, false, false, false, state.CurrentLine, state.CurrentColumn));
+            state.PushConditional(new ConditionalFrame(state.IsCurrentActive, false, false, false, state.CurrentLine, state.CurrentColumn));
             return;
         }
 
         if (!state.TryEvaluateCondition(directive.Arguments, out var condition, out var error))
         {
             state.AddError($"Invalid @if expression: {error}");
-            state.Conditionals.Push(new ConditionalFrame(state.IsCurrentActive, false, false, false, state.CurrentLine, state.CurrentColumn));
+            state.PushConditional(new ConditionalFrame(state.IsCurrentActive, false, false, false, state.CurrentLine, state.CurrentColumn));
             return;
         }
 
         var parentActive = state.IsCurrentActive;
         var ifActive = parentActive && condition;
-        state.Conditionals.Push(new ConditionalFrame(parentActive, ifActive, ifActive, false, state.CurrentLine, state.CurrentColumn));
+        state.PushConditional(new ConditionalFrame(parentActive, ifActive, ifActive, false, state.CurrentLine, state.CurrentColumn));
     }
 }
 
@@ -97,13 +97,16 @@ internal sealed class ElseDirective : IPreprocessorDirective
     }
 }
 
-internal sealed class EndifDirective : IPreprocessorDirective
+internal sealed class EndDirective : IPreprocessorDirective
 {
-    public string Name => "endif";
+    public string Name => "end";
 
     public void Apply(Directive directive, PreprocessorState state)
     {
-        if (!state.Conditionals.TryPop(out _))
-            state.AddError("@endif without matching @if.");
+        if (!string.IsNullOrWhiteSpace(directive.Arguments))
+            state.AddError("@end does not accept arguments.");
+
+        if (!state.TryCloseTopBlock(out var error))
+            state.AddError(error);
     }
 }
