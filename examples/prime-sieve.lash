@@ -2,7 +2,7 @@
 // Sieve of Eratosthenes: print all primes up to `limit`.
 // Usage: lash run examples/prime-sieve.lash [limit]
 
-const limit = 100
+let limit = 100
 
 if #argv > 0
     limit = argv[0]
