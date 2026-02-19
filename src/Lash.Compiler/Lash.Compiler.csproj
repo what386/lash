@@ -18,4 +18,20 @@
     </Antlr4>
   </ItemGroup>
 
+  <Target Name="ResetStaleAntlrFileLists"
+          BeforeTargets="Antlr4CompileReadGeneratedFileList"
+          Condition="Exists('$(Antlr4ToCompileListFile)')">
+    <ReadLinesFromFile File="$(Antlr4ToCompileListFile)">
+      <Output TaskParameter="Lines" ItemName="_AntlrToCompileLines" />
+    </ReadLinesFromFile>
+
+    <ItemGroup>
+      <_MissingAntlrGeneratedFiles Include="@(_AntlrToCompileLines)"
+                                   Condition="!Exists('%(_AntlrToCompileLines.Identity)')" />
+    </ItemGroup>
+
+    <Delete Files="$(Antlr4ToCompileListFile);$(Antlr4AllListFile);$(Antlr4AllDirectoriesFile)"
+            Condition="'@(_MissingAntlrGeneratedFiles)' != ''" />
+  </Target>
+
 </Project>

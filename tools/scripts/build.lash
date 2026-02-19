@@ -1,5 +1,7 @@
 #!/bin/env -S lash run
 
+set -euo pipefail
+
 let PROJECT_NAME = "Lash"
 let OUTPUT_DIR = "./target/release"
 let PROJECTS = [

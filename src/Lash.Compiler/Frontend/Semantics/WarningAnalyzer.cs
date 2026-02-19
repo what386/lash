@@ -1,5 +1,6 @@
 namespace Lash.Compiler.Frontend.Semantics;
 
+using System.Text.RegularExpressions;
 using Lash.Compiler.Ast;
 using Lash.Compiler.Ast.Expressions;
 using Lash.Compiler.Ast.Statements;
@@ -9,6 +10,9 @@ using Lash.Compiler.Diagnostics;
 public sealed class WarningAnalyzer
 {
     private const int MaxConstRangeElements = 256;
+    private static readonly Regex BracedCommandVariableRegex = new(@"(?<!\\)\$\{([A-Za-z_][A-Za-z0-9_]*)[^}]*\}", RegexOptions.Compiled);
+    private static readonly Regex PlainCommandVariableRegex = new(@"(?<!\\)\$([A-Za-z_][A-Za-z0-9_]*)", RegexOptions.Compiled);
+    private static readonly Regex InterpolationPlaceholderRegex = new(@"\{([^{}]+)\}", RegexOptions.Compiled);
 
     private readonly DiagnosticBag diagnostics;
     private readonly Stack<ScopeFrame> scopes = new();
@@ -229,6 +233,10 @@ public sealed class WarningAnalyzer
                 AnalyzeExpression(shiftStatement.Amount);
                 return false;
 
+            case CommandStatement commandStatement:
+                AnalyzeCommandScript(commandStatement.Script);
+                return false;
+
             case ShellStatement shellStatement:
                 AnalyzeExpression(shellStatement.Command);
                 return false;
@@ -405,19 +413,17 @@ public sealed class WarningAnalyzer
 
     private bool AnalyzeSwitchPaths(IReadOnlyList<SwitchCaseClause> cases, bool inLoop, int baseTrackedJobs)
     {
-        bool allCasesTerminate = true;
         var branchTracked = new List<int>();
 
         foreach (var clause in cases)
         {
             var result = AnalyzeBranch(clause.Body, inLoop, baseTrackedJobs);
-            allCasesTerminate &= result.Terminated;
             branchTracked.Add(result.TrackedJobs);
         }
 
         if (branchTracked.Count > 0)
             SetCurrentTrackedJobs(branchTracked.Max());
-        return allCasesTerminate && cases.Count > 0;
+        return false;
     }
 
     private BranchResult AnalyzeBranch(List<Statement> body, bool inLoop, int baseTrackedJobs)
@@ -437,6 +443,10 @@ public sealed class WarningAnalyzer
     {
         switch (expression)
         {
+            case LiteralExpression literal:
+                AnalyzeInterpolatedLiteral(literal);
+                break;
+
             case IdentifierExpression identifier:
                 MarkVariableRead(identifier.Name);
                 break;
@@ -506,6 +516,75 @@ public sealed class WarningAnalyzer
                     AnalyzeExpression(element);
                 break;
         }
+    }
+
+    private void AnalyzeCommandScript(string script)
+    {
+        foreach (Match match in BracedCommandVariableRegex.Matches(script))
+            MarkVariableRead(match.Groups[1].Value);
+
+        foreach (Match match in PlainCommandVariableRegex.Matches(script))
+            MarkVariableRead(match.Groups[1].Value);
+    }
+
+    private void AnalyzeInterpolatedLiteral(LiteralExpression literal)
+    {
+        if (!literal.IsInterpolated || literal.Value is not string template)
+            return;
+
+        foreach (Match match in InterpolationPlaceholderRegex.Matches(template))
+        {
+            if (TryGetInterpolationSymbolName(match.Groups[1].Value, out var symbolName))
+                MarkVariableRead(symbolName);
+        }
+    }
+
+    private static bool TryGetInterpolationSymbolName(string placeholder, out string symbolName)
+    {
+        symbolName = string.Empty;
+        if (string.IsNullOrWhiteSpace(placeholder))
+            return false;
+
+        var parts = placeholder
+            .Split('.', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (parts.Length == 0)
+            return false;
+
+        foreach (var part in parts)
+        {
+            if (!IsIdentifier(part))
+                return false;
+        }
+
+        symbolName = string.Join("_", parts);
+        return true;
+    }
+
+    private static bool IsIdentifier(string value)
+    {
+        if (string.IsNullOrEmpty(value))
+            return false;
+
+        if (!IsIdentifierStart(value[0]))
+            return false;
+
+        for (int i = 1; i < value.Length; i++)
+        {
+            if (!IsIdentifierPart(value[i]))
+                return false;
+        }
+
+        return true;
+    }
+
+    private static bool IsIdentifierStart(char c)
+    {
+        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
+    }
+
+    private static bool IsIdentifierPart(char c)
+    {
+        return IsIdentifierStart(c) || (c >= '0' && c <= '9');
     }
 
     private void WarnBlockUnreachable(List<Statement> statements, string reason, int? line = null, int? column = null)

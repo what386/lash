@@ -212,4 +212,71 @@ public class AdditionalAnalyzerTests
         Assert.Contains(warnings, w => w.Code == DiagnosticCodes.UnusedParameter && w.Message.Contains("unused_param", StringComparison.Ordinal));
         Assert.Contains(warnings, w => w.Code == DiagnosticCodes.UnusedFunction && w.Message.Contains("never_called", StringComparison.Ordinal));
     }
+
+    [Fact]
+    public void WarningAnalyzer_TreatsInterpolatedLiteralsAsVariableReads()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            fn exists(path)
+                let ok = $sh $"test -f \"{path}\"; echo $?"
+                return ok == "0"
+            end
+
+            exists("README.md")
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new WarningAnalyzer(diagnostics).Analyze(program);
+
+        Assert.DoesNotContain(
+            diagnostics.GetWarnings(),
+            w => w.Code == DiagnosticCodes.UnusedParameter
+                 && w.Message.Contains("path", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void WarningAnalyzer_TreatsRawCommandVariableExpansionsAsReads()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            let RED = "red"
+            let NC = "none"
+            echo -e "${RED}hello${NC}"
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new WarningAnalyzer(diagnostics).Analyze(program);
+
+        Assert.DoesNotContain(
+            diagnostics.GetWarnings(),
+            w => w.Code == DiagnosticCodes.UnusedVariable
+                 && (w.Message.Contains("RED", StringComparison.Ordinal)
+                     || w.Message.Contains("NC", StringComparison.Ordinal)));
+    }
+
+    [Fact]
+    public void WarningAnalyzer_DoesNotTreatSwitchWithoutDefaultAsAlwaysTerminating()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            fn parse(value)
+                switch value
+                    case "ok":
+                        return 1
+                end
+                return 0
+            end
+
+            parse("ok")
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new WarningAnalyzer(diagnostics).Analyze(program);
+
+        Assert.DoesNotContain(
+            diagnostics.GetWarnings(),
+            w => w.Code == DiagnosticCodes.UnreachableStatement
+                 && w.Line == 6);
+    }
 }
