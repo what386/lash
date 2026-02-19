@@ -1,4 +1,4 @@
-# TODO — lash v0.4.1
+# TODO — lash v0.4.2
 
 @created: 2026-02-06
 @modified: 2026-02-19
