@@ -41,9 +41,6 @@
 - [ ] Runtime: define Process handle contract for spawn (pid, wait/exit semantics) and add Bash helper coverage (high) #runtime #process #bash #feature
       @created 2026-02-07 02:07
 
-- [ ] Fix false unused-symbol diagnostics for command/interpolated variable reads and diagnose lashc build path failure (high) #bug #compiler #diagnostics #build
-      @created 2026-02-19 00:02
-
 
 ## Completed
 
@@ -139,4 +136,8 @@
 - [x] Add fun example .lash programs under examples #docs #examples
       @created 2026-02-18 23:52
       @completed 2026-02-18 23:52
+
+- [x] Fix false unused-symbol diagnostics for command/interpolated variable reads and diagnose lashc build path failure (high) #bug #compiler #diagnostics #build
+      @created 2026-02-19 00:02
+      @completed 2026-02-19 00:08
 
