@@ -996,7 +996,12 @@
       "commit": null,
       "completed_at": "2026-02-18T23:48:02.884089581Z"
     },
-    "version": null
+    "version": {
+      "major": 0,
+      "minor": 3,
+      "patch": 0,
+      "is_prerelease": false
+    }
   },
   {
     "change": {
@@ -1009,7 +1014,12 @@
       "commit": null,
       "completed_at": "2026-02-18T23:52:56.906059183Z"
     },
-    "version": null
+    "version": {
+      "major": 0,
+      "minor": 3,
+      "patch": 0,
+      "is_prerelease": false
+    }
   },
   {
     "change": {
@@ -1024,6 +1034,69 @@
       "commit": null,
       "completed_at": "2026-02-19T00:08:05.343055227Z"
     },
-    "version": null
+    "version": {
+      "major": 0,
+      "minor": 3,
+      "patch": 0,
+      "is_prerelease": false
+    }
+  },
+  {
+    "change": {
+      "description": "Add branch elimination, stronger constant evaluation, and unused symbol diagnostics",
+      "priority": "High",
+      "tags": [
+        "feature",
+        "compiler",
+        "semantic",
+        "diagnostics"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-18T23:48:00Z"
+    },
+    "version": {
+      "major": 0,
+      "minor": 3,
+      "patch": 0,
+      "is_prerelease": false
+    }
+  },
+  {
+    "change": {
+      "description": "Add fun example .lash programs under examples",
+      "priority": "Medium",
+      "tags": [
+        "docs",
+        "examples"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-18T23:52:00Z"
+    },
+    "version": {
+      "major": 0,
+      "minor": 3,
+      "patch": 0,
+      "is_prerelease": false
+    }
+  },
+  {
+    "change": {
+      "description": "Fix false unused-symbol diagnostics for command/interpolated variable reads and diagnose lashc build path failure",
+      "priority": "High",
+      "tags": [
+        "bug",
+        "compiler",
+        "diagnostics",
+        "build"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-19T00:08:00Z"
+    },
+    "version": {
+      "major": 0,
+      "minor": 3,
+      "patch": 0,
+      "is_prerelease": false
+    }
   }
 ]

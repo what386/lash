@@ -1,4 +1,4 @@
-# TODO — lash v0.2.0
+# TODO — lash v0.3.0
 
 @created: 2026-02-06
 @modified: 2026-02-19
@@ -132,12 +132,15 @@
 - [x] Add branch elimination, stronger constant evaluation, and unused symbol diagnostics (high) #feature #compiler #semantic #diagnostics
       @created 2026-02-18 23:37
       @completed 2026-02-18 23:48
+      @completed_version 0.3.0
 
 - [x] Add fun example .lash programs under examples #docs #examples
       @created 2026-02-18 23:52
       @completed 2026-02-18 23:52
+      @completed_version 0.3.0
 
 - [x] Fix false unused-symbol diagnostics for command/interpolated variable reads and diagnose lashc build path failure (high) #bug #compiler #diagnostics #build
       @created 2026-02-19 00:02
       @completed 2026-02-19 00:08
+      @completed_version 0.3.0
 
