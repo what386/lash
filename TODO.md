@@ -41,9 +41,6 @@
 - [ ] Runtime: define Process handle contract for spawn (pid, wait/exit semantics) and add Bash helper coverage (high) #runtime #process #bash #feature
       @created 2026-02-07 02:07
 
-- [ ] Finish Preprocessing migration and split directives into stateful handlers (high) #feature #compiler #preprocessor
-      @created 2026-02-19 01:50
-
 
 ## Completed
 
@@ -154,4 +151,8 @@
 - [x] Refactor preprocessor structure and implement @if/@elif/@else/@endif directive engine (high) #feature #compiler #preprocessor
       @created 2026-02-19 01:35
       @completed 2026-02-19 01:42
+
+- [x] Finish Preprocessing migration and split directives into stateful handlers (high) #feature #compiler #preprocessor
+      @created 2026-02-19 01:50
+      @completed 2026-02-19 01:54
 
