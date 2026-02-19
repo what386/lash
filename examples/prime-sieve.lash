@@ -1,0 +1,40 @@
+#!/bin/env -S lash run
+// Sieve of Eratosthenes: print all primes up to `limit`.
+// Usage: lash run examples/prime-sieve.lash [limit]
+
+const limit = 100
+
+if #argv > 0
+    limit = argv[0]
+end
+let is_prime = []
+
+let i = 0
+while i <= limit
+    is_prime[i] = true
+    i = i + 1
+end
+
+is_prime[0] = false
+is_prime[1] = false
+
+let p = 2
+while p * p <= limit
+    if is_prime[p]
+        let multiple = p * p
+        while multiple <= limit
+            is_prime[multiple] = false
+            multiple = multiple + p
+        end
+    end
+    p = p + 1
+end
+
+echo "Primes up to" $limit
+let n = 2
+while n <= limit
+    if is_prime[n]
+        echo $n
+    end
+    n = n + 1
+end
