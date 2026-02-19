@@ -34,4 +34,7 @@ public static class DiagnosticCodes
     public const string UnreachableStatement = "W500";
     public const string ShadowedVariable = "W501";
     public const string WaitJobsWithoutTrackedJobs = "W502";
+    public const string UnusedVariable = "W503";
+    public const string UnusedParameter = "W504";
+    public const string UnusedFunction = "W505";
 }

@@ -103,7 +103,7 @@ Lash is a lua-like language that transpiles directly to Bash with minimal runtim
 - `E200-E202`: type and semantic compatibility diagnostics
 - `E300-E303`: flow and constant-safety diagnostics
 - `E400-E401`: codegen-feasibility diagnostics (constructs that cannot be lowered to Bash)
-- `W500-W502`: non-fatal warnings (unreachable code, shadowing, and empty `wait jobs`)
+- `W500-W505`: non-fatal warnings (unreachable code, shadowing, empty `wait jobs`, and unused symbols)
 
 ### Pipe and redirection behavior
 

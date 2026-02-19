@@ -8,8 +8,10 @@ using Lash.Compiler.Diagnostics;
 
 public sealed class WarningAnalyzer
 {
+    private const int MaxConstRangeElements = 256;
+
     private readonly DiagnosticBag diagnostics;
-    private readonly Stack<HashSet<string>> scopeDeclarations = new();
+    private readonly Stack<ScopeFrame> scopes = new();
     private readonly Stack<int> trackedJobs = new();
     private readonly Stack<Dictionary<string, ConstValue>> constValues = new();
 
@@ -56,8 +58,15 @@ public sealed class WarningAnalyzer
         switch (statement)
         {
             case VariableDeclaration variable:
+                AnalyzeExpression(variable.Value);
                 WarnIfShadowing(variable.Name, variable.Line, variable.Column);
-                DeclareInCurrentScope(variable.Name);
+                DeclareSymbol(
+                    variable.Name,
+                    SymbolKind.Variable,
+                    variable.Line,
+                    variable.Column,
+                    ignoreUnused: ShouldIgnoreUnusedSymbol(variable.Name) || variable.IsPublic);
+
                 if (variable.Kind == VariableDeclaration.VarKind.Const && TryEvaluateConstValue(variable.Value, out var constValue))
                 {
                     constValues.Peek()[variable.Name] = constValue;
@@ -69,23 +78,49 @@ public sealed class WarningAnalyzer
                 return false;
 
             case Assignment assignment:
+                AnalyzeExpression(assignment.Value);
+
                 if (assignment.Target is IdentifierExpression identifier)
-                    constValues.Peek().Remove(identifier.Name);
+                {
+                    InvalidateConst(identifier.Name);
+                }
+                else if (assignment.Target is IndexAccessExpression indexTarget)
+                {
+                    AnalyzeExpression(indexTarget.Array);
+                    AnalyzeExpression(indexTarget.Index);
+                    if (indexTarget.Array is IdentifierExpression arrayIdentifier)
+                        InvalidateConst(arrayIdentifier.Name);
+                }
+
                 return false;
 
             case FunctionDeclaration function:
                 WarnIfShadowing(function.Name, function.Line, function.Column);
-                DeclareInCurrentScope(function.Name);
+                DeclareSymbol(
+                    function.Name,
+                    SymbolKind.Function,
+                    function.Line,
+                    function.Column,
+                    ignoreUnused: ShouldIgnoreUnusedSymbol(function.Name) || function.IsPublic);
 
                 PushScope();
                 PushTrackedJobs(0);
                 PushConstScope();
                 foreach (var parameter in function.Parameters)
                 {
+                    if (parameter.DefaultValue != null)
+                        AnalyzeExpression(parameter.DefaultValue);
+
                     WarnIfShadowing(parameter.Name, parameter.Line, parameter.Column);
-                    DeclareInCurrentScope(parameter.Name);
-                    constValues.Peek().Remove(parameter.Name);
+                    DeclareSymbol(
+                        parameter.Name,
+                        SymbolKind.Parameter,
+                        parameter.Line,
+                        parameter.Column,
+                        ignoreUnused: ShouldIgnoreUnusedSymbol(parameter.Name));
+                    InvalidateConst(parameter.Name);
                 }
+
                 AnalyzeBlock(function.Body, inLoop: false);
                 PopConstScope();
                 PopTrackedJobs();
@@ -93,18 +128,29 @@ public sealed class WarningAnalyzer
                 return false;
 
             case IfStatement ifStatement:
+                AnalyzeExpression(ifStatement.Condition);
                 return AnalyzeIfStatement(ifStatement, inLoop);
 
             case SwitchStatement switchStatement:
+                AnalyzeExpression(switchStatement.Value);
                 return AnalyzeSwitchStatement(switchStatement, inLoop);
 
             case ForLoop forLoop:
+                AnalyzeExpression(forLoop.Range);
+                if (forLoop.Step != null)
+                    AnalyzeExpression(forLoop.Step);
+
                 PushScope();
                 PushTrackedJobs(CurrentTrackedJobs());
                 PushConstScope();
                 WarnIfShadowing(forLoop.Variable, forLoop.Line, forLoop.Column);
-                DeclareInCurrentScope(forLoop.Variable);
-                constValues.Peek().Remove(forLoop.Variable);
+                DeclareSymbol(
+                    forLoop.Variable,
+                    SymbolKind.Variable,
+                    forLoop.Line,
+                    forLoop.Column,
+                    ignoreUnused: ShouldIgnoreUnusedSymbol(forLoop.Variable));
+                InvalidateConst(forLoop.Variable);
                 AnalyzeBlock(forLoop.Body, inLoop: true);
                 PopConstScope();
                 PopTrackedJobs();
@@ -127,7 +173,9 @@ public sealed class WarningAnalyzer
                 PopScope();
                 return false;
 
-            case ReturnStatement:
+            case ReturnStatement returnStatement:
+                if (returnStatement.Value != null)
+                    AnalyzeExpression(returnStatement.Value);
                 return true;
 
             case BreakStatement:
@@ -145,6 +193,9 @@ public sealed class WarningAnalyzer
                 PopTrackedJobs();
                 PopScope();
 
+                if (!string.IsNullOrEmpty(subshellStatement.IntoVariable))
+                    InvalidateConst(subshellStatement.IntoVariable!);
+
                 if (subshellStatement.RunInBackground)
                     SetCurrentTrackedJobs(CurrentTrackedJobs() + 1);
                 return false;
@@ -158,7 +209,32 @@ public sealed class WarningAnalyzer
                         waitStatement.Column,
                         DiagnosticCodes.WaitJobsWithoutTrackedJobs);
                 }
+
+                if (!string.IsNullOrEmpty(waitStatement.IntoVariable))
+                    InvalidateConst(waitStatement.IntoVariable!);
+
                 SetCurrentTrackedJobs(0);
+                return false;
+
+            case WaitStatement waitStatement:
+                if (waitStatement.TargetKind == WaitTargetKind.Target && waitStatement.Target != null)
+                    AnalyzeExpression(waitStatement.Target);
+
+                if (!string.IsNullOrEmpty(waitStatement.IntoVariable))
+                    InvalidateConst(waitStatement.IntoVariable!);
+
+                return false;
+
+            case ShiftStatement shiftStatement when shiftStatement.Amount != null:
+                AnalyzeExpression(shiftStatement.Amount);
+                return false;
+
+            case ShellStatement shellStatement:
+                AnalyzeExpression(shellStatement.Command);
+                return false;
+
+            case ExpressionStatement expressionStatement:
+                AnalyzeExpression(expressionStatement.Expression);
                 return false;
 
             default:
@@ -184,6 +260,9 @@ public sealed class WarningAnalyzer
             return AnalyzeElifChain(ifStatement.ElifClauses, ifStatement.ElseBlock, inLoop, CurrentTrackedJobs());
         }
 
+        foreach (var clause in ifStatement.ElifClauses)
+            AnalyzeExpression(clause.Condition);
+
         return AnalyzeIfPaths(
             ifStatement.ThenBlock,
             ifStatement.ElifClauses.Select(c => c.Body).ToList(),
@@ -201,8 +280,13 @@ public sealed class WarningAnalyzer
         for (int i = 0; i < elifClauses.Count; i++)
         {
             var clause = elifClauses[i];
+            AnalyzeExpression(clause.Condition);
+
             if (!TryEvaluateBool(clause.Condition, out var clauseValue))
             {
+                foreach (var laterClause in elifClauses.Skip(i + 1))
+                    AnalyzeExpression(laterClause.Condition);
+
                 var remainingElifs = elifClauses.Skip(i).Select(c => c.Body).ToList();
                 return AnalyzeIfPaths(
                     remainingElifs[0],
@@ -279,11 +363,17 @@ public sealed class WarningAnalyzer
     private bool AnalyzeSwitchStatement(SwitchStatement switchStatement, bool inLoop)
     {
         if (!TryEvaluateConstValue(switchStatement.Value, out var switchValue))
+        {
+            foreach (var clause in switchStatement.Cases)
+                AnalyzeExpression(clause.Pattern);
             return AnalyzeSwitchPaths(switchStatement.Cases, inLoop, CurrentTrackedJobs());
+        }
 
         for (int i = 0; i < switchStatement.Cases.Count; i++)
         {
             var clause = switchStatement.Cases[i];
+            AnalyzeExpression(clause.Pattern);
+
             if (!TryEvaluateConstValue(clause.Pattern, out var patternValue) || !IsExactPattern(clause.Pattern))
             {
                 var remaining = switchStatement.Cases.Skip(i).ToList();
@@ -305,6 +395,7 @@ public sealed class WarningAnalyzer
                     laterClause.Line,
                     laterClause.Column);
             }
+
             SetCurrentTrackedJobs(matched.TrackedJobs);
             return matched.Terminated;
         }
@@ -342,6 +433,81 @@ public sealed class WarningAnalyzer
         return new BranchResult(terminated, jobs);
     }
 
+    private void AnalyzeExpression(Expression expression)
+    {
+        switch (expression)
+        {
+            case IdentifierExpression identifier:
+                MarkVariableRead(identifier.Name);
+                break;
+
+            case FunctionCallExpression functionCall:
+                MarkFunctionUsed(functionCall.FunctionName);
+                foreach (var argument in functionCall.Arguments)
+                    AnalyzeExpression(argument);
+                break;
+
+            case ShellCaptureExpression shellCapture:
+                AnalyzeExpression(shellCapture.Command);
+                break;
+
+            case PipeExpression pipe:
+                AnalyzeExpression(pipe.Left);
+                if (pipe.Right is IdentifierExpression sink)
+                {
+                    InvalidateConst(sink.Name);
+                }
+                else
+                {
+                    AnalyzeExpression(pipe.Right);
+                }
+                break;
+
+            case RedirectExpression redirect:
+                AnalyzeExpression(redirect.Left);
+                AnalyzeExpression(redirect.Right);
+                break;
+
+            case UnaryExpression unary:
+                AnalyzeExpression(unary.Operand);
+                break;
+
+            case BinaryExpression binary:
+                AnalyzeExpression(binary.Left);
+                if (binary.Operator == "&&" &&
+                    TryEvaluateBool(binary.Left, out var leftAndValue) &&
+                    !leftAndValue)
+                {
+                    break;
+                }
+
+                if (binary.Operator == "||" &&
+                    TryEvaluateBool(binary.Left, out var leftOrValue) &&
+                    leftOrValue)
+                {
+                    break;
+                }
+
+                AnalyzeExpression(binary.Right);
+                break;
+
+            case RangeExpression range:
+                AnalyzeExpression(range.Start);
+                AnalyzeExpression(range.End);
+                break;
+
+            case IndexAccessExpression indexAccess:
+                AnalyzeExpression(indexAccess.Array);
+                AnalyzeExpression(indexAccess.Index);
+                break;
+
+            case ArrayLiteral arrayLiteral:
+                foreach (var element in arrayLiteral.Elements)
+                    AnalyzeExpression(element);
+                break;
+        }
+    }
+
     private void WarnBlockUnreachable(List<Statement> statements, string reason, int? line = null, int? column = null)
     {
         if (statements.Count == 0 && line == null)
@@ -366,6 +532,18 @@ public sealed class WarningAnalyzer
         return true;
     }
 
+    private bool TryEvaluateInt(Expression expression, out int value)
+    {
+        if (TryEvaluateConstValue(expression, out var constValue) && constValue.Kind == ConstValueKind.Int)
+        {
+            value = constValue.IntValue;
+            return true;
+        }
+
+        value = 0;
+        return false;
+    }
+
     private bool TryEvaluateConstValue(Expression expression, out ConstValue value)
     {
         switch (expression)
@@ -386,13 +564,86 @@ public sealed class WarningAnalyzer
                 break;
 
             case IdentifierExpression identifier:
-                if (constValues.Peek().TryGetValue(identifier.Name, out value))
+                if (TryResolveConst(identifier.Name, out value))
                     return true;
                 break;
 
+            case ArrayLiteral arrayLiteral:
+                {
+                    var elements = new List<ConstValue>(arrayLiteral.Elements.Count);
+                    foreach (var element in arrayLiteral.Elements)
+                    {
+                        if (!TryEvaluateConstValue(element, out var elementValue))
+                        {
+                            value = default;
+                            return false;
+                        }
+
+                        elements.Add(elementValue);
+                    }
+
+                    value = ConstValue.FromArray(elements);
+                    return true;
+                }
+
+            case RangeExpression rangeExpression:
+                if (TryEvaluateInt(rangeExpression.Start, out var rangeStart) &&
+                    TryEvaluateInt(rangeExpression.End, out var rangeEnd) &&
+                    TryBuildConstRange(rangeStart, rangeEnd, out value))
+                {
+                    return true;
+                }
+                break;
+
+            case IndexAccessExpression indexAccess:
+                if (!TryEvaluateConstValue(indexAccess.Array, out var source) ||
+                    !TryEvaluateInt(indexAccess.Index, out var index) ||
+                    index < 0)
+                {
+                    break;
+                }
+
+                if (source.Kind == ConstValueKind.Array)
+                {
+                    if (index < source.ArrayValues.Count)
+                    {
+                        value = source.ArrayValues[index];
+                        return true;
+                    }
+
+                    break;
+                }
+
+                if (source.Kind == ConstValueKind.String && index < source.StringValue.Length)
+                {
+                    value = ConstValue.FromString(source.StringValue[index].ToString());
+                    return true;
+                }
+
+                break;
+
             case UnaryExpression unary:
+                if (unary.Operator == "#")
+                {
+                    if (!TryEvaluateConstValue(unary.Operand, out var lengthValue))
+                        break;
+
+                    switch (lengthValue.Kind)
+                    {
+                        case ConstValueKind.String:
+                            value = ConstValue.FromInt(lengthValue.StringValue.Length);
+                            return true;
+                        case ConstValueKind.Array:
+                            value = ConstValue.FromInt(lengthValue.ArrayValues.Count);
+                            return true;
+                    }
+
+                    break;
+                }
+
                 if (!TryEvaluateConstValue(unary.Operand, out var operandValue))
                     break;
+
                 switch (unary.Operator)
                 {
                     case "!":
@@ -408,6 +659,42 @@ public sealed class WarningAnalyzer
                 break;
 
             case BinaryExpression binary:
+                if (binary.Operator == "&&")
+                {
+                    if (!TryEvaluateConstValue(binary.Left, out var leftAnd))
+                        break;
+
+                    if (!ToBool(leftAnd))
+                    {
+                        value = ConstValue.FromBool(false);
+                        return true;
+                    }
+
+                    if (!TryEvaluateConstValue(binary.Right, out var rightAnd))
+                        break;
+
+                    value = ConstValue.FromBool(ToBool(rightAnd));
+                    return true;
+                }
+
+                if (binary.Operator == "||")
+                {
+                    if (!TryEvaluateConstValue(binary.Left, out var leftOr))
+                        break;
+
+                    if (ToBool(leftOr))
+                    {
+                        value = ConstValue.FromBool(true);
+                        return true;
+                    }
+
+                    if (!TryEvaluateConstValue(binary.Right, out var rightOr))
+                        break;
+
+                    value = ConstValue.FromBool(ToBool(rightOr));
+                    return true;
+                }
+
                 if (!TryEvaluateConstValue(binary.Left, out var left) || !TryEvaluateConstValue(binary.Right, out var right))
                     break;
 
@@ -431,12 +718,6 @@ public sealed class WarningAnalyzer
                     case ">=" when left.Kind == ConstValueKind.Int && right.Kind == ConstValueKind.Int:
                         value = ConstValue.FromBool(left.IntValue >= right.IntValue);
                         return true;
-                    case "&&":
-                        value = ConstValue.FromBool(ToBool(left) && ToBool(right));
-                        return true;
-                    case "||":
-                        value = ConstValue.FromBool(ToBool(left) || ToBool(right));
-                        return true;
                     case "+" when left.Kind == ConstValueKind.Int && right.Kind == ConstValueKind.Int:
                         value = ConstValue.FromInt(left.IntValue + right.IntValue);
                         return true;
@@ -455,8 +736,45 @@ public sealed class WarningAnalyzer
                     case "+" when left.Kind == ConstValueKind.String && right.Kind == ConstValueKind.String:
                         value = ConstValue.FromString(left.StringValue + right.StringValue);
                         return true;
+                    case ".." when left.Kind == ConstValueKind.Int && right.Kind == ConstValueKind.Int:
+                        return TryBuildConstRange(left.IntValue, right.IntValue, out value);
                 }
+
                 break;
+        }
+
+        value = default;
+        return false;
+    }
+
+    private static bool TryBuildConstRange(int start, int end, out ConstValue value)
+    {
+        var length = Math.Abs(end - start) + 1;
+        if (length > MaxConstRangeElements)
+        {
+            value = default;
+            return false;
+        }
+
+        var step = start <= end ? 1 : -1;
+        var elements = new List<ConstValue>(length);
+        for (int current = start; ; current += step)
+        {
+            elements.Add(ConstValue.FromInt(current));
+            if (current == end)
+                break;
+        }
+
+        value = ConstValue.FromArray(elements);
+        return true;
+    }
+
+    private bool TryResolveConst(string name, out ConstValue value)
+    {
+        foreach (var scope in constValues)
+        {
+            if (scope.TryGetValue(name, out value))
+                return true;
         }
 
         value = default;
@@ -485,6 +803,7 @@ public sealed class WarningAnalyzer
             ConstValueKind.Bool => value.BoolValue,
             ConstValueKind.Int => value.IntValue != 0,
             ConstValueKind.String => !string.IsNullOrEmpty(value.StringValue),
+            ConstValueKind.Array => value.ArrayValues.Count > 0,
             _ => false
         };
     }
@@ -504,17 +823,32 @@ public sealed class WarningAnalyzer
             ConstValueKind.Bool => left.BoolValue == right.BoolValue,
             ConstValueKind.Int => left.IntValue == right.IntValue,
             ConstValueKind.String => string.Equals(left.StringValue, right.StringValue, StringComparison.Ordinal),
+            ConstValueKind.Array => ArraysEqual(left.ArrayValues, right.ArrayValues),
             _ => false
         };
     }
 
+    private static bool ArraysEqual(IReadOnlyList<ConstValue> left, IReadOnlyList<ConstValue> right)
+    {
+        if (left.Count != right.Count)
+            return false;
+
+        for (int i = 0; i < left.Count; i++)
+        {
+            if (!ConstValuesEqual(left[i], right[i]))
+                return false;
+        }
+
+        return true;
+    }
+
     private void WarnIfShadowing(string name, int line, int column)
     {
-        if (scopeDeclarations.Count <= 1)
+        if (scopes.Count <= 1)
             return;
 
         bool first = true;
-        foreach (var scope in scopeDeclarations)
+        foreach (var scope in scopes)
         {
             if (first)
             {
@@ -522,7 +856,7 @@ public sealed class WarningAnalyzer
                 continue;
             }
 
-            if (!scope.Contains(name))
+            if (!scope.Symbols.ContainsKey(name))
                 continue;
 
             diagnostics.AddWarning(
@@ -536,17 +870,85 @@ public sealed class WarningAnalyzer
 
     private void PushScope()
     {
-        scopeDeclarations.Push(new HashSet<string>(StringComparer.Ordinal));
+        scopes.Push(new ScopeFrame());
     }
 
     private void PopScope()
     {
-        scopeDeclarations.Pop();
+        var scope = scopes.Pop();
+        EmitUnusedSymbolWarnings(scope);
     }
 
-    private void DeclareInCurrentScope(string name)
+    private void DeclareSymbol(string name, SymbolKind kind, int line, int column, bool ignoreUnused)
     {
-        scopeDeclarations.Peek().Add(name);
+        scopes.Peek().Symbols[name] = new SymbolEntry(name, kind, line, column, ignoreUnused);
+    }
+
+    private void MarkVariableRead(string name)
+    {
+        foreach (var scope in scopes)
+        {
+            if (!scope.Symbols.TryGetValue(name, out var symbol))
+                continue;
+
+            if (symbol.Kind is SymbolKind.Variable or SymbolKind.Parameter)
+                symbol.IsUsed = true;
+            return;
+        }
+    }
+
+    private void MarkFunctionUsed(string name)
+    {
+        foreach (var scope in scopes)
+        {
+            if (!scope.Symbols.TryGetValue(name, out var symbol))
+                continue;
+
+            if (symbol.Kind == SymbolKind.Function)
+                symbol.IsUsed = true;
+            return;
+        }
+    }
+
+    private void EmitUnusedSymbolWarnings(ScopeFrame scope)
+    {
+        foreach (var symbol in scope.Symbols.Values.OrderBy(static s => s.Line).ThenBy(static s => s.Column))
+        {
+            if (symbol.IsUsed || symbol.IgnoreUnused)
+                continue;
+
+            switch (symbol.Kind)
+            {
+                case SymbolKind.Variable:
+                    diagnostics.AddWarning(
+                        $"Variable '{symbol.Name}' is declared but never used.",
+                        symbol.Line,
+                        symbol.Column,
+                        DiagnosticCodes.UnusedVariable);
+                    break;
+
+                case SymbolKind.Parameter:
+                    diagnostics.AddWarning(
+                        $"Parameter '{symbol.Name}' is never used.",
+                        symbol.Line,
+                        symbol.Column,
+                        DiagnosticCodes.UnusedParameter);
+                    break;
+
+                case SymbolKind.Function:
+                    diagnostics.AddWarning(
+                        $"Function '{symbol.Name}' is declared but never called.",
+                        symbol.Line,
+                        symbol.Column,
+                        DiagnosticCodes.UnusedFunction);
+                    break;
+            }
+        }
+    }
+
+    private static bool ShouldIgnoreUnusedSymbol(string name)
+    {
+        return string.IsNullOrEmpty(name) || name.StartsWith('_');
     }
 
     private void PushTrackedJobs(int count)
@@ -583,19 +985,62 @@ public sealed class WarningAnalyzer
         constValues.Pop();
     }
 
+    private void InvalidateConst(string name)
+    {
+        constValues.Peek().Remove(name);
+    }
+
     private readonly record struct BranchResult(bool Terminated, int TrackedJobs);
+
+    private sealed class ScopeFrame
+    {
+        public Dictionary<string, SymbolEntry> Symbols { get; } = new(StringComparer.Ordinal);
+    }
+
+    private sealed class SymbolEntry
+    {
+        public SymbolEntry(string name, SymbolKind kind, int line, int column, bool ignoreUnused)
+        {
+            Name = name;
+            Kind = kind;
+            Line = line;
+            Column = column;
+            IgnoreUnused = ignoreUnused;
+        }
+
+        public string Name { get; }
+        public SymbolKind Kind { get; }
+        public int Line { get; }
+        public int Column { get; }
+        public bool IgnoreUnused { get; }
+        public bool IsUsed { get; set; }
+    }
+
+    private enum SymbolKind
+    {
+        Variable,
+        Parameter,
+        Function
+    }
 
     private enum ConstValueKind
     {
         Bool,
         Int,
-        String
+        String,
+        Array
     }
 
-    private readonly record struct ConstValue(ConstValueKind Kind, bool BoolValue, int IntValue, string StringValue)
+    private readonly record struct ConstValue(
+        ConstValueKind Kind,
+        bool BoolValue,
+        int IntValue,
+        string StringValue,
+        IReadOnlyList<ConstValue> ArrayValues)
     {
-        public static ConstValue FromBool(bool value) => new(ConstValueKind.Bool, value, 0, string.Empty);
-        public static ConstValue FromInt(int value) => new(ConstValueKind.Int, false, value, string.Empty);
-        public static ConstValue FromString(string value) => new(ConstValueKind.String, false, 0, value);
+        public static ConstValue FromBool(bool value) => new(ConstValueKind.Bool, value, 0, string.Empty, Array.Empty<ConstValue>());
+        public static ConstValue FromInt(int value) => new(ConstValueKind.Int, false, value, string.Empty, Array.Empty<ConstValue>());
+        public static ConstValue FromString(string value) => new(ConstValueKind.String, false, 0, value, Array.Empty<ConstValue>());
+        public static ConstValue FromArray(IReadOnlyList<ConstValue> value) => new(ConstValueKind.Array, false, 0, string.Empty, value);
     }
 }

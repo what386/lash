@@ -147,6 +147,19 @@ public class BashGeneratorTests
     }
 
     [Fact]
+    public void BashGenerator_InterpolatesInRawCommandStatements()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            let planet = "Mars"
+            echo $"Approaching {planet}"
+            """);
+
+        var bash = new BashGenerator().Generate(program);
+        Assert.Contains("echo \"Approaching ${planet}\"", bash);
+    }
+
+    [Fact]
     public void BashGenerator_DoesNotAutoInvokeMainWhenDeclared()
     {
         var program = TestCompiler.ParseOrThrow(
@@ -343,8 +356,11 @@ public class BashGeneratorTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
+            let keep_looping = true
             while true
-                continue
+                if keep_looping
+                    continue
+                end
                 break
             end
             """);
@@ -355,6 +371,29 @@ public class BashGeneratorTests
         Assert.Contains("continue", bash);
         Assert.Contains("break", bash);
         Assert.Contains("done", bash);
+    }
+
+    [Fact]
+    public void BashGenerator_EliminatesConstantDeadIfBranches()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            if false
+                echo "never"
+            elif true
+                echo "chosen"
+            else
+                echo "also-never"
+            end
+            """);
+
+        var bash = new BashGenerator().Generate(program);
+        Assert.Contains("echo \"chosen\"", bash);
+        Assert.DoesNotContain("if ", bash);
+        Assert.DoesNotContain("elif ", bash);
+        Assert.DoesNotContain("else", bash);
+        Assert.DoesNotContain("never", bash);
+        Assert.DoesNotContain("also-never", bash);
     }
 
     [Fact]

@@ -162,4 +162,54 @@ public class AdditionalAnalyzerTests
         Assert.Contains(warnings, w => w.Message.Contains("can never match", StringComparison.Ordinal));
         Assert.Contains(warnings, w => w.Message.Contains("earlier case always matches", StringComparison.Ordinal));
     }
+
+    [Fact]
+    public void WarningAnalyzer_EvaluatesShortCircuitConditionsForDeadBranchWarnings()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            let x = 1
+            if false && x > 0
+                echo "never"
+            else
+                echo "ok"
+            end
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new WarningAnalyzer(diagnostics).Analyze(program);
+
+        Assert.Contains(
+            diagnostics.GetWarnings(),
+            w => w.Code == DiagnosticCodes.UnreachableStatement
+                 && w.Message.Contains("always false", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void WarningAnalyzer_EmitsUnusedSymbolWarnings()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            fn helper(unused_param)
+                let unused_local = 1
+                return 0
+            end
+
+            fn never_called()
+                return 1
+            end
+
+            let unused_top = 10
+            helper(7)
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new WarningAnalyzer(diagnostics).Analyze(program);
+
+        var warnings = diagnostics.GetWarnings().ToList();
+        Assert.Contains(warnings, w => w.Code == DiagnosticCodes.UnusedVariable && w.Message.Contains("unused_local", StringComparison.Ordinal));
+        Assert.Contains(warnings, w => w.Code == DiagnosticCodes.UnusedVariable && w.Message.Contains("unused_top", StringComparison.Ordinal));
+        Assert.Contains(warnings, w => w.Code == DiagnosticCodes.UnusedParameter && w.Message.Contains("unused_param", StringComparison.Ordinal));
+        Assert.Contains(warnings, w => w.Code == DiagnosticCodes.UnusedFunction && w.Message.Contains("never_called", StringComparison.Ordinal));
+    }
 }

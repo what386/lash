@@ -77,7 +77,7 @@ public partial class BashGenerator
                 break;
 
             case CommandStatement commandStmt:
-                Emit(commandStmt.Script);
+                Emit(RenderCommandStatement(commandStmt.Script));
                 break;
 
             default:
@@ -134,6 +134,52 @@ public partial class BashGenerator
         }
 
         Emit($"{varDecl.Name}={value}");
+    }
+
+    private string RenderCommandStatement(string script)
+    {
+        if (!script.Contains("$\"", StringComparison.Ordinal))
+            return script;
+
+        var output = new System.Text.StringBuilder(script.Length);
+
+        for (int i = 0; i < script.Length;)
+        {
+            if (script[i] == '$' && i + 1 < script.Length && script[i + 1] == '"')
+            {
+                var cursor = i + 2;
+                while (cursor < script.Length)
+                {
+                    if (script[cursor] == '"' && !IsEscapedQuote(script, cursor))
+                        break;
+                    cursor++;
+                }
+
+                if (cursor >= script.Length)
+                {
+                    output.Append(script[i..]);
+                    break;
+                }
+
+                var template = script[(i + 2)..cursor];
+                output.Append(GenerateInterpolatedStringLiteral(template));
+                i = cursor + 1;
+                continue;
+            }
+
+            output.Append(script[i]);
+            i++;
+        }
+
+        return output.ToString();
+    }
+
+    private static bool IsEscapedQuote(string text, int index)
+    {
+        var slashCount = 0;
+        for (var i = index - 1; i >= 0 && text[i] == '\\'; i--)
+            slashCount++;
+        return (slashCount % 2) != 0;
     }
 
     private void GenerateAssignment(Assignment assignment)
