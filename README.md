@@ -24,7 +24,7 @@ Current language reference: `language-spec.md`.
 Run an example:
 
 ```bash
-dotnet run --project src/Lash.Cli/Lash.Cli.csproj -- run examples/general-overview.lash
+dotnet run --project src/Lash.Cli/Lash.Cli.csproj -- run examples/overview.lash
 ```
 
 Run the prime sieve example with a CLI arg:
