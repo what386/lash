@@ -1,7 +1,6 @@
 namespace Lash.Cli.Commands;
 
 using System.CommandLine;
-using Lash.Cli.Application;
 
 static class RunCommand
 {
