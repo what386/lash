@@ -12,20 +12,6 @@ internal static class CompilePipeline
             return 1;
         }
 
-        var compilerProjectPath = ToolResolver.ResolveCompilerProjectPath();
-        if (compilerProjectPath is not null)
-        {
-            if (verbose)
-                Console.Error.WriteLine($"[lash] using compiler project: {compilerProjectPath}");
-
-            var projectResult = RunProcessWithLaunchState("dotnet", ["run", "--project", compilerProjectPath, "--", inputPath, "--check"]);
-            if (projectResult.Launched)
-                return projectResult.ExitCode;
-
-            if (verbose)
-                Console.Error.WriteLine("[lash] compiler project could not be launched, falling back to resolved compiler binary");
-        }
-
         string compilerPath;
         try
         {
@@ -49,26 +35,6 @@ internal static class CompilePipeline
         {
             Console.Error.WriteLine($"File not found: {inputPath}");
             return 1;
-        }
-
-        var compilerProjectPath = ToolResolver.ResolveCompilerProjectPath();
-        if (compilerProjectPath is not null)
-        {
-            if (verbose)
-                Console.Error.WriteLine($"[lash] using compiler project: {compilerProjectPath}");
-
-            var projectResult = RunProcessWithLaunchState("dotnet", ["run", "--project", compilerProjectPath, "--", inputPath, "--emit-bash", outputPath]);
-            if (projectResult.Launched)
-            {
-                if (projectResult.ExitCode != 0)
-                    return projectResult.ExitCode;
-
-                TryMarkExecutable(outputPath);
-                return 0;
-            }
-
-            if (verbose)
-                Console.Error.WriteLine("[lash] compiler project could not be launched, falling back to resolved compiler binary");
         }
 
         string compilerPath;

@@ -6,10 +6,6 @@ internal static class ToolResolver
 
     public static string ResolveFormatterPath() => ResolveExecutable("lashfmt");
 
-    public static string? ResolveCompilerProjectPath() => ResolveProjectPath("src/Lash.Compiler/Lash.Compiler.csproj");
-
-    public static string? ResolveFormatterProjectPath() => ResolveProjectPath("src/Lash.Formatter/Lash.Formatter.csproj");
-
     private static string ResolveExecutable(string toolName)
     {
         foreach (var candidate in LocalCandidates(toolName))
@@ -30,18 +26,6 @@ internal static class ToolResolver
         }
 
         throw new FileNotFoundException($"Unable to locate '{toolName}' in current directory or PATH.");
-    }
-
-    private static string? ResolveProjectPath(string relativePath)
-    {
-        foreach (var root in ProbeRoots())
-        {
-            var candidate = Path.Combine(root, relativePath.Replace('/', Path.DirectorySeparatorChar));
-            if (File.Exists(candidate))
-                return Path.GetFullPath(candidate);
-        }
-
-        return null;
     }
 
     private static IEnumerable<string> LocalCandidates(string toolName)
