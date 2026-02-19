@@ -3,11 +3,8 @@
 
 @define TARGET linux
 
-echo "You are targetting:"
 @if defined(TARGET) && TARGET == "linux"
-echo "Linux"
-@elif defined(TARGET) && TARGET == "osx" || TARGET == "macOS"
-echo "MacOS"
+echo "Targetting Linux"
 @else
 @warning "Unknown target"
 @endif
