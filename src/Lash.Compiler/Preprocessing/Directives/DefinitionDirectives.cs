@@ -9,7 +9,7 @@ internal sealed class DefineDirective : IPreprocessorDirective
         if (!state.IsCurrentActive)
             return;
 
-        if (!DirectiveParsing.TryParseDefinition(directive.Arguments, out var name, out var value, out var error))
+        if (!DirectiveProcessor.TryParseDefinition(directive.Arguments, out var name, out var value, out var error))
         {
             state.AddError($"Invalid @define directive: {error}");
             return;
@@ -28,7 +28,7 @@ internal sealed class UndefDirective : IPreprocessorDirective
         if (!state.IsCurrentActive)
             return;
 
-        if (!DirectiveParsing.TryParseSymbolName(directive.Arguments, out var name, out var error))
+        if (!DirectiveProcessor.TryParseSymbolName(directive.Arguments, out var name, out var error))
         {
             state.AddError($"Invalid @undef directive: {error}");
             return;
