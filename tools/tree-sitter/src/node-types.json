@@ -821,6 +821,49 @@
     }
   },
   {
+    "type": "preprocessor_directive",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "preprocessor_define_directive",
+          "named": true
+        },
+        {
+          "type": "preprocessor_elif_directive",
+          "named": true
+        },
+        {
+          "type": "preprocessor_else_directive",
+          "named": true
+        },
+        {
+          "type": "preprocessor_endif_directive",
+          "named": true
+        },
+        {
+          "type": "preprocessor_error_directive",
+          "named": true
+        },
+        {
+          "type": "preprocessor_if_directive",
+          "named": true
+        },
+        {
+          "type": "preprocessor_undef_directive",
+          "named": true
+        },
+        {
+          "type": "preprocessor_warning_directive",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "preprocessor_elif_directive",
     "named": true,
     "fields": {
@@ -1174,35 +1217,7 @@
           "named": true
         },
         {
-          "type": "preprocessor_define_directive",
-          "named": true
-        },
-        {
-          "type": "preprocessor_elif_directive",
-          "named": true
-        },
-        {
-          "type": "preprocessor_else_directive",
-          "named": true
-        },
-        {
-          "type": "preprocessor_endif_directive",
-          "named": true
-        },
-        {
-          "type": "preprocessor_error_directive",
-          "named": true
-        },
-        {
-          "type": "preprocessor_if_directive",
-          "named": true
-        },
-        {
-          "type": "preprocessor_undef_directive",
-          "named": true
-        },
-        {
-          "type": "preprocessor_warning_directive",
+          "type": "preprocessor_directive",
           "named": true
         },
         {

@@ -48,35 +48,7 @@
       "members": [
         {
           "type": "SYMBOL",
-          "name": "preprocessor_if_directive"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "preprocessor_elif_directive"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "preprocessor_else_directive"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "preprocessor_endif_directive"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "preprocessor_define_directive"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "preprocessor_undef_directive"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "preprocessor_error_directive"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "preprocessor_warning_directive"
+          "name": "preprocessor_directive"
         },
         {
           "type": "SYMBOL",
@@ -162,6 +134,43 @@
             "type": "SYMBOL",
             "name": "expression"
           }
+        }
+      ]
+    },
+    "preprocessor_directive": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "preprocessor_if_directive"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "preprocessor_elif_directive"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "preprocessor_else_directive"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "preprocessor_endif_directive"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "preprocessor_define_directive"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "preprocessor_undef_directive"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "preprocessor_error_directive"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "preprocessor_warning_directive"
         }
       ]
     },
