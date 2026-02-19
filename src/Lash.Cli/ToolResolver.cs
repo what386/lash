@@ -1,4 +1,4 @@
-namespace Lash.Cli.Application;
+namespace Lash.Cli;
 
 internal static class ToolResolver
 {

@@ -1,7 +1,8 @@
 namespace Lash.Cli;
 
 using System.CommandLine;
-using Lash.Cli.Application;
+
+using Lash.Cli.Commands;
 
 internal static class Program
 {
@@ -15,7 +16,15 @@ internal static class Program
             return 0;
         });
 
-        CommandRegistry.RegisterCommands(rootCommand);
+        RegisterCommands(rootCommand);
         return await rootCommand.Parse(args).InvokeAsync();
+    }
+
+    public static void RegisterCommands(RootCommand root)
+    {
+        root.Subcommands.Add(CompileCommand.Create());
+        root.Subcommands.Add(CheckCommand.Create());
+        root.Subcommands.Add(FormatCommand.Create());
+        root.Subcommands.Add(RunCommand.Create());
     }
 }

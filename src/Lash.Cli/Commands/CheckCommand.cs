@@ -1,21 +1,15 @@
-namespace Lash.Cli.Application.Commands;
+namespace Lash.Cli.Commands;
 
 using System.CommandLine;
 using Lash.Cli.Application;
 
-
-static class CompileCommand
+static class CheckCommand
 {
     public static Command Create()
     {
         Argument<string> fileArgument = new("file")
         {
-            Description = "Path to the .lash file to compile"
-        };
-
-        Option<string?> outputOption = new("-o", "--output")
-        {
-            Description = "Output file path (defaults to <input>.sh)"
+            Description = "Path to the .lash file to check"
         };
 
         fileArgument.Validators.Add(result =>
@@ -32,23 +26,17 @@ static class CompileCommand
             }
         });
 
-        var command = new Command("compile", "Compile a .lash file to Bash")
+        var command = new Command("check", "Validate a .lash file without emitting output")
         {
             fileArgument,
-            outputOption,
             SharedOptions.Verbose
         };
 
         command.SetAction(parseResult =>
         {
-            var file = parseResult.GetValue(fileArgument)!;
-            var output = parseResult.GetValue(outputOption);
+            var file = parseResult.GetValue(fileArgument);
             var verbose = parseResult.GetValue(SharedOptions.Verbose);
-            output ??= Path.Combine(
-                Path.GetDirectoryName(file) ?? ".",
-                $"{Path.GetFileNameWithoutExtension(file)}.sh");
-
-            return CompilePipeline.Compile(file, output, verbose);
+            return CompilePipeline.Check(file!, verbose);
         });
 
         return command;

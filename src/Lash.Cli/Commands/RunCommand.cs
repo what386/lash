@@ -1,4 +1,4 @@
-namespace Lash.Cli.Application.Commands;
+namespace Lash.Cli.Commands;
 
 using System.CommandLine;
 using Lash.Cli.Application;
