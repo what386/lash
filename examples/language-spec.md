@@ -14,6 +14,26 @@ Lash is a lua-like language that transpiles directly to Bash with minimal runtim
   - line comments: `// ...`
   - block comments: `/* ... */`
 
+### Preprocessor directives
+
+- Lash supports `@`-prefixed preprocessor directives evaluated before parsing.
+- Supported directives:
+  - conditionals: `@if`, `@elif`, `@else`, `@endif`
+  - symbols: `@define`, `@undef`
+  - diagnostics: `@error`, `@warning`
+- Directives are compile-time only and do not exist at runtime.
+- `@if`/`@elif` conditions support:
+  - `defined(NAME)`
+  - boolean literals (`true`, `false`)
+  - numeric/string literals
+  - symbol names from `@define`
+  - operators: `!`, `&&`, `||`, `==`, `!=`, and parentheses
+- `@define` accepts:
+  - `@define NAME`
+  - `@define NAME=value`
+  - `@define NAME value`
+- Inactive conditional branches are stripped before the parser runs.
+
 ### Top-level statements
 
 - Variable declaration:

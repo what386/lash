@@ -1,6 +1,11 @@
 #!/bin/env -S lash run
 // Quick runnable overview of current Lash syntax.
 
+@define TARGET linux
+@if defined(TARGET) && TARGET == "linux"
+echo "preprocessor target: linux"
+@endif
+
 fn greet(name, greeting = "Hello")
     return greeting + ", " + name
 end

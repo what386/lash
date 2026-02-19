@@ -32,6 +32,14 @@ module.exports = grammar({
     // -------------------------------------------------------------------------
 
     statement: $ => choice(
+      $.preprocessor_if_directive,
+      $.preprocessor_elif_directive,
+      $.preprocessor_else_directive,
+      $.preprocessor_endif_directive,
+      $.preprocessor_define_directive,
+      $.preprocessor_undef_directive,
+      $.preprocessor_error_directive,
+      $.preprocessor_warning_directive,
       $.variable_declaration,
       $.enum_declaration,
       $.assignment,
@@ -54,6 +62,41 @@ module.exports = grammar({
     sh_statement: $ => seq(
       "sh",
       field("command", $.expression),
+    ),
+
+    preprocessor_if_directive: $ => seq(
+      "@if",
+      field("condition", $.preprocessor_directive_argument),
+    ),
+
+    preprocessor_elif_directive: $ => seq(
+      "@elif",
+      field("condition", $.preprocessor_directive_argument),
+    ),
+
+    preprocessor_else_directive: _ => "@else",
+
+    preprocessor_endif_directive: _ => "@endif",
+
+    preprocessor_define_directive: $ => seq(
+      "@define",
+      field("name", $.identifier),
+      optional(field("value", $.preprocessor_directive_argument)),
+    ),
+
+    preprocessor_undef_directive: $ => seq(
+      "@undef",
+      field("name", $.identifier),
+    ),
+
+    preprocessor_error_directive: $ => seq(
+      "@error",
+      optional(field("message", $.preprocessor_directive_argument)),
+    ),
+
+    preprocessor_warning_directive: $ => seq(
+      "@warning",
+      optional(field("message", $.preprocessor_directive_argument)),
     ),
 
     variable_declaration: $ => seq(
@@ -373,6 +416,8 @@ module.exports = grammar({
     )),
 
     fd_dup_operator: _ => token(seq(/[0-9]+/, ">&", choice(/[0-9]+/, "-"))),
+
+    preprocessor_directive_argument: _ => token(/[^\r\n]+/),
 
     line_comment: _ => token(seq("//", /[^\r\n]*/)),
 

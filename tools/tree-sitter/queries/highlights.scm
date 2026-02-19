@@ -1,6 +1,37 @@
 ; Shebang
 (shebang) @keyword.directive
 
+; Preprocessor directives
+"@if" @keyword.directive
+"@elif" @keyword.directive
+"@else" @keyword.directive
+"@endif" @keyword.directive
+"@define" @keyword.directive
+"@undef" @keyword.directive
+"@error" @keyword.directive
+"@warning" @keyword.directive
+
+(preprocessor_define_directive
+  name: (identifier) @constant)
+
+(preprocessor_undef_directive
+  name: (identifier) @constant)
+
+(preprocessor_if_directive
+  condition: (preprocessor_directive_argument) @string.special)
+
+(preprocessor_elif_directive
+  condition: (preprocessor_directive_argument) @string.special)
+
+(preprocessor_define_directive
+  value: (preprocessor_directive_argument) @string.special)
+
+(preprocessor_error_directive
+  message: (preprocessor_directive_argument) @string.special)
+
+(preprocessor_warning_directive
+  message: (preprocessor_directive_argument) @string.special)
+
 ; Comments
 (line_comment) @comment
 (block_comment) @comment

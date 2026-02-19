@@ -48,6 +48,38 @@
       "members": [
         {
           "type": "SYMBOL",
+          "name": "preprocessor_if_directive"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "preprocessor_elif_directive"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "preprocessor_else_directive"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "preprocessor_endif_directive"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "preprocessor_define_directive"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "preprocessor_undef_directive"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "preprocessor_error_directive"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "preprocessor_warning_directive"
+        },
+        {
+          "type": "SYMBOL",
           "name": "variable_declaration"
         },
         {
@@ -130,6 +162,148 @@
             "type": "SYMBOL",
             "name": "expression"
           }
+        }
+      ]
+    },
+    "preprocessor_if_directive": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "@if"
+        },
+        {
+          "type": "FIELD",
+          "name": "condition",
+          "content": {
+            "type": "SYMBOL",
+            "name": "preprocessor_directive_argument"
+          }
+        }
+      ]
+    },
+    "preprocessor_elif_directive": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "@elif"
+        },
+        {
+          "type": "FIELD",
+          "name": "condition",
+          "content": {
+            "type": "SYMBOL",
+            "name": "preprocessor_directive_argument"
+          }
+        }
+      ]
+    },
+    "preprocessor_else_directive": {
+      "type": "STRING",
+      "value": "@else"
+    },
+    "preprocessor_endif_directive": {
+      "type": "STRING",
+      "value": "@endif"
+    },
+    "preprocessor_define_directive": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "@define"
+        },
+        {
+          "type": "FIELD",
+          "name": "name",
+          "content": {
+            "type": "SYMBOL",
+            "name": "identifier"
+          }
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "FIELD",
+              "name": "value",
+              "content": {
+                "type": "SYMBOL",
+                "name": "preprocessor_directive_argument"
+              }
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        }
+      ]
+    },
+    "preprocessor_undef_directive": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "@undef"
+        },
+        {
+          "type": "FIELD",
+          "name": "name",
+          "content": {
+            "type": "SYMBOL",
+            "name": "identifier"
+          }
+        }
+      ]
+    },
+    "preprocessor_error_directive": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "@error"
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "FIELD",
+              "name": "message",
+              "content": {
+                "type": "SYMBOL",
+                "name": "preprocessor_directive_argument"
+              }
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        }
+      ]
+    },
+    "preprocessor_warning_directive": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "@warning"
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "FIELD",
+              "name": "message",
+              "content": {
+                "type": "SYMBOL",
+                "name": "preprocessor_directive_argument"
+              }
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
         }
       ]
     },
@@ -1783,6 +1957,13 @@
             ]
           }
         ]
+      }
+    },
+    "preprocessor_directive_argument": {
+      "type": "TOKEN",
+      "content": {
+        "type": "PATTERN",
+        "value": "[^\\r\\n]+"
       }
     },
     "line_comment": {
