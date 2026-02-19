@@ -98,7 +98,9 @@ subshell into bg_pid
     sh "sleep 0.01"
 end &
 
+// wait for single pid
 wait bg_pid into bg_status
+// wait for all jobs
 wait jobs into bg_status
 echo $"background status: {bg_status}"
 
