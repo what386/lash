@@ -299,4 +299,31 @@ public class FormatterRulesTests
         var formatted = LashFormatter.Format(input);
         Assert.Equal(expected.Replace("\r\n", "\n") + "\n", formatted);
     }
+
+    [Fact]
+    public void Formatter_FormatsSwitchCaseBlocksWithoutCaseNesting()
+    {
+        const string input =
+            """
+            switch mode
+            case "a":
+            echo A
+            case "b":
+            echo B
+            end
+            """;
+
+        const string expected =
+            """
+            switch mode
+                case "a":
+                    echo A
+                case "b":
+                    echo B
+            end
+            """;
+
+        var formatted = LashFormatter.Format(input);
+        Assert.Equal(expected.Replace("\r\n", "\n") + "\n", formatted);
+    }
 }

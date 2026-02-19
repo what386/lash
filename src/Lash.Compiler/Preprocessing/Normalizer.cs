@@ -1,28 +1,47 @@
-namespace Lash.Compiler.Preprocessor;
+namespace Lash.Compiler.Preprocessing;
 
-using Lash.Compiler.Diagnostics;
-
-internal sealed class Preprocessor
+internal static class Normalizer
 {
-    public string Process(string source, DiagnosticBag diagnostics)
+    public static string Normalize(string source)
     {
-        _ = diagnostics;
-        var normalized = source.Replace("\r\n", "\n", StringComparison.Ordinal);
-        var withoutShebang = StripLeadingShebang(normalized);
-        return StripComments(withoutShebang);
+        source = NormalizeLineEndings(source);
+        source = StripShebang(source);
+        source = StripComments(source);
+
+        return source;
     }
 
-    private static string StripLeadingShebang(string source)
+    private static string NormalizeLineEndings(string source)
     {
-        if (!source.StartsWith("#!", StringComparison.Ordinal))
-            return source;
+        return source.Replace("\r\n", "\n", StringComparison.Ordinal)
+            .Replace('\r', '\n');
+    }
 
-        var newlineIndex = source.IndexOf('\n');
-        if (newlineIndex < 0)
-            return string.Empty;
+    public static string StripTrailingLineComment(string text)
+    {
+        var inSingleQuote = false;
+        var inDoubleQuote = false;
+        var escaped = false;
 
-        // Keep the newline so diagnostics preserve original line numbers.
-        return source[newlineIndex..];
+        for (int i = 0; i < text.Length - 1; i++)
+        {
+            var c = text[i];
+            var next = text[i + 1];
+
+            if (c == '"' && !inSingleQuote && !escaped)
+                inDoubleQuote = !inDoubleQuote;
+            else if (c == '\'' && !inDoubleQuote && !escaped)
+                inSingleQuote = !inSingleQuote;
+
+            if (!inSingleQuote && !inDoubleQuote && c == '/' && next == '/')
+                return text[..i];
+
+            escaped = !escaped && c == '\\';
+            if (c != '\\')
+                escaped = false;
+        }
+
+        return text;
     }
 
     private static string StripComments(string source)
@@ -87,6 +106,19 @@ internal sealed class Preprocessor
         }
 
         return output.ToString();
+    }
+
+    private static string StripShebang(string source)
+    {
+        if (!source.StartsWith("#!", StringComparison.Ordinal))
+            return source;
+
+        var newlineIndex = source.IndexOf('\n');
+        if (newlineIndex < 0)
+            return string.Empty;
+
+        // Keep the newline so diagnostics preserve original line numbers.
+        return source[newlineIndex..];
     }
 
     private static bool IsEscaped(string source, int index)

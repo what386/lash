@@ -96,8 +96,9 @@ internal static class CompilePipeline
     public static int Run(string inputPath, bool keepTemp, IReadOnlyList<string> args, bool verbose = false)
     {
         var tempPath = Path.Combine(Path.GetTempPath(), $"lash-run-{Guid.NewGuid():N}.sh");
-        if (Compile(inputPath, tempPath, verbose) != 0)
-            return 1;
+        var compileExitCode = Compile(inputPath, tempPath, verbose);
+        if (compileExitCode != 0)
+            return compileExitCode;
 
         try
         {

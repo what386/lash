@@ -84,4 +84,66 @@ public class PreprocessorTests
         var declaration = Assert.IsType<VariableDeclaration>(Assert.Single(program.Statements));
         Assert.Equal("x", declaration.Name);
     }
+
+    [Fact]
+    public void Preprocessor_DirectiveIfElse_KeepsActiveBranchOnly()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            @if true
+            let active = 1
+            @else
+            let inactive = 0
+            @endif
+            """);
+
+        var declaration = Assert.IsType<VariableDeclaration>(Assert.Single(program.Statements));
+        Assert.Equal("active", declaration.Name);
+    }
+
+    [Fact]
+    public void Preprocessor_DirectiveElif_SelectsFirstMatchingBranch()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            @if false
+            let never = 0
+            @elif true
+            let chosen = 1
+            @else
+            let also_never = 2
+            @endif
+            """);
+
+        var declaration = Assert.IsType<VariableDeclaration>(Assert.Single(program.Statements));
+        Assert.Equal("chosen", declaration.Name);
+    }
+
+    [Fact]
+    public void Preprocessor_DirectiveIf_SupportsDefinedWithDefine()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            @define TARGET linux
+            @if defined(TARGET) && TARGET == "linux"
+            let platform = "ok"
+            @endif
+            """);
+
+        var declaration = Assert.IsType<VariableDeclaration>(Assert.Single(program.Statements));
+        Assert.Equal("platform", declaration.Name);
+    }
+
+    [Fact]
+    public void Preprocessor_DirectiveIfWithoutEndif_ReportsError()
+    {
+        var result = TestCompiler.LoadProgram(
+            """
+            @if true
+            let x = 1
+            """);
+
+        Assert.False(result.Success);
+        Assert.Contains(result.Diagnostics.GetErrors(), e => e.Message.Contains("Missing '@endif'", StringComparison.Ordinal));
+    }
 }

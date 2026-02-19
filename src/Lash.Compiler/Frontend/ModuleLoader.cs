@@ -3,7 +3,7 @@ namespace Lash.Compiler.Frontend;
 using Antlr4.Runtime;
 using Lash.Compiler.Ast;
 using Lash.Compiler.Diagnostics;
-using Lash.Compiler.Preprocessor;
+using Lash.Compiler.Preprocessing;
 
 public static class ModuleLoader
 {
@@ -36,9 +36,10 @@ public static class ModuleLoader
             return false;
         }
 
-        source = new Preprocessor().Process(source, diagnostics);
-        if (diagnostics.HasErrors)
-            return false;
+        source = new SourcePreprocessor().Process(source, diagnostics);
+        var normalized = Normalizer.Normalize(source);
+
+        source = new DirectiveProcessor().Process(normalized, diagnostics);
 
         source = NormalizeSimplifiedSyntax(source);
         if (diagnostics.HasErrors)

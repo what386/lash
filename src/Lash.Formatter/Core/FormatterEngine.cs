@@ -8,7 +8,7 @@ internal static class FormatterEngine
         var lines = normalized.Split('\n');
         var output = new List<string>(lines.Length);
 
-        int indentLevel = 0;
+        var blockStack = new List<string>();
         bool previousBlank = false;
 
         foreach (var rawLine in lines)
@@ -35,16 +35,35 @@ internal static class FormatterEngine
 
             var line = SpacingRules.Normalize(trimmed);
             line = SignatureRules.NormalizeFunctionDeclarationSpacing(line);
-            indentLevel = Math.Max(0, indentLevel - IndentationRules.GetLeadingDeductions(line));
+            var keyword = IndentationRules.GetLeadingKeyword(line);
+
+            if (keyword == "case" && blockStack.Count > 0 && blockStack[^1] == "case")
+                blockStack.RemoveAt(blockStack.Count - 1);
+
+            if (keyword == "end")
+            {
+                if (blockStack.Count > 0 && blockStack[^1] == "case")
+                    blockStack.RemoveAt(blockStack.Count - 1);
+                if (blockStack.Count > 0)
+                    blockStack.RemoveAt(blockStack.Count - 1);
+            }
+
+            var indentLevel = blockStack.Count;
+            if (keyword is "elif" or "else")
+                indentLevel = Math.Max(0, indentLevel - 1);
 
             var prefix = new string(' ', indentLevel * options.SpacesPerIndent);
             var wrapped = WrappingRules.WrapArgumentsIfNeeded(line, prefix, options);
             output.AddRange(wrapped);
             previousBlank = false;
 
-            indentLevel += IndentationRules.GetTrailingIncreases(line);
-            if (indentLevel < 0)
-                indentLevel = 0;
+            if (keyword is not null)
+            {
+                if (IndentationRules.IsIndentOpeningKeyword(keyword))
+                    blockStack.Add(keyword);
+                else if (keyword == "case")
+                    blockStack.Add("case");
+            }
         }
 
         var normalizedLayout = LayoutRules.NormalizeTopLevelLayout(output);

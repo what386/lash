@@ -1,24 +1,36 @@
 namespace Lash.Formatter.Rules;
 
-using System.Text.RegularExpressions;
-
 internal static class IndentationRules
 {
-    private static readonly Regex LeadingDedentPattern = new(
-        @"^(elif|else|end)\b",
-        RegexOptions.Compiled);
-
-    private static readonly Regex TrailingIndentPattern = new(
-        @"^(fn|if|elif|else|for|while|switch|case|enum|subshell)\b",
-        RegexOptions.Compiled);
-
-    public static int GetLeadingDeductions(string line)
+    public static string? GetLeadingKeyword(string line)
     {
-        return LeadingDedentPattern.IsMatch(line) ? 1 : 0;
+        if (StartsWithKeyword(line, "fn")) return "fn";
+        if (StartsWithKeyword(line, "if")) return "if";
+        if (StartsWithKeyword(line, "elif")) return "elif";
+        if (StartsWithKeyword(line, "else")) return "else";
+        if (StartsWithKeyword(line, "for")) return "for";
+        if (StartsWithKeyword(line, "while")) return "while";
+        if (StartsWithKeyword(line, "switch")) return "switch";
+        if (StartsWithKeyword(line, "case")) return "case";
+        if (StartsWithKeyword(line, "enum")) return "enum";
+        if (StartsWithKeyword(line, "subshell")) return "subshell";
+        if (StartsWithKeyword(line, "end")) return "end";
+        return null;
     }
 
-    public static int GetTrailingIncreases(string line)
+    public static bool IsIndentOpeningKeyword(string keyword)
     {
-        return TrailingIndentPattern.IsMatch(line) ? 1 : 0;
+        return keyword is "fn" or "if" or "for" or "while" or "switch" or "enum" or "subshell";
+    }
+
+    private static bool StartsWithKeyword(string line, string keyword)
+    {
+        if (!line.StartsWith(keyword, StringComparison.Ordinal))
+            return false;
+
+        if (line.Length == keyword.Length)
+            return true;
+
+        return char.IsWhiteSpace(line[keyword.Length]);
     }
 }
