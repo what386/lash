@@ -1,2 +1,0 @@
-let imported_banner = "imported from overview-snippet.lash"
-echo $imported_banner

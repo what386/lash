@@ -250,11 +250,14 @@ public class AstBuilder : LashBaseVisitor<AstNode>
 
     public override AstNode VisitSubshellStatement(LashParser.SubshellStatementContext context)
     {
+        var intoBinding = context.intoBinding();
+
         return new SubshellStatement
         {
             Line = context.Start.Line,
             Column = context.Start.Column,
-            IntoVariable = context.IDENTIFIER()?.GetText(),
+            IntoVariable = intoBinding?.IDENTIFIER().GetText(),
+            IntoMode = GetIntoMode(intoBinding),
             RunInBackground = context.AMP() != null,
             Body = context.statement().Select(s => Visit(s) as Statement).Where(s => s != null).ToList()!
         };
@@ -284,7 +287,8 @@ public class AstBuilder : LashBaseVisitor<AstNode>
             Column = context.Start.Column,
             TargetKind = targetKind,
             Target = target,
-            IntoVariable = context.IDENTIFIER()?.GetText()
+            IntoVariable = context.intoBinding()?.IDENTIFIER().GetText(),
+            IntoMode = GetIntoMode(context.intoBinding())
         };
     }
 
@@ -606,6 +610,23 @@ public class AstBuilder : LashBaseVisitor<AstNode>
             Right = Visit(rightContext) as Expression ?? new NullLiteral(),
             Type = ExpressionTypes.Unknown
         };
+    }
+
+    private static IntoBindingMode GetIntoMode(LashParser.IntoBindingContext? intoBinding)
+    {
+        if (intoBinding == null)
+            return IntoBindingMode.Auto;
+
+        if (intoBinding.ChildCount >= 3)
+        {
+            var modeText = intoBinding.GetChild(1).GetText();
+            if (string.Equals(modeText, "const", StringComparison.Ordinal))
+                return IntoBindingMode.Const;
+            if (string.Equals(modeText, "let", StringComparison.Ordinal))
+                return IntoBindingMode.Let;
+        }
+
+        return IntoBindingMode.Auto;
     }
 
     private static string UnquoteStringLiteral(string text)

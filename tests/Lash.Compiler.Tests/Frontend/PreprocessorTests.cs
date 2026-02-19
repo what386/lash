@@ -253,6 +253,62 @@ public class PreprocessorTests
     }
 
     [Fact]
+    public void Preprocessor_ImportInto_CreatesVariableWhenMissing()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), $"lash-preprocessor-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(tempDir);
+
+        try
+        {
+            var textPath = Path.Combine(tempDir, "doc.txt");
+            var entryPath = Path.Combine(tempDir, "main.lash");
+            File.WriteAllText(textPath, "hello\nworld");
+            File.WriteAllText(entryPath, "@import \"doc.txt\" into doc\nlet size = #doc\n");
+
+            var diagnostics = new DiagnosticBag();
+            var success = ModuleLoader.TryLoadProgram(entryPath, diagnostics, out var program);
+
+            Assert.True(success, string.Join(Environment.NewLine, diagnostics.GetErrors()));
+            Assert.NotNull(program);
+            var declaration = Assert.IsType<VariableDeclaration>(program!.Statements[0]);
+            Assert.Equal("doc", declaration.Name);
+            Assert.Equal(VariableDeclaration.VarKind.Let, declaration.Kind);
+        }
+        finally
+        {
+            Directory.Delete(tempDir, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void Preprocessor_ImportIntoConst_CreatesConstWhenMissing()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), $"lash-preprocessor-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(tempDir);
+
+        try
+        {
+            var textPath = Path.Combine(tempDir, "doc.txt");
+            var entryPath = Path.Combine(tempDir, "main.lash");
+            File.WriteAllText(textPath, "hello");
+            File.WriteAllText(entryPath, "@import \"doc.txt\" into const doc\n");
+
+            var diagnostics = new DiagnosticBag();
+            var success = ModuleLoader.TryLoadProgram(entryPath, diagnostics, out var program);
+
+            Assert.True(success, string.Join(Environment.NewLine, diagnostics.GetErrors()));
+            Assert.NotNull(program);
+            var declaration = Assert.IsType<VariableDeclaration>(program!.Statements[0]);
+            Assert.Equal("doc", declaration.Name);
+            Assert.Equal(VariableDeclaration.VarKind.Const, declaration.Kind);
+        }
+        finally
+        {
+            Directory.Delete(tempDir, recursive: true);
+        }
+    }
+
+    [Fact]
     public void Preprocessor_ImportInto_WithInvalidTargetReportsError()
     {
         var result = TestCompiler.LoadProgram(

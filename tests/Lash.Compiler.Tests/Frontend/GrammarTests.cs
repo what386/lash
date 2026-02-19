@@ -315,16 +315,22 @@ public class GrammarTests
             wait pid into status
             wait jobs
             wait into status
+            subshell into const const_pid
+                echo "bye"
+            end &
+            wait into let local_status
             """);
 
         var subshell = Assert.IsType<SubshellStatement>(program.Statements[2]);
         Assert.Equal("pid", subshell.IntoVariable);
+        Assert.Equal(IntoBindingMode.Auto, subshell.IntoMode);
         Assert.True(subshell.RunInBackground);
         Assert.Single(subshell.Body);
 
         var waitPid = Assert.IsType<WaitStatement>(program.Statements[3]);
         Assert.Equal(WaitTargetKind.Target, waitPid.TargetKind);
         Assert.Equal("status", waitPid.IntoVariable);
+        Assert.Equal(IntoBindingMode.Auto, waitPid.IntoMode);
         var waitTarget = Assert.IsType<IdentifierExpression>(waitPid.Target);
         Assert.Equal("pid", waitTarget.Name);
 
@@ -335,6 +341,14 @@ public class GrammarTests
         var waitAll = Assert.IsType<WaitStatement>(program.Statements[5]);
         Assert.Equal(WaitTargetKind.Default, waitAll.TargetKind);
         Assert.Equal("status", waitAll.IntoVariable);
+
+        var constSubshell = Assert.IsType<SubshellStatement>(program.Statements[6]);
+        Assert.Equal("const_pid", constSubshell.IntoVariable);
+        Assert.Equal(IntoBindingMode.Const, constSubshell.IntoMode);
+
+        var letWait = Assert.IsType<WaitStatement>(program.Statements[7]);
+        Assert.Equal("local_status", letWait.IntoVariable);
+        Assert.Equal(IntoBindingMode.Let, letWait.IntoMode);
     }
 
     [Fact]

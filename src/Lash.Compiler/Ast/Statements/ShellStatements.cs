@@ -29,9 +29,19 @@ public class ShiftStatement : Statement
     public Expression? Amount { get; set; }
 }
 
+public enum IntoBindingMode
+{
+    Auto,
+    Let,
+    Const
+}
+
 public class SubshellStatement : Statement
 {
     public string? IntoVariable { get; set; }
+    public IntoBindingMode IntoMode { get; set; } = IntoBindingMode.Auto;
+    public bool IntoCreatesVariable { get; set; }
+    public bool IntoCreatesConst { get; set; }
     public bool RunInBackground { get; set; }
     public List<Statement> Body { get; set; } = new();
 }
@@ -48,4 +58,7 @@ public class WaitStatement : Statement
     public WaitTargetKind TargetKind { get; set; } = WaitTargetKind.Default;
     public Expression? Target { get; set; }
     public string? IntoVariable { get; set; }
+    public IntoBindingMode IntoMode { get; set; } = IntoBindingMode.Auto;
+    public bool IntoCreatesVariable { get; set; }
+    public bool IntoCreatesConst { get; set; }
 }

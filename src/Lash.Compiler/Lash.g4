@@ -105,16 +105,20 @@ shiftStatement
     ;
 
 subshellStatement
-    : 'subshell' ('into' IDENTIFIER)? statement* 'end' AMP?
+    : 'subshell' intoBinding? statement* 'end' AMP?
     ;
 
 waitStatement
-    : 'wait' waitTarget? ('into' IDENTIFIER)?
+    : 'wait' waitTarget? intoBinding?
     ;
 
 waitTarget
     : 'jobs'
     | expression
+    ;
+
+intoBinding
+    : 'into' ('let' | 'const')? IDENTIFIER
     ;
 
 breakStatement

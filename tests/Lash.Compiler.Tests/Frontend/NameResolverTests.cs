@@ -184,19 +184,37 @@ public class NameResolverTests
     }
 
     [Fact]
-    public void NameResolver_RejectsSubshellIntoUndeclaredVariable()
+    public void NameResolver_AllowsSubshellIntoUndeclaredVariableByDeclaringIt()
     {
         var program = TestCompiler.ParseOrThrow(
             """
             subshell into pid
                 echo "hi"
             end &
+            let next = pid + 1
             """);
 
         var diagnostics = new DiagnosticBag();
         new NameResolver(diagnostics).Analyze(program);
 
-        Assert.Contains(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.UndeclaredVariable && e.Message.Contains("undeclared variable 'pid'", StringComparison.Ordinal));
+        Assert.DoesNotContain(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.UndeclaredVariable && e.Message.Contains("undeclared variable 'pid'", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void NameResolver_IntoConstCreatesConstVariable()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            subshell into const status
+                echo "hi"
+            end
+            status = 1
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new NameResolver(diagnostics).Analyze(program);
+
+        Assert.Contains(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.InvalidAssignmentTarget && e.Message.Contains("Cannot assign to const variable 'status'", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -212,6 +230,21 @@ public class NameResolverTests
         new NameResolver(diagnostics).Analyze(program);
 
         Assert.Contains(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.InvalidAssignmentTarget && e.Message.Contains("Cannot assign to const variable 'status'", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void NameResolver_AllowsWaitIntoUndeclaredVariableByDeclaringIt()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            wait into status
+            let next = status + 1
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new NameResolver(diagnostics).Analyze(program);
+
+        Assert.DoesNotContain(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.UndeclaredVariable && e.Message.Contains("undeclared variable 'status'", StringComparison.Ordinal));
     }
 
     [Fact]

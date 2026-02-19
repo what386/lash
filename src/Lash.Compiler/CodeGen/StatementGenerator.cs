@@ -710,7 +710,11 @@ public partial class BashGenerator
             if (!string.IsNullOrEmpty(subshellStatement.IntoVariable))
             {
                 EmitLine();
-                Emit($"{subshellStatement.IntoVariable}=$!");
+                EmitIntoCaptureAssignment(
+                    subshellStatement.IntoVariable!,
+                    "$!",
+                    subshellStatement.IntoCreatesVariable,
+                    subshellStatement.IntoCreatesConst);
             }
 
             if (needsTrackedJobs)
@@ -725,7 +729,11 @@ public partial class BashGenerator
         if (!string.IsNullOrEmpty(subshellStatement.IntoVariable))
         {
             EmitLine();
-            Emit($"{subshellStatement.IntoVariable}=$?");
+            EmitIntoCaptureAssignment(
+                subshellStatement.IntoVariable!,
+                "$?",
+                subshellStatement.IntoCreatesVariable,
+                subshellStatement.IntoCreatesConst);
         }
     }
 
@@ -757,7 +765,11 @@ public partial class BashGenerator
         if (!string.IsNullOrEmpty(waitStatement.IntoVariable))
         {
             EmitLine();
-            Emit($"{waitStatement.IntoVariable}=$?");
+            EmitIntoCaptureAssignment(
+                waitStatement.IntoVariable!,
+                "$?",
+                waitStatement.IntoCreatesVariable,
+                waitStatement.IntoCreatesConst);
         }
     }
 
@@ -765,7 +777,11 @@ public partial class BashGenerator
     {
         if (!string.IsNullOrEmpty(waitStatement.IntoVariable))
         {
-            Emit($"{waitStatement.IntoVariable}=0");
+            EmitIntoCaptureAssignment(
+                waitStatement.IntoVariable!,
+                "0",
+                waitStatement.IntoCreatesVariable,
+                waitStatement.IntoCreatesConst);
             EmitLine();
         }
 
@@ -785,6 +801,32 @@ public partial class BashGenerator
         Emit("done");
         EmitLine();
         Emit($"{TrackedJobsRuntimeName}=()");
+    }
+
+    private void EmitIntoCaptureAssignment(string name, string value, bool createsVariable, bool createsConst)
+    {
+        if (createsVariable)
+        {
+            if (createsConst)
+            {
+                if (currentFunctionName != null)
+                {
+                    Emit($"local -r {name}={value}");
+                    return;
+                }
+
+                Emit($"readonly {name}={value}");
+                return;
+            }
+
+            if (currentFunctionName != null)
+            {
+                Emit($"local {name}={value}");
+                return;
+            }
+        }
+
+        Emit($"{name}={value}");
     }
 
     private static string EscapeCasePattern(string pattern)

@@ -15,13 +15,13 @@ internal sealed class ImportDirective : IPreprocessorDirective
             return;
         }
 
-        if (!DirectiveProcessor.TryParseImportArguments(directive.Arguments, out var pathExpression, out var intoVariable, out var error))
+        if (!DirectiveProcessor.TryParseImportArguments(directive.Arguments, out var pathExpression, out var intoVariable, out var intoMode, out var error))
         {
             state.AddError($"Invalid @import directive: {error}");
             return;
         }
 
-        state.EnqueueImport(new ImportRequest(pathExpression, intoVariable));
+        state.EnqueueImport(new ImportRequest(pathExpression, intoVariable, intoMode));
     }
 }
 

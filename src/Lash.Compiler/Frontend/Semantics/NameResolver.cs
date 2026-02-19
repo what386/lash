@@ -227,39 +227,35 @@ public sealed class NameResolver
                 break;
 
             case SubshellStatement subshellStatement:
-                if (!string.IsNullOrEmpty(subshellStatement.IntoVariable))
-                {
-                    ValidateAssignmentTarget(
-                        new IdentifierExpression
-                        {
-                            Line = subshellStatement.Line,
-                            Column = subshellStatement.Column,
-                            Name = subshellStatement.IntoVariable!
-                        },
-                        isGlobal: false);
-                }
-
                 PushScope();
                 foreach (var nested in subshellStatement.Body)
                     CheckStatement(nested);
                 PopScope();
+
+                ResolveIntoBinding(
+                    subshellStatement.IntoVariable,
+                    subshellStatement.IntoMode,
+                    subshellStatement,
+                    (creates, createConst) =>
+                    {
+                        subshellStatement.IntoCreatesVariable = creates;
+                        subshellStatement.IntoCreatesConst = createConst;
+                    });
                 break;
 
             case WaitStatement waitStatement:
                 if (waitStatement.TargetKind == WaitTargetKind.Target && waitStatement.Target != null)
                     CheckExpression(waitStatement.Target);
 
-                if (!string.IsNullOrEmpty(waitStatement.IntoVariable))
-                {
-                    ValidateAssignmentTarget(
-                        new IdentifierExpression
-                        {
-                            Line = waitStatement.Line,
-                            Column = waitStatement.Column,
-                            Name = waitStatement.IntoVariable!
-                        },
-                        isGlobal: false);
-                }
+                ResolveIntoBinding(
+                    waitStatement.IntoVariable,
+                    waitStatement.IntoMode,
+                    waitStatement,
+                    (creates, createConst) =>
+                    {
+                        waitStatement.IntoCreatesVariable = creates;
+                        waitStatement.IntoCreatesConst = createConst;
+                    });
                 break;
 
             case ShellStatement shellStatement:
@@ -497,6 +493,43 @@ public sealed class NameResolver
                 $"Unknown enum member '{enumAccess.EnumName}::{enumAccess.MemberName}'.",
                 DiagnosticCodes.UndeclaredVariable);
         }
+    }
+
+    private void ResolveIntoBinding(
+        string? targetName,
+        IntoBindingMode mode,
+        AstNode node,
+        Action<bool, bool> setResolution)
+    {
+        setResolution(false, false);
+        if (string.IsNullOrEmpty(targetName))
+            return;
+
+        if (IsBuiltinIdentifier(targetName))
+        {
+            Report(
+                node,
+                $"Cannot assign to built-in variable '{targetName}'.",
+                DiagnosticCodes.InvalidAssignmentTarget);
+            return;
+        }
+
+        if (TryResolveSymbol(targetName, out var resolved))
+        {
+            if (resolved.IsConst)
+            {
+                Report(
+                    node,
+                    $"Cannot assign to const variable '{targetName}'.",
+                    DiagnosticCodes.InvalidAssignmentTarget);
+            }
+
+            return;
+        }
+
+        var createConst = mode == IntoBindingMode.Const;
+        Declare(targetName, createConst, node, isGlobal: false);
+        setResolution(true, createConst);
     }
 
     private void PushScope()

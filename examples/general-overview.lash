@@ -1,13 +1,14 @@
 #!/bin/env -S lash run
 // Quick runnable overview of current Lash syntax.
 
-@define TARGET linux
-@import "overview-snippet.lash"
+@define SIEVE_ENABLE true
 
-@if defined(TARGET) && TARGET == "linux"
-echo "Targetting Linux"
+@if defined(SIEVE_ENABLE) && SIEVE_ENABLE == "true"
+echo "Importing prime sieve!"
+@import "prime-sieve.lash"
 @else
-@warning "Unknown target"
+echo "No prime sieve!"
+@warning "Skipping prime sieve!"
 @end
 
 // raw bash block

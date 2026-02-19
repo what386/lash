@@ -150,6 +150,11 @@ public sealed class TypeChecker
                 }
             case SubshellStatement subshellStatement:
                 {
+                    PushScope();
+                    foreach (var nested in subshellStatement.Body)
+                        CheckStatement(nested);
+                    PopScope();
+
                     if (!string.IsNullOrEmpty(subshellStatement.IntoVariable))
                     {
                         Assign(
@@ -162,11 +167,6 @@ public sealed class TypeChecker
                             },
                             ExpressionTypes.Number);
                     }
-
-                    PushScope();
-                    foreach (var nested in subshellStatement.Body)
-                        CheckStatement(nested);
-                    PopScope();
                     break;
                 }
             case WaitStatement waitStatement:

@@ -9,6 +9,7 @@ internal sealed class PreprocessorState
     private readonly Stack<PreprocessorBlockFrame> blocks = new();
     private readonly Queue<ImportRequest> pendingImports = new();
     private readonly Stack<string?> fileScopes = new();
+    private readonly HashSet<string> knownTopLevelVariables = new(StringComparer.Ordinal);
 
     public PreprocessorState(DiagnosticBag diagnostics, DirectiveExpressionEvaluator evaluator, string? entryPath)
     {
@@ -183,6 +184,32 @@ internal sealed class PreprocessorState
         }
     }
 
+    public bool IsKnownTopLevelVariable(string name)
+    {
+        return knownTopLevelVariables.Contains(name);
+    }
+
+    public void MarkKnownTopLevelVariable(string name)
+    {
+        if (!string.IsNullOrWhiteSpace(name))
+            knownTopLevelVariables.Add(name);
+    }
+
+    public void TrackTopLevelVariableDeclaration(string line, bool isActiveLine, bool isDirectiveContext)
+    {
+        if (!isActiveLine || !isDirectiveContext || RuntimeBlockDepth != 0)
+            return;
+
+        var stripped = Normalizer.StripTrailingLineComment(line).Trim();
+        if (stripped.Length == 0)
+            return;
+
+        if (!TryParseTopLevelDeclarationName(stripped, out var name))
+            return;
+
+        MarkKnownTopLevelVariable(name);
+    }
+
     public void UpdateRuntimeBlockDepth(string line, bool isActiveLine, bool isDirectiveContext)
     {
         if (!isActiveLine || !isDirectiveContext)
@@ -317,6 +344,63 @@ internal sealed class PreprocessorState
 
         return char.IsWhiteSpace(line[keyword.Length]) || line[keyword.Length] == '(';
     }
+
+    private static bool TryParseTopLevelDeclarationName(string line, out string name)
+    {
+        name = string.Empty;
+        var cursor = 0;
+
+        SkipWhitespace(line, ref cursor);
+        if (TryReadKeyword(line, ref cursor, "global"))
+            SkipWhitespace(line, ref cursor);
+
+        if (!TryReadKeyword(line, ref cursor, "let") && !TryReadKeyword(line, ref cursor, "const"))
+            return false;
+
+        SkipWhitespace(line, ref cursor);
+        if (cursor >= line.Length || !IsIdentifierStart(line[cursor]))
+            return false;
+
+        var start = cursor;
+        cursor++;
+        while (cursor < line.Length && IsIdentifierPart(line[cursor]))
+            cursor++;
+
+        name = line[start..cursor];
+        return true;
+    }
+
+    private static bool TryReadKeyword(string text, ref int cursor, string keyword)
+    {
+        if (cursor + keyword.Length > text.Length)
+            return false;
+
+        if (!text.AsSpan(cursor, keyword.Length).SequenceEqual(keyword.AsSpan()))
+            return false;
+
+        var end = cursor + keyword.Length;
+        if (end < text.Length && !char.IsWhiteSpace(text[end]))
+            return false;
+
+        cursor = end;
+        return true;
+    }
+
+    private static void SkipWhitespace(string text, ref int cursor)
+    {
+        while (cursor < text.Length && char.IsWhiteSpace(text[cursor]))
+            cursor++;
+    }
+
+    private static bool IsIdentifierStart(char c)
+    {
+        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
+    }
+
+    private static bool IsIdentifierPart(char c)
+    {
+        return IsIdentifierStart(c) || (c >= '0' && c <= '9');
+    }
 }
 
 internal readonly record struct ConditionalFrame(
@@ -345,4 +429,12 @@ internal readonly record struct RawFrame(
 
 internal readonly record struct ImportRequest(
     string PathExpression,
-    string? IntoVariable);
+    string? IntoVariable,
+    ImportIntoMode IntoMode);
+
+internal enum ImportIntoMode
+{
+    Auto,
+    Let,
+    Const
+}

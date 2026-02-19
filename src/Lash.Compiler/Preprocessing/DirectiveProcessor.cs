@@ -72,6 +72,7 @@ internal sealed class DirectiveProcessor
                 }
 
                 output.Add(isActiveLine ? line : string.Empty);
+                state.TrackTopLevelVariableDeclaration(line, isActiveLine, isDirectiveContext);
                 state.UpdateRuntimeBlockDepth(line, isActiveLine, isDirectiveContext);
                 state.UpdateLexicalState(line);
             }
@@ -160,7 +161,7 @@ internal sealed class DirectiveProcessor
 
         if (importRequest.IntoVariable is not null)
         {
-            EmitImportIntoAssignment(importRequest.IntoVariable, importSource, state, output);
+            EmitImportIntoAssignment(importRequest, importSource, state, output);
             return;
         }
 
@@ -168,8 +169,9 @@ internal sealed class DirectiveProcessor
         ProcessSource(normalized, fullPath, state, output);
     }
 
-    private static void EmitImportIntoAssignment(string variableName, string content, PreprocessorState state, List<string> output)
+    private static void EmitImportIntoAssignment(ImportRequest importRequest, string content, PreprocessorState state, List<string> output)
     {
+        var variableName = importRequest.IntoVariable!;
         var normalizedContent = content.Replace("\r\n", "\n", StringComparison.Ordinal)
             .Replace('\r', '\n');
 
@@ -179,23 +181,38 @@ internal sealed class DirectiveProcessor
             return;
         }
 
+        var shouldDeclare = !state.IsKnownTopLevelVariable(variableName);
+        var declarationPrefix = shouldDeclare
+            ? importRequest.IntoMode == ImportIntoMode.Const ? "const " : "let "
+            : string.Empty;
+
         var lines = normalizedContent.Split('\n');
         if (lines.Length == 1)
         {
-            output.Add($"{variableName} = [[{lines[0]}]]");
+            output.Add($"{declarationPrefix}{variableName} = [[{lines[0]}]]");
+            if (shouldDeclare)
+                state.MarkKnownTopLevelVariable(variableName);
             return;
         }
 
-        output.Add($"{variableName} = [[{lines[0]}");
+        output.Add($"{declarationPrefix}{variableName} = [[{lines[0]}");
         for (int i = 1; i < lines.Length - 1; i++)
             output.Add(lines[i]);
         output.Add($"{lines[^1]}]]");
+        if (shouldDeclare)
+            state.MarkKnownTopLevelVariable(variableName);
     }
 
-    public static bool TryParseImportArguments(string text, out string pathExpression, out string? intoVariable, out string error)
+    public static bool TryParseImportArguments(
+        string text,
+        out string pathExpression,
+        out string? intoVariable,
+        out ImportIntoMode intoMode,
+        out string error)
     {
         pathExpression = string.Empty;
         intoVariable = null;
+        intoMode = ImportIntoMode.Auto;
 
         var trimmed = text.Trim();
         if (trimmed.Length == 0)
@@ -204,12 +221,13 @@ internal sealed class DirectiveProcessor
             return false;
         }
 
-        if (!TrySplitImportInto(trimmed, out var leftPath, out var rightVariable, out error))
+        if (!TrySplitImportInto(trimmed, out var leftPath, out var rightVariable, out var parsedMode, out error))
             return false;
 
         pathExpression = leftPath;
         if (rightVariable is null)
         {
+            intoMode = ImportIntoMode.Auto;
             error = string.Empty;
             return true;
         }
@@ -221,14 +239,21 @@ internal sealed class DirectiveProcessor
         }
 
         intoVariable = variableName;
+        intoMode = parsedMode;
         error = string.Empty;
         return true;
     }
 
-    private static bool TrySplitImportInto(string text, out string pathExpression, out string? variableName, out string error)
+    private static bool TrySplitImportInto(
+        string text,
+        out string pathExpression,
+        out string? variableName,
+        out ImportIntoMode intoMode,
+        out string error)
     {
         pathExpression = string.Empty;
         variableName = null;
+        intoMode = ImportIntoMode.Auto;
         var inSingleQuote = false;
         var inDoubleQuote = false;
         var escaped = false;
@@ -286,16 +311,13 @@ internal sealed class DirectiveProcessor
                 continue;
 
             pathExpression = text[..i].Trim();
-            variableName = text[rightIndex..].Trim();
+            var rightSide = text[rightIndex..].Trim();
+            if (!TryParseImportIntoTarget(rightSide, out variableName, out intoMode, out error))
+                return false;
+
             if (pathExpression.Length == 0)
             {
                 error = "missing import path before 'into'";
-                return false;
-            }
-
-            if (variableName.Length == 0)
-            {
-                error = "missing variable name after 'into'";
                 return false;
             }
 
@@ -304,8 +326,48 @@ internal sealed class DirectiveProcessor
         }
 
         pathExpression = text;
+        intoMode = ImportIntoMode.Auto;
         error = string.Empty;
         return true;
+    }
+
+    private static bool TryParseImportIntoTarget(string text, out string variableName, out ImportIntoMode intoMode, out string error)
+    {
+        variableName = string.Empty;
+        intoMode = ImportIntoMode.Auto;
+        if (text.Length == 0)
+        {
+            error = "missing variable name after 'into'";
+            return false;
+        }
+
+        var parts = text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 1)
+        {
+            variableName = parts[0];
+            error = string.Empty;
+            return true;
+        }
+
+        if (parts.Length == 2)
+        {
+            if (string.Equals(parts[0], "const", StringComparison.Ordinal))
+                intoMode = ImportIntoMode.Const;
+            else if (string.Equals(parts[0], "let", StringComparison.Ordinal))
+                intoMode = ImportIntoMode.Let;
+            else
+            {
+                error = "expected 'let' or 'const' before variable name";
+                return false;
+            }
+
+            variableName = parts[1];
+            error = string.Empty;
+            return true;
+        }
+
+        error = "invalid tokens after 'into'";
+        return false;
     }
 
     public static bool TryParseDefinition(string text, out string name, out string? value, out string error)

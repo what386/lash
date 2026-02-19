@@ -99,9 +99,9 @@ public sealed class DefiniteAssignmentAnalyzer
                 break;
 
             case SubshellStatement subshellStatement:
+                AnalyzeIsolatedBlock(subshellStatement.Body);
                 if (!string.IsNullOrEmpty(subshellStatement.IntoVariable))
                     SetAssigned(subshellStatement.IntoVariable!, isGlobal: false);
-                AnalyzeIsolatedBlock(subshellStatement.Body);
                 break;
 
             case WaitStatement waitStatement:

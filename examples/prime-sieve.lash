@@ -1,7 +1,3 @@
-#!/bin/env -S lash run
-// Sieve of Eratosthenes: print all primes up to `limit`.
-// Usage: lash run examples/prime-sieve.lash [limit]
-
 let limit = 100
 
 if #argv > 0

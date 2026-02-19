@@ -198,7 +198,20 @@ public sealed class WarningAnalyzer
                 PopScope();
 
                 if (!string.IsNullOrEmpty(subshellStatement.IntoVariable))
+                {
+                    if (subshellStatement.IntoCreatesVariable)
+                    {
+                        WarnIfShadowing(subshellStatement.IntoVariable!, subshellStatement.Line, subshellStatement.Column);
+                        DeclareSymbol(
+                            subshellStatement.IntoVariable!,
+                            SymbolKind.Variable,
+                            subshellStatement.Line,
+                            subshellStatement.Column,
+                            ignoreUnused: ShouldIgnoreUnusedSymbol(subshellStatement.IntoVariable!));
+                    }
+
                     InvalidateConst(subshellStatement.IntoVariable!);
+                }
 
                 if (subshellStatement.RunInBackground)
                     SetCurrentTrackedJobs(CurrentTrackedJobs() + 1);
@@ -215,7 +228,20 @@ public sealed class WarningAnalyzer
                 }
 
                 if (!string.IsNullOrEmpty(waitStatement.IntoVariable))
+                {
+                    if (waitStatement.IntoCreatesVariable)
+                    {
+                        WarnIfShadowing(waitStatement.IntoVariable!, waitStatement.Line, waitStatement.Column);
+                        DeclareSymbol(
+                            waitStatement.IntoVariable!,
+                            SymbolKind.Variable,
+                            waitStatement.Line,
+                            waitStatement.Column,
+                            ignoreUnused: ShouldIgnoreUnusedSymbol(waitStatement.IntoVariable!));
+                    }
+
                     InvalidateConst(waitStatement.IntoVariable!);
+                }
 
                 SetCurrentTrackedJobs(0);
                 return false;
@@ -225,7 +251,20 @@ public sealed class WarningAnalyzer
                     AnalyzeExpression(waitStatement.Target);
 
                 if (!string.IsNullOrEmpty(waitStatement.IntoVariable))
+                {
+                    if (waitStatement.IntoCreatesVariable)
+                    {
+                        WarnIfShadowing(waitStatement.IntoVariable!, waitStatement.Line, waitStatement.Column);
+                        DeclareSymbol(
+                            waitStatement.IntoVariable!,
+                            SymbolKind.Variable,
+                            waitStatement.Line,
+                            waitStatement.Column,
+                            ignoreUnused: ShouldIgnoreUnusedSymbol(waitStatement.IntoVariable!));
+                    }
+
                     InvalidateConst(waitStatement.IntoVariable!);
+                }
 
                 return false;
 
