@@ -85,6 +85,11 @@ let remaining_args = #argv
 let shift_summary = $"after shift: {remaining_args}"
 echo $shift_summary
 
+// foreground subshell
+subshell
+    echo "inside subshell"
+end
+
 // subshell background + wait
 let bg_pid = 0
 let bg_status = 0
