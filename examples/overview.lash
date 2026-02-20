@@ -74,7 +74,7 @@ subshell into lint_pid
     sh "sleep 5"
 end &
 echo "waiting for subshell..."
-wait lint_pid into const lint_status
+wait lint_pid into lint_status
 echo "Background check exit status:" $lint_status
 
 @if defined(INCLUDE_TIP) && INCLUDE_TIP == "true"
