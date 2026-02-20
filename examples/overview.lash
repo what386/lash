@@ -71,8 +71,9 @@ let done = stats["done"]
 echo "Progress:" $done "/" $total "complete"
 
 subshell into lint_pid
-    sh "sleep 0.02"
+    sh "sleep 5"
 end &
+echo "waiting for subshell..."
 wait lint_pid into const lint_status
 echo "Background check exit status:" $lint_status
 
