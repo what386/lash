@@ -1,1 +1,3 @@
-Tip: run this with `release` to see extra tasks: `lash run examples/overview.lash release`.
+This is a note, located in examples/note.txt.
+import is a textual paste of file contents into the calling script.
+import into is a textual paste of file contents into a variable.
