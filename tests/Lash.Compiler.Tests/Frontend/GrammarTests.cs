@@ -69,6 +69,19 @@ public class GrammarTests
     }
 
     [Fact]
+    public void ModuleLoader_RewritesBareCommandContainingMultilineLiteral()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            echo [[line1
+            line2]]
+            """);
+
+        var command = Assert.IsType<CommandStatement>(Assert.Single(program.Statements));
+        Assert.Equal("echo $'line1\\nline2'", command.Script);
+    }
+
+    [Fact]
     public void ModuleLoader_RewritesSingleWordAndPathCommands()
     {
         var program = TestCompiler.ParseOrThrow(

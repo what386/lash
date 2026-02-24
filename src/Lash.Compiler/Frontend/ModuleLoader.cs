@@ -75,8 +75,9 @@ public static class ModuleLoader
         var inEnumDeclaration = false;
         var expressionContinuationDepth = 0;
 
-        foreach (var rawLine in lines)
+        for (var lineIndex = 0; lineIndex < lines.Length; lineIndex++)
         {
+            var rawLine = lines[lineIndex];
             var trimmed = rawLine.Trim();
 
             if (inMultilineString)
@@ -94,6 +95,13 @@ public static class ModuleLoader
                 if (expressionContinuationDepth > 0)
                     UpdateExpressionContinuationDepth(rawLine, ref expressionContinuationDepth);
                 UpdateMultilineStringState(rawLine, ref inMultilineString);
+                continue;
+            }
+
+            if (TryRewriteBareCommandLineWithMultilineLiteral(lines, lineIndex, out var rewrittenCommandLine, out var consumedLineCount))
+            {
+                output.Add(rewrittenCommandLine);
+                lineIndex += consumedLineCount - 1;
                 continue;
             }
 
@@ -116,6 +124,93 @@ public static class ModuleLoader
         }
 
         return string.Join('\n', output);
+    }
+
+    private static bool TryRewriteBareCommandLineWithMultilineLiteral(
+        string[] lines,
+        int startLineIndex,
+        out string rewrittenLine,
+        out int consumedLineCount)
+    {
+        rewrittenLine = string.Empty;
+        consumedLineCount = 0;
+
+        var firstLine = lines[startLineIndex];
+        var trimmed = firstLine.Trim();
+        if (!ShouldRewriteAsBareCommand(trimmed))
+            return false;
+
+        var openIndex = trimmed.IndexOf("[[", StringComparison.Ordinal);
+        if (openIndex < 0)
+            return false;
+
+        var sameLineCloseIndex = trimmed.IndexOf("]]", openIndex + 2, StringComparison.Ordinal);
+        if (sameLineCloseIndex >= 0)
+            return false;
+
+        var literalText = new System.Text.StringBuilder();
+        literalText.Append(trimmed[(openIndex + 2)..]);
+
+        for (var lineIndex = startLineIndex + 1; lineIndex < lines.Length; lineIndex++)
+        {
+            var line = lines[lineIndex];
+            var closeIndex = line.IndexOf("]]", StringComparison.Ordinal);
+            if (closeIndex < 0)
+            {
+                literalText.Append('\n');
+                literalText.Append(line);
+                continue;
+            }
+
+            literalText.Append('\n');
+            literalText.Append(line[..closeIndex]);
+
+            var prefix = trimmed[..openIndex];
+            var suffix = line[(closeIndex + 2)..].TrimEnd();
+            var escapedLiteral = EscapeAsAnsiCString(literalText.ToString());
+            var indentLength = firstLine.Length - firstLine.TrimStart().Length;
+            var indent = firstLine[..indentLength];
+
+            rewrittenLine = indent + "__cmd " + prefix + escapedLiteral + suffix;
+            consumedLineCount = lineIndex - startLineIndex + 1;
+            return true;
+        }
+
+        return false;
+    }
+
+    private static string EscapeAsAnsiCString(string text)
+    {
+        var escaped = new System.Text.StringBuilder(text.Length + 8);
+        escaped.Append("$'");
+
+        foreach (var ch in text)
+        {
+            switch (ch)
+            {
+                case '\n':
+                    escaped.Append("\\n");
+                    break;
+                case '\r':
+                    escaped.Append("\\r");
+                    break;
+                case '\t':
+                    escaped.Append("\\t");
+                    break;
+                case '\\':
+                    escaped.Append("\\\\");
+                    break;
+                case '\'':
+                    escaped.Append("\\'");
+                    break;
+                default:
+                    escaped.Append(ch);
+                    break;
+            }
+        }
+
+        escaped.Append('\'');
+        return escaped.ToString();
     }
 
     private static void UpdateEnumDeclarationState(string trimmedLine, ref bool inEnumDeclaration)
@@ -306,28 +401,36 @@ public static class ModuleLoader
     private static string RewriteBareCommandLine(string line)
     {
         var trimmed = line.Trim();
-        if (trimmed.Length == 0
-            || trimmed.StartsWith("//", StringComparison.Ordinal)
-            || trimmed.StartsWith("/*", StringComparison.Ordinal)
-            || trimmed.StartsWith("*/", StringComparison.Ordinal)
-            || trimmed.StartsWith("*", StringComparison.Ordinal))
-            return line;
-
-        if (IsKnownStatementPrefix(trimmed))
-            return line;
-
-        if (LooksLikeLashAssignment(trimmed))
-            return line;
-
-        if (LooksLikeFunctionCallExpression(trimmed))
-            return line;
-
-        if (LooksLikeLashPipeExpression(trimmed))
+        if (!ShouldRewriteAsBareCommand(trimmed))
             return line;
 
         var indentLength = line.Length - line.TrimStart().Length;
         var indent = line[..indentLength];
         return indent + "__cmd " + trimmed;
+    }
+
+    private static bool ShouldRewriteAsBareCommand(string trimmed)
+    {
+        if (trimmed.Length == 0
+            || trimmed.StartsWith("//", StringComparison.Ordinal)
+            || trimmed.StartsWith("/*", StringComparison.Ordinal)
+            || trimmed.StartsWith("*/", StringComparison.Ordinal)
+            || trimmed.StartsWith("*", StringComparison.Ordinal))
+            return false;
+
+        if (IsKnownStatementPrefix(trimmed))
+            return false;
+
+        if (LooksLikeLashAssignment(trimmed))
+            return false;
+
+        if (LooksLikeFunctionCallExpression(trimmed))
+            return false;
+
+        if (LooksLikeLashPipeExpression(trimmed))
+            return false;
+
+        return true;
     }
 
     private static bool IsKnownStatementPrefix(string line)

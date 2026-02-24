@@ -88,6 +88,23 @@ public class RoundTripTests
     }
 
     [Fact]
+    public void RoundTrip_BareCommandAcceptsMultilineLiteralArgument()
+    {
+        var result = CompilerPipeline.Compile(
+            """
+            echo [[line1
+            line2]]
+            """);
+
+        Assert.False(result.Diagnostics.HasErrors, string.Join(Environment.NewLine, result.Diagnostics.GetErrors()));
+        var bash = Assert.IsType<string>(result.Bash);
+
+        var run = CompilerPipeline.RunBash(bash);
+        Assert.Equal(0, run.ExitCode);
+        Assert.Equal("line1\nline2\n", run.StdOut);
+    }
+
+    [Fact]
     public void RoundTrip_EnumAccessLowersToStableString()
     {
         var result = CompilerPipeline.Compile(

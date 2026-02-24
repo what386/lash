@@ -14,7 +14,7 @@ let OUTPUT_PATH = "/tmp/lash-bench-output.sh"
 let SKIP_BUILD = false
 
 fn show_help()
-    const help_text = [[Usage: tools/scripts/benchmark-compiler.lash [OPTIONS] [input-file]
+    echo [[Usage: tools/scripts/benchmark-compiler.lash [OPTIONS] [input-file]
 
 Benchmark Lash compiler runtime over repeated runs.
 
@@ -30,7 +30,6 @@ Options:
 Examples:
   tools/scripts/benchmark-compiler.lash
   tools/scripts/benchmark-compiler.lash -m check -n 50 examples/prime-sieve.lash]]
-    echo "$help_text"
 end
 
 fn fail(message)
