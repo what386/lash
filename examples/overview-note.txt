@@ -1,3 +1,3 @@
-This is a note, located in examples/note.txt.
-import is a textual paste of file contents into the calling script.
-import into is a textual paste of file contents into a variable.
+This is a note, located in examples/note.txt
+`import` is a textual paste of file contents into the calling script.
+`import into` is a textual paste of file contents into a variable.
