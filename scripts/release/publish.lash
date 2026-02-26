@@ -1,0 +1,87 @@
+#!/bin/env -S lash run
+
+set -euo pipefail
+
+// Remotes/channels to publish on
+@define GITHUB true
+@define NUGET false
+
+fn file_exists(path)
+    let exists = $sh $"if [ -e \"{path}\" ]; then echo 1; else echo 0; fi"
+    if exists == "1"
+        return true
+    end
+    return false
+end
+
+fn add_if_exists(path)
+    if file_exists(path)
+        git add "$path"
+    end
+end
+
+if #argv == 0 || #argv > 1
+    echo "Usage: scripts/release/publish.lash <version-or-tag>"
+    exit 1
+end
+
+const raw_version = argv[0]
+const version = $sh $"printf '%s' '{raw_version}' | sed 's/^v//'"
+const tag = $"v{version}"
+
+echo $"Preparing release {tag}..."
+
+git checkout dev
+
+tally semver $version --auto
+tally changelog --auto > CHANGELOG.md
+
+add_if_exists("CHANGELOG.md")
+add_if_exists("TODO.md")
+add_if_exists(".tally/history.json")
+add_if_exists("src/Lash.Cli/Lash.Cli.csproj")
+add_if_exists("src/Lash.Compiler/Lash.Compiler.csproj")
+add_if_exists("src/Lash.Formatter/Lash.Formatter.csproj")
+
+const staged = $sh "git diff --cached --name-only"
+if staged != ""
+    git commit -m $"release: {tag}"
+else
+    echo "No release metadata changes to commit."
+end
+
+echo "Pushing dev branch to remotes..."
+git push github dev
+git push gitea dev
+
+echo "Merging dev into main..."
+git checkout main
+git merge dev -m "Merge dev into main"
+
+echo "Pushing main branch to remotes..."
+git push github main
+git push gitea main
+
+git tag $tag
+
+@if defined(GITHUB) && GITHUB == "true"
+git push github $tag
+@end
+
+@if defined(NUGET) && NUGET == "true"
+if $sh "printenv NUGET_SOURCE >/dev/null 2>&1 && printenv NUGET_API_KEY >/dev/null 2>&1 && echo 1 || echo 0" != "1"
+    echo "Error: NUGET_SOURCE and NUGET_API_KEY must be set when NUGET publish is enabled."
+    exit 1
+end
+
+dotnet pack src/Lash.Cli/Lash.Cli.csproj -c Release --nologo
+const package_file = $sh "find src/Lash.Cli/bin/Release -type f -name '*.nupkg' ! -name '*.symbols.nupkg' -print -quit"
+if package_file == ""
+    echo "Error: no .nupkg file found after dotnet pack."
+    exit 1
+end
+
+dotnet nuget push "$package_file" --api-key "$NUGET_API_KEY" --source "$NUGET_SOURCE"
+@end
+
+git checkout dev

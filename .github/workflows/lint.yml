@@ -18,7 +18,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "9.0.x"
+          dotnet-version: "10.0.x"
 
       - name: Verify formatting (Lash.Compiler)
         run: dotnet format src/Lash.Compiler/Lash.Compiler.csproj --verify-no-changes --verbosity minimal
@@ -32,8 +32,5 @@ jobs:
       - name: Verify formatting (Lash.Compiler.Tests)
         run: dotnet format tests/Lash.Compiler.Tests/Lash.Compiler.Tests.csproj --verify-no-changes --verbosity minimal
 
-      - name: Build compiler (release)
-        run: dotnet build src/Lash.Compiler/Lash.Compiler.csproj --configuration Release --verbosity minimal
-
-      - name: Build CLI (release)
-        run: dotnet build src/Lash.Cli/Lash.Cli.csproj --configuration Release --verbosity minimal
+      - name: Build with warnings as errors
+        run: dotnet build --configuration Release --verbosity minimal --nologo -warnaserror

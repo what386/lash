@@ -1,17 +1,45 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - "v*"
-  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - CI
+    types:
+      - completed
 
 permissions:
   contents: write
 
 jobs:
+  guard:
+    name: Resolve Tag
+    runs-on: ubuntu-latest
+    outputs:
+      should_release: ${{ steps.resolve.outputs.should_release }}
+      tag_name: ${{ steps.resolve.outputs.tag_name }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Resolve release tag
+        id: resolve
+        shell: bash
+        run: |
+          TAG_NAME="$(git tag --points-at "${{ github.event.workflow_run.head_sha }}" | grep -E '^v' | head -n1 || true)"
+          if [[ -n "${TAG_NAME}" ]]; then
+            echo "should_release=true" >> "$GITHUB_OUTPUT"
+            echo "tag_name=${TAG_NAME}" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+            echo "tag_name=" >> "$GITHUB_OUTPUT"
+          fi
+
   build:
     name: Build (${{ matrix.rid }})
+    needs: guard
+    if: github.event.workflow_run.conclusion == 'success' && needs.guard.outputs.should_release == 'true'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -26,42 +54,53 @@ jobs:
           - os: macos-14
             rid: osx-arm64
             output_name: Lash-osx_arm-64
+          - os: windows-latest
+            rid: win-x64
+            output_name: Lash-win_x86-64
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "9.0.x"
+          dotnet-version: "10.0.x"
 
-      - name: Build release binary
+      - name: Build release bundle
         shell: bash
         run: |
-          chmod +x ./tools/scripts/build.sh
-          ./tools/scripts/build.sh "${{ matrix.rid }}"
+          chmod +x ./scripts/build/build.sh
+          ./scripts/build/build.sh "${{ matrix.rid }}"
 
-      - name: Archive release bundle
+      - name: Archive bundle
         shell: bash
         run: |
-          tar -C target/release -czf "target/release/${{ matrix.output_name }}.tar.gz" "${{ matrix.output_name }}"
-          ls -lah "target/release/${{ matrix.output_name }}.tar.gz"
+          mkdir -p dist
+          tar -C target/release -czf "dist/${{ matrix.output_name }}.tar.gz" "${{ matrix.output_name }}"
+          ls -lah "dist/${{ matrix.output_name }}.tar.gz"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: lash-${{ matrix.rid }}
-          path: target/release/${{ matrix.output_name }}.tar.gz
+          path: dist/${{ matrix.output_name }}.tar.gz
           if-no-files-found: error
 
   release:
     name: Create GitHub Release
+    needs:
+      - guard
+      - build
+    if: github.event.workflow_run.conclusion == 'success' && needs.guard.outputs.should_release == 'true'
     runs-on: ubuntu-latest
-    needs: build
-
     steps:
-      - name: Download build artifacts
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: dist
@@ -80,7 +119,21 @@ jobs:
           sha256sum *.tar.gz > SHA256SUMS.txt
           cat SHA256SUMS.txt
 
-      - name: Publish release
+      - name: Read changelog section for tag
+        id: release_notes
+        shell: bash
+        run: |
+          chmod +x ./scripts/release/changelog_for_tag.bash
+          RELEASE_NOTES="$(./scripts/release/changelog_for_tag.bash "${{ needs.guard.outputs.tag_name }}")"
+          {
+            echo "body<<__RELEASE_NOTES__"
+            printf '%s\n' "$RELEASE_NOTES"
+            echo "__RELEASE_NOTES__"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ needs.guard.outputs.tag_name }}
+          body: ${{ steps.release_notes.outputs.body }}
           files: release/*
