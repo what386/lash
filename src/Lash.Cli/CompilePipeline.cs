@@ -41,9 +41,11 @@ internal static class CompilePipeline
         if (compileExitCode != 0)
             return compileExitCode;
 
+        var runtimeWorkingDirectory = ResolveRuntimeWorkingDirectory(inputPath);
+
         try
         {
-            var exitCode = RunProcess("bash", [tempPath, .. args]);
+            var exitCode = RunProcess("bash", [tempPath, .. args], runtimeWorkingDirectory);
             return exitCode;
         }
         finally
@@ -116,17 +118,23 @@ internal static class CompilePipeline
         return RunProcess(formatterPath, arguments);
     }
 
-    private static int RunProcess(string fileName, IReadOnlyList<string> args)
+    private static int RunProcess(string fileName, IReadOnlyList<string> args, string? workingDirectory = null)
     {
-        return RunProcessWithLaunchState(fileName, args).ExitCode;
+        return RunProcessWithLaunchState(fileName, args, workingDirectory).ExitCode;
     }
 
-    private static (bool Launched, int ExitCode) RunProcessWithLaunchState(string fileName, IReadOnlyList<string> args)
+    private static (bool Launched, int ExitCode) RunProcessWithLaunchState(
+        string fileName,
+        IReadOnlyList<string> args,
+        string? workingDirectory = null)
     {
         var psi = new ProcessStartInfo(fileName)
         {
             UseShellExecute = false
         };
+
+        if (!string.IsNullOrWhiteSpace(workingDirectory))
+            psi.WorkingDirectory = workingDirectory!;
 
         foreach (var arg in args)
             psi.ArgumentList.Add(arg);
@@ -150,7 +158,10 @@ internal static class CompilePipeline
         }
     }
 
-    private static int RunProcessIgnoringStdout(string fileName, IReadOnlyList<string> args)
+    private static int RunProcessIgnoringStdout(
+        string fileName,
+        IReadOnlyList<string> args,
+        string? workingDirectory = null)
     {
         var psi = new ProcessStartInfo(fileName)
         {
@@ -158,6 +169,9 @@ internal static class CompilePipeline
             RedirectStandardOutput = true,
             RedirectStandardError = false
         };
+
+        if (!string.IsNullOrWhiteSpace(workingDirectory))
+            psi.WorkingDirectory = workingDirectory!;
 
         foreach (var arg in args)
             psi.ArgumentList.Add(arg);
@@ -190,6 +204,16 @@ internal static class CompilePipeline
             Console.Error.WriteLine($"Failed to execute '{fileName}': {ex.Message}");
             return 1;
         }
+    }
+
+    private static string ResolveRuntimeWorkingDirectory(string inputPath)
+    {
+        var fullInputPath = Path.GetFullPath(inputPath);
+        var directory = Path.GetDirectoryName(fullInputPath);
+        if (!string.IsNullOrWhiteSpace(directory) && Directory.Exists(directory))
+            return directory;
+
+        return Environment.CurrentDirectory;
     }
 
     private static void TryMarkExecutable(string path)

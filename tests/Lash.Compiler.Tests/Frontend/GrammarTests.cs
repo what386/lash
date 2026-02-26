@@ -87,14 +87,14 @@ public class GrammarTests
         var program = TestCompiler.ParseOrThrow(
             """
             pwd
-            ./tools/scripts/build.sh
+            ./scripts/build/build.sh
             /bin/echo hi
             """);
 
         Assert.Equal(3, program.Statements.Count);
         Assert.All(program.Statements, s => Assert.IsType<CommandStatement>(s));
         Assert.Contains(program.Statements, s => s is CommandStatement { Script: "pwd" });
-        Assert.Contains(program.Statements, s => s is CommandStatement { Script: "./tools/scripts/build.sh" });
+        Assert.Contains(program.Statements, s => s is CommandStatement { Script: "./scripts/build/build.sh" });
         Assert.Contains(program.Statements, s => s is CommandStatement { Script: "/bin/echo hi" });
     }
 
