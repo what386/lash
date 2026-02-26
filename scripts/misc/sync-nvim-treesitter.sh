@@ -4,7 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd -- "${SCRIPT_DIR}/../.." && pwd)"
 
-SOURCE_DIR="${REPO_ROOT}/tools/tree-sitter"
+SOURCE_DIR="${REPO_ROOT}/tree-sitter"
 TARGET_DIR="${HOME}/.config/nvim/treesitter/lash"
 
 DRY_RUN=false
@@ -42,7 +42,7 @@ while [[ $# -gt 0 ]]; do
         TARGET_DIR="$2"
         shift 2
         ;;
-    -h|--help)
+    -h | --help)
         show_help
         exit 0
         ;;
