@@ -466,6 +466,19 @@ public class BashGeneratorTests
     }
 
     [Fact]
+    public void BashGenerator_InterpolatesVariablesInsideSingleQuotedShPayloadSegments()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            let raw_version = "v1.4.5"
+            let version = $sh $"printf '%s' '{raw_version}' | sed 's/^v//'"
+            """);
+
+        var bash = new BashGenerator().Generate(program);
+        Assert.Contains("version=$(printf '%s' ''\"${raw_version}\"'' | sed 's/^v//')", bash);
+    }
+
+    [Fact]
     public void BashGenerator_EmitsAssociativeArraySyntaxWhenStringKeysAreUsed()
     {
         var program = TestCompiler.ParseOrThrow(

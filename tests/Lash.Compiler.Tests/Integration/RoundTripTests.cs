@@ -360,6 +360,27 @@ public class RoundTripTests
     }
 
     [Fact]
+    public void RoundTrip_ShellCaptureInterpolatesInsideSingleQuotedTemplateSegments()
+    {
+        var result = CompilerPipeline.Compile(
+            """
+            let raw_version = "v1.4.5"
+            let version = $sh $"printf '%s' '{raw_version}' | sed 's/^v//'"
+            let tag = $"v{version}"
+            echo "$raw_version"
+            echo "$version"
+            echo "$tag"
+            """);
+
+        Assert.False(result.Diagnostics.HasErrors, string.Join(Environment.NewLine, result.Diagnostics.GetErrors()));
+        var bash = Assert.IsType<string>(result.Bash);
+
+        var run = CompilerPipeline.RunBash(bash);
+        Assert.Equal(0, run.ExitCode);
+        Assert.Equal("v1.4.5\n1.4.5\nv1.4.5\n", run.StdOut);
+    }
+
+    [Fact]
     public void RoundTrip_PipeFunctionStageAssignsToTargetVariable()
     {
         var result = CompilerPipeline.Compile(
