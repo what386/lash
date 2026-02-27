@@ -167,4 +167,24 @@ public class TypeCheckerTests
 
         Assert.DoesNotContain(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.TypeMismatch);
     }
+
+    [Fact]
+    public void TypeChecker_DoesNotDuplicateNonArrayIndexDiagnostics()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            let x = 1
+            let y = x[0]
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new TypeChecker(diagnostics).Analyze(program);
+
+        var errors = diagnostics.GetErrors()
+            .Where(e => e.Code == DiagnosticCodes.InvalidIndexOrContainerUsage)
+            .Where(e => e.Message.Contains("expects an array", StringComparison.Ordinal))
+            .ToList();
+
+        Assert.Single(errors);
+    }
 }

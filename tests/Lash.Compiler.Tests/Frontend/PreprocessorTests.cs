@@ -146,7 +146,10 @@ public class PreprocessorTests
             """);
 
         Assert.False(result.Success);
-        Assert.Contains(result.Diagnostics.GetErrors(), e => e.Message.Contains("Missing '@end'", StringComparison.Ordinal));
+        Assert.Contains(
+            result.Diagnostics.GetErrors(),
+            e => e.Code == DiagnosticCodes.PreprocessorConditionalStructure
+                 && e.Message.Contains("Missing '@end'", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -160,7 +163,10 @@ public class PreprocessorTests
             """);
 
         Assert.False(result.Success);
-        Assert.Contains(result.Diagnostics.GetErrors(), e => e.Message.Contains("Use '@end'", StringComparison.Ordinal));
+        var error = Assert.Single(result.Diagnostics.GetErrors());
+        Assert.Equal(DiagnosticCodes.PreprocessorConditionalStructure, error.Code);
+        Assert.Contains("@endif is not supported", error.Message, StringComparison.Ordinal);
+        Assert.Contains("Use '@end'", error.Message, StringComparison.Ordinal);
     }
 
     [Fact]

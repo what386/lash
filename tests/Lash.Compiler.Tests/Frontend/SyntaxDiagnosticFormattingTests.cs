@@ -16,6 +16,7 @@ public class SyntaxDiagnosticFormattingTests
 
         var error = diagnostics.GetErrors().First();
         Assert.Contains("Unrecognized symbol '@'", error.Message);
+        Assert.Contains("Tip:", error.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -41,6 +42,21 @@ public class SyntaxDiagnosticFormattingTests
             """);
 
         Assert.True(diagnostics.HasErrors);
+    }
+
+    [Fact]
+    public void ParserErrors_ReportMissingEndForUnexpectedEof()
+    {
+        var diagnostics = Parse(
+            """
+            if true
+                echo "ok"
+            """);
+
+        var error = Assert.Single(diagnostics.GetErrors());
+        Assert.Contains("Unexpected end of file", error.Message, StringComparison.Ordinal);
+        Assert.Contains("missing 'end'", error.Message, StringComparison.Ordinal);
+        Assert.Contains("Tip:", error.Message, StringComparison.Ordinal);
     }
 
     private static DiagnosticBag Parse(string source)
