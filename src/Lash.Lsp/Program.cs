@@ -25,6 +25,7 @@ public static class Program
                 .WithHandler<TextDocumentSyncHandler>()
                 .WithHandler<HoverHandler>()
                 .WithHandler<DefinitionHandler>()
+                .WithHandler<DocumentFormattingHandler>()
                 .WithServices(services =>
                 {
                     services.AddSingleton<DocumentStore>();

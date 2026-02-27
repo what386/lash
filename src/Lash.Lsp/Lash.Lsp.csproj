@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\\Lash.Compiler\\Lash.Compiler.csproj" />
+    <ProjectReference Include="..\\Lash.Formatter\\Lash.Formatter.csproj" />
   </ItemGroup>
 
   <ItemGroup>
