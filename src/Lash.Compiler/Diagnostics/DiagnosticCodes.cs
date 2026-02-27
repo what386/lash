@@ -6,6 +6,15 @@ public static class DiagnosticCodes
     public const string LexInvalidToken = "E000";
     public const string ParseSyntaxError = "E001";
 
+    // Preprocessor
+    public const string PreprocessorUnknownDirective = "E010";
+    public const string PreprocessorDirectiveSyntax = "E011";
+    public const string PreprocessorConditionalStructure = "E012";
+    public const string PreprocessorImportIo = "E013";
+    public const string PreprocessorImportUsage = "E014";
+    public const string PreprocessorRawUsage = "E015";
+    public const string PreprocessorWarning = "W010";
+
     // Name/Declaration/Scope
     public const string InvalidAssignmentTarget = "E110";
     public const string UndeclaredVariable = "E111";

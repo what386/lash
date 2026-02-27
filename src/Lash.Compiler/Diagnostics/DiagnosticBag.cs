@@ -86,6 +86,13 @@ public class DiagnosticBag
                          .ThenBy(d => d.Column);
     }
 
+    public bool HasErrorCode(string code)
+    {
+        return diagnostics.Any(d =>
+            d.Severity == DiagnosticSeverity.Error &&
+            string.Equals(d.Code, code, StringComparison.Ordinal));
+    }
+
     // ============================================
     // Utility
     // ============================================
