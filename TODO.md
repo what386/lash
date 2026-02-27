@@ -8,6 +8,9 @@
 - [ ] Add Lash LSP completion with keywords, symbols, directives, and core snippets #feature #lsp
       @created 2026-02-27 20:17
 
+- [ ] Add safe rename and prepare-rename support to Lash LSP #feature #lsp
+      @created 2026-02-27 20:17
+
 
 ## Completed
 
