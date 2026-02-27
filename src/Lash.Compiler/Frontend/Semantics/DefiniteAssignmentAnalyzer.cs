@@ -194,7 +194,9 @@ public sealed class DefiniteAssignmentAnalyzer
                 if (!assigned)
                 {
                     diagnostics.AddError(
-                        $"Variable '{identifier.Name}' may be used before it is initialized.",
+                        DiagnosticMessage.WithTip(
+                            $"Variable '{identifier.Name}' may be used before it is initialized.",
+                            "Initialize the variable before reading it, or assign on all control-flow paths."),
                         identifier.Line,
                         identifier.Column,
                         DiagnosticCodes.MaybeUninitializedVariable);

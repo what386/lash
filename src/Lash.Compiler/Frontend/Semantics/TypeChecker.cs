@@ -291,15 +291,22 @@ public sealed class TypeChecker
     {
         var arrayType = InferType(indexAccess.Array);
         var indexType = InferType(indexAccess.Index);
+        var keyKind = InferKeyKind(indexAccess.Index, indexType);
 
         if (indexAccess.Array is IdentifierExpression identifier)
         {
-            var keyKind = InferKeyKind(indexAccess.Index, indexType);
             ValidateAndTrackContainerKeyKind(identifier, keyKind, indexAccess);
         }
-
-        if (IsKnown(arrayType) && !IsArray(arrayType))
+        else if (IsKnown(arrayType) && !IsArray(arrayType))
+        {
             Report(indexAccess.Array, $"Index access expects an array, got {FormatType(arrayType)}.", DiagnosticCodes.InvalidIndexOrContainerUsage);
+        }
+        else if (indexAccess.Array is IdentifierExpression && keyKind == ContainerKeyKind.Unknown && IsKnown(arrayType) && !IsArray(arrayType))
+        {
+            // For identifier-backed index access with unknown key kind we still
+            // want one clear non-array diagnostic.
+            Report(indexAccess.Array, $"Index access expects an array, got {FormatType(arrayType)}.", DiagnosticCodes.InvalidIndexOrContainerUsage);
+        }
 
         return ExpressionTypes.Unknown;
     }
@@ -605,7 +612,19 @@ public sealed class TypeChecker
 
     private void Report(AstNode node, string message, string code = DiagnosticCodes.TypeMismatch)
     {
-        diagnostics.AddError($"Type error: {message}", node.Line, node.Column, code);
+        var tip = code switch
+        {
+            DiagnosticCodes.TypeMismatch => "Check operand/value types and convert values before combining them.",
+            DiagnosticCodes.InvalidShellPayload => "Use a string literal or interpolated string for shell command payloads.",
+            DiagnosticCodes.InvalidIndexOrContainerUsage => "Use array values for index access and keep key kinds consistent.",
+            _ => null
+        };
+
+        diagnostics.AddError(
+            DiagnosticMessage.WithTip($"Type error: {message}", tip),
+            node.Line,
+            node.Column,
+            code);
     }
 
     private static bool IsKnown(ExpressionType type) => !IsUnknown(type);

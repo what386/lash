@@ -770,6 +770,14 @@ internal sealed class LoaderParserErrorListener : BaseErrorListener
         string msg,
         RecognitionException e)
     {
+        if (offendingSymbol?.Text == "<EOF>" &&
+            diagnostics.HasErrorCode(DiagnosticCodes.LexInvalidToken))
+        {
+            // Avoid noisy parser EOF cascades when a lexer error has already
+            // identified the root problem.
+            return;
+        }
+
         diagnostics.AddDiagnostic(new Diagnostic
         {
             Severity = DiagnosticSeverity.Error,

@@ -588,7 +588,24 @@ public sealed class NameResolver
 
     private void Report(AstNode node, string message, string code)
     {
-        diagnostics.AddError(message, node.Line, node.Column, code);
+        diagnostics.AddError(WithTip(message, code), node.Line, node.Column, code);
+    }
+
+    private static string WithTip(string message, string code)
+    {
+        var tip = code switch
+        {
+            DiagnosticCodes.InvalidAssignmentTarget => "Use 'let' for mutable variables, or remove this assignment.",
+            DiagnosticCodes.UndeclaredVariable => "Declare the symbol before first use with 'let' or 'const'.",
+            DiagnosticCodes.UnknownFunction => "Declare the function before calling it, or fix the function name.",
+            DiagnosticCodes.FunctionArityMismatch => "Match the call arity to the function signature (required + optional parameters).",
+            DiagnosticCodes.InvalidControlFlowContext => "Move this statement into a valid context (loop or function).",
+            DiagnosticCodes.InvalidParameterDeclaration => "Place required parameters before defaulted parameters.",
+            DiagnosticCodes.DuplicateDeclaration => "Rename the symbol or remove the duplicate declaration in this scope.",
+            _ => null
+        };
+
+        return DiagnosticMessage.WithTip(message, tip);
     }
 
     private static string FormatArity(int required, int total)

@@ -43,7 +43,7 @@ public sealed class WarningAnalyzer
         {
             if (terminated)
             {
-                diagnostics.AddWarning(
+                AddWarning(
                     "Unreachable statement.",
                     statement.Line,
                     statement.Column,
@@ -221,7 +221,7 @@ public sealed class WarningAnalyzer
             case WaitStatement waitStatement when waitStatement.TargetKind == WaitTargetKind.Jobs:
                 if (CurrentTrackedJobs() == 0)
                 {
-                    diagnostics.AddWarning(
+                    AddWarning(
                         "'wait jobs' has no tracked background subshells to wait for.",
                         waitStatement.Line,
                         waitStatement.Column,
@@ -632,7 +632,7 @@ public sealed class WarningAnalyzer
         if (statements.Count == 0 && line == null)
             return;
 
-        diagnostics.AddWarning(
+        AddWarning(
             reason,
             line ?? statements[0].Line,
             column ?? statements[0].Column,
@@ -978,7 +978,7 @@ public sealed class WarningAnalyzer
             if (!scope.Symbols.ContainsKey(name))
                 continue;
 
-            diagnostics.AddWarning(
+            AddWarning(
                 $"Declaration '{name}' shadows an outer scope variable.",
                 line,
                 column,
@@ -1039,7 +1039,7 @@ public sealed class WarningAnalyzer
             switch (symbol.Kind)
             {
                 case SymbolKind.Variable:
-                    diagnostics.AddWarning(
+                    AddWarning(
                         $"Variable '{symbol.Name}' is declared but never used.",
                         symbol.Line,
                         symbol.Column,
@@ -1047,7 +1047,7 @@ public sealed class WarningAnalyzer
                     break;
 
                 case SymbolKind.Parameter:
-                    diagnostics.AddWarning(
+                    AddWarning(
                         $"Parameter '{symbol.Name}' is never used.",
                         symbol.Line,
                         symbol.Column,
@@ -1055,7 +1055,7 @@ public sealed class WarningAnalyzer
                     break;
 
                 case SymbolKind.Function:
-                    diagnostics.AddWarning(
+                    AddWarning(
                         $"Function '{symbol.Name}' is declared but never called.",
                         symbol.Line,
                         symbol.Column,
@@ -1107,6 +1107,26 @@ public sealed class WarningAnalyzer
     private void InvalidateConst(string name)
     {
         constValues.Peek().Remove(name);
+    }
+
+    private void AddWarning(string message, int line, int column, string code)
+    {
+        var tip = code switch
+        {
+            DiagnosticCodes.UnreachableStatement => "Remove dead code, or change the controlling condition to make this path reachable.",
+            DiagnosticCodes.ShadowedVariable => "Rename the inner variable if shadowing was not intentional.",
+            DiagnosticCodes.WaitJobsWithoutTrackedJobs => "Start a background subshell first, or remove this wait call.",
+            DiagnosticCodes.UnusedVariable => "Remove it, use it, or prefix with '_' to explicitly mark it as intentionally unused.",
+            DiagnosticCodes.UnusedParameter => "Remove it, use it, or prefix with '_' to explicitly mark it as intentionally unused.",
+            DiagnosticCodes.UnusedFunction => "Call it, remove it, or mark as public if it is an external entrypoint.",
+            _ => null
+        };
+
+        diagnostics.AddWarning(
+            DiagnosticMessage.WithTip(message, tip),
+            line,
+            column,
+            code);
     }
 
     private readonly record struct BranchResult(bool Terminated, int TrackedJobs);

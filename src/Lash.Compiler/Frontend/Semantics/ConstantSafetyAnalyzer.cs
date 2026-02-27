@@ -82,7 +82,9 @@ public sealed class ConstantSafetyAnalyzer
                     if (TryEvaluateInt(forLoop.Step, out var stepValue) && stepValue == 0)
                     {
                         diagnostics.AddError(
-                            "For-loop step cannot be 0.",
+                            DiagnosticMessage.WithTip(
+                                "For-loop step cannot be 0.",
+                                "Use a positive or negative non-zero step value."),
                             forLoop.Step.Line,
                             forLoop.Step.Column,
                             DiagnosticCodes.InvalidForStep);
@@ -105,7 +107,9 @@ public sealed class ConstantSafetyAnalyzer
                 if (TryEvaluateInt(shiftStatement.Amount, out var shiftAmount) && shiftAmount < 0)
                 {
                     diagnostics.AddError(
-                        "Shift amount cannot be negative.",
+                        DiagnosticMessage.WithTip(
+                            "Shift amount cannot be negative.",
+                            "Use shift 0 or a positive integer."),
                         shiftStatement.Amount.Line,
                         shiftStatement.Amount.Column,
                         DiagnosticCodes.InvalidShiftAmount);
@@ -143,7 +147,9 @@ public sealed class ConstantSafetyAnalyzer
                     right == 0)
                 {
                     diagnostics.AddError(
-                        $"Operator '{binary.Operator}' cannot use a right-hand operand of 0.",
+                        DiagnosticMessage.WithTip(
+                            $"Operator '{binary.Operator}' cannot use a right-hand operand of 0.",
+                            "Ensure the divisor/modulo operand is non-zero."),
                         binary.Right.Line,
                         binary.Right.Column,
                         DiagnosticCodes.DivisionOrModuloByZero);

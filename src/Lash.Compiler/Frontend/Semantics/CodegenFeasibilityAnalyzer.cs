@@ -352,7 +352,9 @@ public sealed class CodegenFeasibilityAnalyzer
         }
 
         diagnostics.AddError(
-            "Shell command payload must be a string literal for Bash code generation.",
+            DiagnosticMessage.WithTip(
+                "Shell command payload must be a string literal for Bash code generation.",
+                "Use a string literal/interpolated string in-place, or move dynamic construction into a plain shell command statement."),
             line,
             column,
             DiagnosticCodes.UnsupportedExpressionForCodegen);
@@ -360,7 +362,14 @@ public sealed class CodegenFeasibilityAnalyzer
 
     private void Report(AstNode node, string message, string code)
     {
-        diagnostics.AddError(message, node.Line, node.Column, code);
+        var tip = code switch
+        {
+            DiagnosticCodes.UnsupportedExpressionForCodegen => "Rewrite this expression using a supported Bash-lowerable form.",
+            DiagnosticCodes.UnsupportedStatementForCodegen => "Rewrite this statement to a supported construct or plain shell command.",
+            _ => null
+        };
+
+        diagnostics.AddError(DiagnosticMessage.WithTip(message, tip), node.Line, node.Column, code);
     }
 
     private enum ValueContext
