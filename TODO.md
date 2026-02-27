@@ -5,6 +5,9 @@
 
 ## Tasks
 
+- [ ] Add Lash LSP completion with keywords, symbols, directives, and core snippets #feature #lsp
+      @created 2026-02-27 20:17
+
 
 ## Completed
 
