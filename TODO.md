@@ -11,6 +11,9 @@
 - [ ] Add safe rename and prepare-rename support to Lash LSP #feature #lsp
       @created 2026-02-27 20:17
 
+- [ ] Improve Lash LSP hover docs for language tokens and symbols #feature #lsp
+      @created 2026-02-27 20:17
+
 
 ## Completed
 
