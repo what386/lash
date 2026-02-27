@@ -61,5 +61,18 @@
       "completed_at": "2026-02-27T20:17:24.025029680Z"
     },
     "version": null
+  },
+  {
+    "change": {
+      "description": "Improve Lash LSP hover docs for language tokens and symbols",
+      "priority": "Medium",
+      "tags": [
+        "feature",
+        "lsp"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-27T20:17:24.080358597Z"
+    },
+    "version": null
   }
 ]
