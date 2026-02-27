@@ -48,5 +48,18 @@
       "completed_at": "2026-02-27T20:17:23.982489772Z"
     },
     "version": null
+  },
+  {
+    "change": {
+      "description": "Add safe rename and prepare-rename support to Lash LSP",
+      "priority": "Medium",
+      "tags": [
+        "feature",
+        "lsp"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-27T20:17:24.025029680Z"
+    },
+    "version": null
   }
 ]
