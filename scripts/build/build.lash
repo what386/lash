@@ -8,10 +8,10 @@ let PROJECT_NAME = "Lash"
 
 let OUTPUT_DIR = "./target/release"
 let PROJECTS = [
-    "lash:./src/Lash.Cli/Lash.Cli.csproj",
-    "lashc:./src/Lash.Compiler/Lash.Compiler.csproj",
-    "lashfmt:./src/Lash.Formatter/Lash.Formatter.csproj",
-    "lashlsp:./src/Lash.Lsp/Lash.Lsp.csproj"
+"lash:./src/Lash.Cli/Lash.Cli.csproj",
+"lashc:./src/Lash.Compiler/Lash.Compiler.csproj",
+"lashfmt:./src/Lash.Formatter/Lash.Formatter.csproj",
+"lashlsp:./src/Lash.Lsp/Lash.Lsp.csproj"
 ]
 
 // Build defaults
@@ -145,31 +145,31 @@ end
 fn build_tool_for_platform(tool_name, project_path, rid, bundle_dir)
     let temp_dir = OUTPUT_DIR + "/temp_" + tool_name + "_" + rid
     let publish_args = [
-        project_path,
-        "-c",
-        CONFIGURATION,
-        "-r",
-        rid,
-        "--self-contained",
-        "-p:UseAppHost=true",
-        "-o",
-        temp_dir
+    project_path,
+    "-c",
+    CONFIGURATION,
+    "-r",
+    rid,
+    "--self-contained",
+    "-p:UseAppHost=true",
+    "-o",
+    temp_dir
     ]
 
     if ENABLE_SINGLE_FILE
-        publish_args += ["-p:PublishSingleFile=True"]
+        publish_args + = ["-p:PublishSingleFile=True"]
     end
 
     if ENABLE_READY_TO_RUN
-        publish_args += ["-p:PublishReadyToRun=True"]
+        publish_args + = ["-p:PublishReadyToRun=True"]
     end
 
     if ENABLE_TRIMMING
-        publish_args += [
-            "-p:PublishTrimmed=True",
-            "-p:TrimMode=CopyUsed",
-            "-p:EnableTrimAnalyzer=True",
-            "-warnaserror:IL2*"
+        publish_args + = [
+        "-p:PublishTrimmed=True",
+        "-p:TrimMode=CopyUsed",
+        "-p:EnableTrimAnalyzer=True",
+        "-warnaserror:IL2*"
         ]
     end
 
@@ -261,7 +261,7 @@ while #argv > 0
         ENABLE_READY_TO_RUN = false
         shift
     else
-        BUILD_PLATFORMS += [arg]
+        BUILD_PLATFORMS + = [arg]
         shift
     end
 end
