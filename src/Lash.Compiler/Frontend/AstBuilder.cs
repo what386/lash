@@ -205,14 +205,16 @@ public class AstBuilder : LashBaseVisitor<AstNode>
 
     public override AstNode VisitForLoop(LashParser.ForLoopContext context)
     {
+        var expressions = context.expression();
         return new ForLoop
         {
             Line = context.Start.Line,
             Column = context.Start.Column,
             IsIncrementing = true,
             Variable = context.IDENTIFIER().GetText(),
-            Range = Visit(context.expression(0)) as Expression ?? new NullLiteral(),
-            Step = context.expression().Length > 1 ? Visit(context.expression(1)) as Expression : null,
+            Range = expressions.Length > 0 ? Visit(expressions[0]) as Expression ?? new NullLiteral() : null,
+            GlobPattern = context.GLOB_PATTERN()?.GetText(),
+            Step = expressions.Length > 1 ? Visit(expressions[1]) as Expression : null,
             Body = context.statement().Select(s => Visit(s) as Statement).Where(s => s != null).ToList()!
         };
     }

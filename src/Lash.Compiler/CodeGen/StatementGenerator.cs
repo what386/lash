@@ -314,7 +314,11 @@ public partial class BashGenerator
     private void GenerateForLoop(ForLoop forLoop)
     {
         string rangeExpr;
-        if (forLoop.Range is RangeExpression range)
+        if (!string.IsNullOrEmpty(forLoop.GlobPattern))
+        {
+            rangeExpr = forLoop.GlobPattern!;
+        }
+        else if (forLoop.Range is RangeExpression range)
         {
             var start = GenerateExpression(range.Start);
             var end = GenerateExpression(range.End);
@@ -331,6 +335,9 @@ public partial class BashGenerator
         }
         else
         {
+            if (forLoop.Range is null)
+                throw new InvalidOperationException("Non-glob for-loop is missing its iterable expression.");
+
             rangeExpr = forLoop.Range is IdentifierExpression ident
                 ? string.Equals(ident.Name, "argv", StringComparison.Ordinal)
                     ? $"\"${{{ArgvRuntimeName}[@]}}\""

@@ -189,8 +189,13 @@ module.exports = grammar({
       "for",
       field("variable", $.identifier),
       "in",
-      field("iterable", $.expression),
-      optional(seq("step", field("step", $.expression))),
+      choice(
+        seq(
+          field("iterable", $.expression),
+          optional(seq("step", field("step", $.expression))),
+        ),
+        field("glob", $.glob_pattern),
+      ),
       field("body", $.block),
     ),
 
@@ -251,6 +256,12 @@ module.exports = grammar({
       $.string,
       $.number,
     ),
+
+    glob_pattern: _ => token(seq(
+      repeat(/[a-zA-Z0-9_./~\-\[\]]/),
+      choice("*", "?"),
+      repeat(/[a-zA-Z0-9_./~\-\[\]*?]/),
+    )),
 
     expression_statement: $ => $.expression,
 

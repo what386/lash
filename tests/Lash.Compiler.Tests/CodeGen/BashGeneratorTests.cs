@@ -160,6 +160,21 @@ public class BashGeneratorTests
     }
 
     [Fact]
+    public void BashGenerator_EmitsGlobForLoopAsDirectBashForLoop()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            for file in ./*.txt
+                echo $file
+            end
+            """);
+
+        var bash = new BashGenerator().Generate(program);
+        Assert.Contains("for file in ./*.txt; do", bash);
+        Assert.Contains("echo $file", bash);
+    }
+
+    [Fact]
     public void BashGenerator_DoesNotAutoInvokeMainWhenDeclared()
     {
         var program = TestCompiler.ParseOrThrow(

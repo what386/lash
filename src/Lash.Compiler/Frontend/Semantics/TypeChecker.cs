@@ -124,8 +124,9 @@ public sealed class TypeChecker
                 break;
             case ForLoop forLoop:
                 PushScope();
-                Declare(forLoop.Variable, ExpressionTypes.Number);
-                InferType(forLoop.Range);
+                Declare(forLoop.Variable, forLoop.GlobPattern != null ? ExpressionTypes.String : ExpressionTypes.Number);
+                if (forLoop.Range != null)
+                    InferType(forLoop.Range);
                 if (forLoop.Step != null)
                     InferType(forLoop.Step);
                 foreach (var nested in forLoop.Body)

@@ -491,9 +491,19 @@
           }
         ]
       },
+      "glob": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "glob_pattern",
+            "named": true
+          }
+        ]
+      },
       "iterable": {
         "multiple": false,
-        "required": true,
+        "required": false,
         "types": [
           {
             "type": "expression",
@@ -1709,6 +1719,10 @@
   {
     "type": "for",
     "named": false
+  },
+  {
+    "type": "glob_pattern",
+    "named": true
   },
   {
     "type": "global",

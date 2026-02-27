@@ -93,7 +93,8 @@ internal sealed class SymbolIndexBuilder
                 }
                 break;
             case ForLoop forLoop:
-                VisitExpression(forLoop.Range);
+                if (forLoop.Range is not null)
+                    VisitExpression(forLoop.Range);
                 if (forLoop.Step is not null)
                     VisitExpression(forLoop.Step);
                 PushScope();

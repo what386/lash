@@ -18,7 +18,8 @@ public class ForLoop : Statement
 {
     public bool IsIncrementing { get; set; } = true;
     public string Variable { get; set; } = string.Empty;
-    public Expression Range { get; set; } = null!;
+    public Expression? Range { get; set; }
+    public string? GlobPattern { get; set; }
     public Expression? Step { get; set; }
     public List<Statement> Body { get; set; } = new();
 }

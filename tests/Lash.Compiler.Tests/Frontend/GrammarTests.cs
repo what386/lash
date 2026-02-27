@@ -150,6 +150,24 @@ public class GrammarTests
     }
 
     [Fact]
+    public void ModuleLoader_ParsesGlobForLoop()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            for file in ./*.txt
+                echo $file
+            end
+            """);
+
+        var loop = Assert.IsType<ForLoop>(Assert.Single(program.Statements));
+        Assert.Equal("file", loop.Variable);
+        Assert.Null(loop.Range);
+        Assert.Equal("./*.txt", loop.GlobPattern);
+        Assert.Null(loop.Step);
+        Assert.Single(loop.Body);
+    }
+
+    [Fact]
     public void ModuleLoader_ParsesIfWithElifAndElseBlocks()
     {
         var program = TestCompiler.ParseOrThrow(

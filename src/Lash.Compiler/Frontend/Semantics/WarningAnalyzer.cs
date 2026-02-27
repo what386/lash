@@ -140,7 +140,8 @@ public sealed class WarningAnalyzer
                 return AnalyzeSwitchStatement(switchStatement, inLoop);
 
             case ForLoop forLoop:
-                AnalyzeExpression(forLoop.Range);
+                if (forLoop.Range != null)
+                    AnalyzeExpression(forLoop.Range);
                 if (forLoop.Step != null)
                     AnalyzeExpression(forLoop.Step);
 

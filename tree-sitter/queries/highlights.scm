@@ -120,6 +120,9 @@
 (for_loop
   variable: (identifier) @variable)
 
+(for_loop
+  glob: (glob_pattern) @string.special)
+
 (into_binding
   name: (identifier) @variable)
 

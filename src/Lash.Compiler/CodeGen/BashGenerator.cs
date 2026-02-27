@@ -223,7 +223,8 @@ public partial class BashGenerator
                     }
                     break;
                 case ForLoop forLoop:
-                    CollectAssociativeUsages(forLoop.Range, functionName);
+                    if (forLoop.Range != null)
+                        CollectAssociativeUsages(forLoop.Range, functionName);
                     if (forLoop.Step != null)
                         CollectAssociativeUsages(forLoop.Step, functionName);
                     CollectAssociativeUsages(forLoop.Body, functionName);

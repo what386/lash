@@ -166,7 +166,8 @@ public sealed class NameResolver
                 break;
 
             case ForLoop forLoop:
-                CheckExpression(forLoop.Range);
+                if (forLoop.Range != null)
+                    CheckExpression(forLoop.Range);
                 if (forLoop.Step != null)
                     CheckExpression(forLoop.Step);
 

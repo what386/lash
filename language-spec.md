@@ -64,6 +64,7 @@ Lash is a lua-like language that transpiles directly to Bash with minimal runtim
 - Control flow:
   - `if / elif / else / end`
   - `for x in expr [step expr] ... end`
+  - `for x in glob-pattern ... end` (for example `for file in ./*.txt`)
   - `while expr ... end`
   - `switch expr`, with one or more `case expr: ...` clauses, then closing `end`
   - `break`
@@ -160,3 +161,7 @@ Lash is a lua-like language that transpiles directly to Bash with minimal runtim
 - `subshell ... end` lowers to a Bash subshell block `(...)`.
 - `subshell ... end &` launches in background; `subshell into pid ... end &` captures `$!`.
 - `wait` lowers directly to Bash `wait`; `wait jobs` drains tracked background subshell pids.
+- Glob-style `for` loops lower directly to Bash word/glob iteration:
+  - `for file in ./*.txt ... end` -> `for file in ./*.txt; do ...; done`
+  - unmatched globs follow the shell's current Bash options (`nullglob`, `failglob`, etc.)
+  - glob patterns in `for` loops are loop-only syntax, not first-class Lash expressions

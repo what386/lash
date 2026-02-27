@@ -81,7 +81,7 @@ elseClause
     ;
 
 forLoop
-    : 'for' IDENTIFIER 'in' expression ('step' expression)? statement* 'end'
+    : 'for' IDENTIFIER 'in' (expression ('step' expression)? | GLOB_PATTERN) statement* 'end'
     ;
 
 whileLoop
@@ -256,6 +256,21 @@ INTERPOLATED_STRING
 
 MULTILINE_STRING
     : '[[' .*? ']]'
+    ;
+
+GLOB_PATTERN
+    : GLOB_CHAR* GLOB_META GLOB_CHAR*
+    ;
+
+fragment GLOB_CHAR
+    : [a-zA-Z0-9_./~]
+    | '-'
+    | '['
+    | ']'
+    ;
+
+fragment GLOB_META
+    : [*?]
     ;
 
 COMMAND_STATEMENT

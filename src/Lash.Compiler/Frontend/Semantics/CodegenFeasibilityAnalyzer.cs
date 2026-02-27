@@ -76,7 +76,8 @@ public sealed class CodegenFeasibilityAnalyzer
                 break;
 
             case ForLoop forLoop:
-                ValidateValueExpression(forLoop.Range, ValueContext.ForRange);
+                if (forLoop.Range != null)
+                    ValidateValueExpression(forLoop.Range, ValueContext.ForRange);
                 if (forLoop.Step != null)
                     ValidateValueExpression(forLoop.Step, ValueContext.GeneralValue);
                 foreach (var nested in forLoop.Body)

@@ -116,7 +116,8 @@ internal sealed class ConstantFolder
                 return FoldSwitchStatement(switchStatement);
 
             case ForLoop forLoop:
-                forLoop.Range = FoldExpression(forLoop.Range);
+                if (forLoop.Range != null)
+                    forLoop.Range = FoldExpression(forLoop.Range);
                 if (forLoop.Step != null)
                     forLoop.Step = FoldExpression(forLoop.Step);
                 forLoop.Body = FoldIsolated(forLoop.Body);
