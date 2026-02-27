@@ -5,7 +5,7 @@ set -euo pipefail
 let REPO_ROOT = $sh "d=\"$PWD\"; while [ \"$d\" != \"/\" ]; do if [ -f \"$d/src/Lash.Compiler/Lash.Compiler.csproj\" ]; then echo \"$d\"; exit 0; fi; d=\"$(dirname \"$d\")\"; done; echo \"$PWD\""
 
 let PROJECT_PATH = REPO_ROOT + "/src/Lash.Compiler/Lash.Compiler.csproj"
-let INPUT_PATH = REPO_ROOT + "/examples/overview.lash"
+let INPUT_PATH = REPO_ROOT + "/examples/prime-sieve.lash"
 let ITERATIONS = 20
 let WARMUP = 3
 let MODE = "emit"

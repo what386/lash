@@ -21,36 +21,42 @@ Current language reference: `language-spec.md`.
 
 ## Quick Start
 
-Run an example:
+Read the guided usage tour:
 
 ```bash
-dotnet run --project src/Lash.Cli/Lash.Cli.csproj -- run examples/overview.lash
+cat USAGE.md
+```
+
+Run the fizzbuzz example:
+
+```bash
+lash run run examples/fizzbuzz.lash 30
 ```
 
 Run the prime sieve example with a CLI arg:
 
 ```bash
-dotnet run --project src/Lash.Cli/Lash.Cli.csproj -- run examples/prime-sieve.lash 100
+lash run run examples/prime-sieve.lash 100
 ```
 
 Compile a Lash file to Bash:
 
 ```bash
-dotnet run --project src/Lash.Cli/Lash.Cli.csproj -- compile examples/prime-sieve.lash -o prime-sieve.sh
+lash run compile examples/prime-sieve.lash -o prime-sieve.sh
 bash prime-sieve.sh 100
 ```
 
 Check only (no output file):
 
 ```bash
-dotnet run --project src/Lash.Cli/Lash.Cli.csproj -- check examples/prime-sieve.lash
+lash run check examples/prime-sieve.lash
 ```
 
 Format files:
 
 ```bash
-dotnet run --project src/Lash.Cli/Lash.Cli.csproj -- format examples
-dotnet run --project src/Lash.Cli/Lash.Cli.csproj -- format examples --check
+lash run format examples
+lash run format examples --check
 ```
 
 ## CLI Commands

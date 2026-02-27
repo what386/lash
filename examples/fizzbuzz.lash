@@ -1,0 +1,21 @@
+#!/bin/env -S lash run
+
+let _limit = 20
+if #argv > 0
+    _limit = argv[0]
+end
+
+let n = 1
+while n <= _limit
+    if n % 15 == 0
+        echo "FizzBuzz"
+    elif n % 3 == 0
+        echo "Fizz"
+    elif n % 5 == 0
+        echo "Buzz"
+    else
+        echo $n
+    end
+
+    n = n + 1
+end
