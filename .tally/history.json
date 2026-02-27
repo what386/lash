@@ -1,0 +1,29 @@
+[
+  {
+    "change": {
+      "description": "Add Lash LSP server with diagnostics, hover, and go-to-definition",
+      "priority": "Medium",
+      "tags": [
+        "feature",
+        "lsp"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-27T03:07:36.602385163Z"
+    },
+    "version": null
+  },
+  {
+    "change": {
+      "description": "Refactor compiler analysis into a reusable API for editor tooling",
+      "priority": "Medium",
+      "tags": [
+        "feature",
+        "compiler",
+        "lsp"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-27T03:07:36.607321006Z"
+    },
+    "version": null
+  }
+]
