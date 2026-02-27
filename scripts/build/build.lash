@@ -7,7 +7,8 @@ let OUTPUT_DIR = "./target/release"
 let PROJECTS = [
     "lash:./src/Lash.Cli/Lash.Cli.csproj",
     "lashc:./src/Lash.Compiler/Lash.Compiler.csproj",
-    "lashfmt:./src/Lash.Formatter/Lash.Formatter.csproj"
+    "lashfmt:./src/Lash.Formatter/Lash.Formatter.csproj",
+    "lashlsp:./src/Lash.Lsp/Lash.Lsp.csproj"
 ]
 
 // Build defaults
