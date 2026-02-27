@@ -74,5 +74,18 @@
       "completed_at": "2026-02-27T20:17:24.080358597Z"
     },
     "version": null
+  },
+  {
+    "change": {
+      "description": "Harden Lash LSP local symbol resolution and add LSP test suite",
+      "priority": "Medium",
+      "tags": [
+        "feature",
+        "lsp"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-27T20:17:24.123437834Z"
+    },
+    "version": null
   }
 ]

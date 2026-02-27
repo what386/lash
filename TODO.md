@@ -5,9 +5,6 @@
 
 ## Tasks
 
-- [ ] Harden Lash LSP local symbol resolution and add LSP test suite #feature #lsp
-      @created 2026-02-27 20:17
-
 
 ## Completed
 
@@ -30,6 +27,10 @@
       @completed 2026-02-27 20:17
 
 - [x] Improve Lash LSP hover docs for language tokens and symbols #feature #lsp
+      @created 2026-02-27 20:17
+      @completed 2026-02-27 20:17
+
+- [x] Harden Lash LSP local symbol resolution and add LSP test suite #feature #lsp
       @created 2026-02-27 20:17
       @completed 2026-02-27 20:17
 
