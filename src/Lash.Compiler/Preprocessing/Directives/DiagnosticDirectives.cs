@@ -1,5 +1,7 @@
 namespace Lash.Compiler.Preprocessing.Directives;
 
+using Lash.Compiler.Diagnostics;
+
 internal sealed class WarningDirective : IPreprocessorDirective
 {
     public string Name => "warning";
@@ -13,7 +15,7 @@ internal sealed class WarningDirective : IPreprocessorDirective
             ? "@warning directive triggered."
             : directive.Arguments;
 
-        state.AddWarning(message);
+        state.AddWarning(message, DiagnosticCodes.PreprocessorWarning);
     }
 }
 
@@ -30,6 +32,6 @@ internal sealed class ErrorDirective : IPreprocessorDirective
             ? "@error directive triggered."
             : directive.Arguments;
 
-        state.AddError(message);
+        state.AddError(message, DiagnosticCodes.PreprocessorDirectiveSyntax);
     }
 }

@@ -1,5 +1,7 @@
 namespace Lash.Compiler.Preprocessing.Directives;
 
+using Lash.Compiler.Diagnostics;
+
 internal sealed class ImportDirective : IPreprocessorDirective
 {
     public string Name => "import";
@@ -11,13 +13,19 @@ internal sealed class ImportDirective : IPreprocessorDirective
 
         if (state.RuntimeBlockDepth > 0)
         {
-            state.AddError("@import is only allowed at file/preprocessor scope, not inside runtime blocks.");
+            state.AddError(
+                DiagnosticMessage.WithTip(
+                    "@import is only allowed at file/preprocessor scope, not inside runtime blocks.",
+                    "Move @import outside runtime blocks (if/fn/for/while/switch/subshell)."),
+                DiagnosticCodes.PreprocessorImportUsage);
             return;
         }
 
         if (!DirectiveProcessor.TryParseImportArguments(directive.Arguments, out var pathExpression, out var intoVariable, out var intoMode, out var error))
         {
-            state.AddError($"Invalid @import directive: {error}");
+            state.AddError(
+                DiagnosticMessage.WithTip($"Invalid @import directive: {error}", "Expected: @import \"path\" [into [let|const] name]"),
+                DiagnosticCodes.PreprocessorDirectiveSyntax);
             return;
         }
 
@@ -32,7 +40,9 @@ internal sealed class RawDirective : IPreprocessorDirective
     public void Apply(Directive directive, PreprocessorState state)
     {
         if (!string.IsNullOrWhiteSpace(directive.Arguments))
-            state.AddError("@raw does not accept arguments.");
+            state.AddError(
+                DiagnosticMessage.WithTip("@raw does not accept arguments.", "Use '@raw' on its own line and close with '@end'."),
+                DiagnosticCodes.PreprocessorRawUsage);
 
         state.EnterRaw(state.IsCurrentActive);
     }

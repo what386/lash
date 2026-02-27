@@ -1,5 +1,7 @@
 namespace Lash.Compiler.Preprocessing.Directives;
 
+using Lash.Compiler.Diagnostics;
+
 internal sealed class IfDirective : IPreprocessorDirective
 {
     public string Name => "if";
@@ -8,14 +10,18 @@ internal sealed class IfDirective : IPreprocessorDirective
     {
         if (string.IsNullOrWhiteSpace(directive.Arguments))
         {
-            state.AddError("@if requires a condition expression.");
+            state.AddError(
+                DiagnosticMessage.WithTip("@if requires a condition expression.", "Example: @if defined(NAME) && NAME == \"true\""),
+                DiagnosticCodes.PreprocessorDirectiveSyntax);
             state.PushConditional(new ConditionalFrame(state.IsCurrentActive, false, false, false, state.CurrentLine, state.CurrentColumn));
             return;
         }
 
         if (!state.TryEvaluateCondition(directive.Arguments, out var condition, out var error))
         {
-            state.AddError($"Invalid @if expression: {error}");
+            state.AddError(
+                DiagnosticMessage.WithTip($"Invalid @if expression: {error}", "Use defined(NAME), literals, &&, ||, !, ==, !=, and parentheses."),
+                DiagnosticCodes.PreprocessorDirectiveSyntax);
             state.PushConditional(new ConditionalFrame(state.IsCurrentActive, false, false, false, state.CurrentLine, state.CurrentColumn));
             return;
         }
@@ -34,27 +40,35 @@ internal sealed class ElifDirective : IPreprocessorDirective
     {
         if (!state.Conditionals.TryPop(out var frame))
         {
-            state.AddError("@elif without matching @if.");
+            state.AddError(
+                DiagnosticMessage.WithTip("@elif without matching @if.", "Start a conditional block with @if before using @elif."),
+                DiagnosticCodes.PreprocessorConditionalStructure);
             return;
         }
 
         if (string.IsNullOrWhiteSpace(directive.Arguments))
         {
-            state.AddError("@elif requires a condition expression.");
+            state.AddError(
+                DiagnosticMessage.WithTip("@elif requires a condition expression.", "Provide a boolean expression after @elif."),
+                DiagnosticCodes.PreprocessorDirectiveSyntax);
             state.Conditionals.Push(frame);
             return;
         }
 
         if (frame.ElseSeen)
         {
-            state.AddError("@elif cannot appear after @else in the same conditional block.");
+            state.AddError(
+                DiagnosticMessage.WithTip("@elif cannot appear after @else in the same conditional block.", "Move @elif before @else."),
+                DiagnosticCodes.PreprocessorConditionalStructure);
             state.Conditionals.Push(frame with { IsActive = false });
             return;
         }
 
         if (!state.TryEvaluateCondition(directive.Arguments, out var condition, out var error))
         {
-            state.AddError($"Invalid @elif expression: {error}");
+            state.AddError(
+                DiagnosticMessage.WithTip($"Invalid @elif expression: {error}", "Use a valid directive expression after @elif."),
+                DiagnosticCodes.PreprocessorDirectiveSyntax);
             state.Conditionals.Push(frame with { IsActive = false });
             return;
         }
@@ -76,13 +90,17 @@ internal sealed class ElseDirective : IPreprocessorDirective
     {
         if (!state.Conditionals.TryPop(out var frame))
         {
-            state.AddError("@else without matching @if.");
+            state.AddError(
+                DiagnosticMessage.WithTip("@else without matching @if.", "Start a conditional block with @if before using @else."),
+                DiagnosticCodes.PreprocessorConditionalStructure);
             return;
         }
 
         if (frame.ElseSeen)
         {
-            state.AddError("Only one @else is allowed per @if block.");
+            state.AddError(
+                DiagnosticMessage.WithTip("Only one @else is allowed per @if block.", "Remove the extra @else."),
+                DiagnosticCodes.PreprocessorConditionalStructure);
             state.Conditionals.Push(frame);
             return;
         }
@@ -104,9 +122,11 @@ internal sealed class EndDirective : IPreprocessorDirective
     public void Apply(Directive directive, PreprocessorState state)
     {
         if (!string.IsNullOrWhiteSpace(directive.Arguments))
-            state.AddError("@end does not accept arguments.");
+            state.AddError(
+                DiagnosticMessage.WithTip("@end does not accept arguments.", "Remove tokens after @end."),
+                DiagnosticCodes.PreprocessorDirectiveSyntax);
 
         if (!state.TryCloseTopBlock(out var error))
-            state.AddError(error);
+            state.AddError(DiagnosticMessage.WithTip(error, "Check that each @if/@raw has a matching @end."), DiagnosticCodes.PreprocessorConditionalStructure);
     }
 }

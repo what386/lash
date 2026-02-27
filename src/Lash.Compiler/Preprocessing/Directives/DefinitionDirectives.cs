@@ -1,5 +1,7 @@
 namespace Lash.Compiler.Preprocessing.Directives;
 
+using Lash.Compiler.Diagnostics;
+
 internal sealed class DefineDirective : IPreprocessorDirective
 {
     public string Name => "define";
@@ -11,7 +13,9 @@ internal sealed class DefineDirective : IPreprocessorDirective
 
         if (!DirectiveProcessor.TryParseDefinition(directive.Arguments, out var name, out var value, out var error))
         {
-            state.AddError($"Invalid @define directive: {error}");
+            state.AddError(
+                DiagnosticMessage.WithTip($"Invalid @define directive: {error}", "Expected: @define NAME, @define NAME=value, or @define NAME value."),
+                DiagnosticCodes.PreprocessorDirectiveSyntax);
             return;
         }
 
@@ -30,7 +34,9 @@ internal sealed class UndefDirective : IPreprocessorDirective
 
         if (!DirectiveProcessor.TryParseSymbolName(directive.Arguments, out var name, out var error))
         {
-            state.AddError($"Invalid @undef directive: {error}");
+            state.AddError(
+                DiagnosticMessage.WithTip($"Invalid @undef directive: {error}", "Expected: @undef NAME"),
+                DiagnosticCodes.PreprocessorDirectiveSyntax);
             return;
         }
 

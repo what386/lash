@@ -60,14 +60,14 @@ internal sealed class PreprocessorState
         CurrentColumn = column;
     }
 
-    public void AddError(string message)
+    public void AddError(string message, string? code = null)
     {
-        Diagnostics.AddError(message, CurrentLine, CurrentColumn);
+        Diagnostics.AddError(message, CurrentLine, CurrentColumn, code);
     }
 
-    public void AddWarning(string message)
+    public void AddWarning(string message, string? code = null)
     {
-        Diagnostics.AddWarning(message, CurrentLine, CurrentColumn);
+        Diagnostics.AddWarning(message, CurrentLine, CurrentColumn, code);
     }
 
     public bool TryEvaluateCondition(string expression, out bool value, out string error)
@@ -170,16 +170,22 @@ internal sealed class PreprocessorState
             if (block.Kind == PreprocessorBlockKind.Conditional)
             {
                 Diagnostics.AddError(
-                    $"Missing '@end' for '@if' started on line {block.StartLine}.",
+                    DiagnosticMessage.WithTip(
+                        $"Missing '@end' for '@if' started on line {block.StartLine}.",
+                        "Add '@end' to close the conditional directive block."),
                     block.StartLine,
-                    block.StartColumn);
+                    block.StartColumn,
+                    DiagnosticCodes.PreprocessorConditionalStructure);
             }
             else
             {
                 Diagnostics.AddError(
-                    $"Missing '@end' for '@raw' started on line {block.StartLine}.",
+                    DiagnosticMessage.WithTip(
+                        $"Missing '@end' for '@raw' started on line {block.StartLine}.",
+                        "Add '@end' to close the raw directive block."),
                     block.StartLine,
-                    block.StartColumn);
+                    block.StartColumn,
+                    DiagnosticCodes.PreprocessorConditionalStructure);
             }
         }
     }

@@ -109,7 +109,19 @@ internal sealed class DirectiveProcessor
     {
         if (string.Equals(directive.Name, "endif", StringComparison.Ordinal))
         {
-            state.AddError("@endif is not supported. Use '@end'.");
+            state.AddError(
+                DiagnosticMessage.WithTip(
+                    "@endif is not supported.",
+                    "Use '@end' instead of '@endif'."),
+                DiagnosticCodes.PreprocessorConditionalStructure);
+
+            if (!state.TryCloseTopBlock(out var closeError))
+            {
+                state.AddError(
+                    DiagnosticMessage.WithTip(closeError, "Check that each @if/@raw has a matching @end."),
+                    DiagnosticCodes.PreprocessorConditionalStructure);
+            }
+
             output.Add(string.Empty);
             return;
         }
@@ -120,7 +132,11 @@ internal sealed class DirectiveProcessor
         }
         else
         {
-            state.AddError($"Unknown directive '@{directive.Name}'.");
+            state.AddError(
+                DiagnosticMessage.WithTip(
+                    $"Unknown directive '@{directive.Name}'.",
+                    "Use one of: @if, @elif, @else, @end, @import, @raw, @define, @undef, @error, @warning."),
+                DiagnosticCodes.PreprocessorUnknownDirective);
         }
 
         var replacedByImport = false;
@@ -138,13 +154,17 @@ internal sealed class DirectiveProcessor
     {
         if (!state.TryResolveImportPath(importRequest.PathExpression, out var fullPath, out var error))
         {
-            state.AddError(error);
+            state.AddError(
+                DiagnosticMessage.WithTip(error, "Use a quoted relative or absolute path."),
+                DiagnosticCodes.PreprocessorImportIo);
             return;
         }
 
         if (!File.Exists(fullPath))
         {
-            state.AddError($"@import file not found: {fullPath}");
+            state.AddError(
+                DiagnosticMessage.WithTip($"@import file not found: {fullPath}", "Check the path relative to the file that contains @import."),
+                DiagnosticCodes.PreprocessorImportIo);
             return;
         }
 
@@ -155,7 +175,9 @@ internal sealed class DirectiveProcessor
         }
         catch (Exception ex)
         {
-            state.AddError($"Failed to read imported file '{fullPath}': {ex.Message}");
+            state.AddError(
+                DiagnosticMessage.WithTip($"Failed to read imported file '{fullPath}': {ex.Message}", "Verify file permissions and encoding."),
+                DiagnosticCodes.PreprocessorImportIo);
             return;
         }
 
@@ -177,7 +199,11 @@ internal sealed class DirectiveProcessor
 
         if (normalizedContent.Contains("]]", StringComparison.Ordinal))
         {
-            state.AddError($"@import into '{variableName}' cannot represent content containing ']]' in a multiline string literal.");
+            state.AddError(
+                DiagnosticMessage.WithTip(
+                    $"@import into '{variableName}' cannot represent content containing ']]' in a multiline string literal.",
+                    "Remove the ']]' sequence from imported content or use plain @import without 'into'."),
+                DiagnosticCodes.PreprocessorImportUsage);
             return;
         }
 
