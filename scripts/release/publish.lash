@@ -25,16 +25,15 @@ if #argv == 0 || #argv > 1
     exit 1
 end
 
-const raw_version = argv[0]
-const version = $sh $"printf '%s' '{raw_version}' | sed 's/^v//'"
-const tag = $"v{version}"
+const version = argv[0]
+const tag = version
 
-echo $"Preparing release {tag}..."
+echo $"Preparing release {version}..."
 
 git checkout dev
 
 tally semver $version --auto
-tally changelog --auto > CHANGELOG.md
+tally changelog > CHANGELOG.md
 
 add_if_exists("CHANGELOG.md")
 add_if_exists("TODO.md")
