@@ -21,6 +21,18 @@ public static class ModuleLoader
         return TryParseSingleFile(fullEntryPath, diagnostics, out program);
     }
 
+    public static bool TryLoadProgramFromSource(string source, string sourcePath, DiagnosticBag diagnostics, out ProgramNode? program)
+    {
+        program = null;
+        if (sourcePath.Length == 0)
+        {
+            diagnostics.AddError("Source path cannot be empty.");
+            return false;
+        }
+
+        return TryParseSource(source, sourcePath, diagnostics, out program);
+    }
+
     private static bool TryParseSingleFile(string path, DiagnosticBag diagnostics, out ProgramNode? program)
     {
         program = null;
@@ -36,8 +48,14 @@ public static class ModuleLoader
             return false;
         }
 
-        source = new SourcePreprocessor().Process(source, diagnostics, path);
+        return TryParseSource(source, path, diagnostics, out program);
+    }
 
+    private static bool TryParseSource(string source, string path, DiagnosticBag diagnostics, out ProgramNode? program)
+    {
+        program = null;
+
+        source = new SourcePreprocessor().Process(source, diagnostics, path);
         source = NormalizeSimplifiedSyntax(source);
         if (diagnostics.HasErrors)
             return false;

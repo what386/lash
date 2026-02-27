@@ -2,11 +2,11 @@ namespace Lash.Compiler;
 
 using System.Collections;
 using System.Reflection;
+using Lash.Compiler.Analysis;
 using Lash.Compiler.Ast;
 using Lash.Compiler.CodeGen;
 using Lash.Compiler.Diagnostics;
 using Lash.Compiler.Frontend;
-using Lash.Compiler.Frontend.Semantics;
 
 public static class Program
 {
@@ -33,54 +33,23 @@ public static class Program
             return 1;
         }
 
-        var diagnostics = new DiagnosticBag();
-        if (!ModuleLoader.TryLoadProgram(path, diagnostics, out var program))
+        var analysis = new LashAnalyzer().AnalyzePath(path, new AnalysisOptions(
+            IncludeWarnings: true,
+            BuildSymbolIndex: false));
+        if (analysis.Program is null)
         {
-            diagnostics.PrintToConsole();
-            return 1;
-        }
-        if (program is null)
-        {
-            Console.Error.WriteLine("Failed to load program.");
-            return 1;
-        }
-
-        new NameResolver(diagnostics).Analyze(program);
-        if (diagnostics.HasErrors)
-        {
-            diagnostics.PrintToConsole();
+            foreach (var diagnostic in analysis.Diagnostics)
+                Console.Error.WriteLine(diagnostic.ToString());
             return 1;
         }
 
-        new TypeChecker(diagnostics).Analyze(program);
-        if (diagnostics.HasErrors)
+        var program = analysis.Program;
+        if (analysis.HasErrors)
         {
-            diagnostics.PrintToConsole();
+            foreach (var diagnostic in analysis.Diagnostics)
+                Console.Error.WriteLine(diagnostic.ToString());
             return 1;
         }
-
-        new DefiniteAssignmentAnalyzer(diagnostics).Analyze(program);
-        if (diagnostics.HasErrors)
-        {
-            diagnostics.PrintToConsole();
-            return 1;
-        }
-
-        new ConstantSafetyAnalyzer(diagnostics).Analyze(program);
-        if (diagnostics.HasErrors)
-        {
-            diagnostics.PrintToConsole();
-            return 1;
-        }
-
-        new CodegenFeasibilityAnalyzer(diagnostics).Analyze(program);
-        if (diagnostics.HasErrors)
-        {
-            diagnostics.PrintToConsole();
-            return 1;
-        }
-
-        new WarningAnalyzer(diagnostics).Analyze(program);
 
         if (options.PrintAst)
         {
@@ -89,7 +58,7 @@ public static class Program
             AstPrinter.Print(program);
         }
 
-        PrintWarnings(diagnostics);
+        PrintWarnings(analysis.Diagnostics);
 
         if (options.CheckOnly)
             return 0;
@@ -122,9 +91,9 @@ public static class Program
         return 0;
     }
 
-    private static void PrintWarnings(DiagnosticBag diagnostics)
+    private static void PrintWarnings(IEnumerable<Diagnostic> diagnostics)
     {
-        foreach (var warning in diagnostics.GetWarnings())
+        foreach (var warning in diagnostics.Where(static d => d.Severity == DiagnosticSeverity.Warning))
         {
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.Error.WriteLine(warning.ToString());
