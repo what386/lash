@@ -25,11 +25,17 @@ public static class Program
                 .WithHandler<TextDocumentSyncHandler>()
                 .WithHandler<HoverHandler>()
                 .WithHandler<DefinitionHandler>()
+                .WithHandler<PrepareRenameHandler>()
+                .WithHandler<RenameHandler>()
+                .WithHandler<CompletionHandler>()
                 .WithHandler<DocumentFormattingHandler>()
                 .WithServices(services =>
                 {
                     services.AddSingleton<DocumentStore>();
                     services.AddSingleton<AnalysisService>();
+                    services.AddSingleton<SnapshotTextService>();
+                    services.AddSingleton<SymbolQueryService>();
+                    services.AddSingleton<LanguageDocs>();
                 });
         });
 

@@ -9,6 +9,9 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 internal sealed class HoverHandler : HoverHandlerBase
 {
     private readonly DocumentStore documents;
+    private readonly SymbolQueryService symbols;
+    private readonly SnapshotTextService snapshotText;
+    private readonly LanguageDocs languageDocs;
     private readonly TextDocumentSelector selector = new(
         new TextDocumentFilter
         {
@@ -16,9 +19,16 @@ internal sealed class HoverHandler : HoverHandlerBase
             Language = "lash"
         });
 
-    public HoverHandler(DocumentStore documents)
+    public HoverHandler(
+        DocumentStore documents,
+        SymbolQueryService symbols,
+        SnapshotTextService snapshotText,
+        LanguageDocs languageDocs)
     {
         this.documents = documents;
+        this.symbols = symbols;
+        this.snapshotText = snapshotText;
+        this.languageDocs = languageDocs;
     }
 
     protected override HoverRegistrationOptions CreateRegistrationOptions(HoverCapability capability, ClientCapabilities clientCapabilities)
@@ -29,36 +39,54 @@ internal sealed class HoverHandler : HoverHandlerBase
 
     public override Task<Hover?> Handle(HoverParams request, CancellationToken cancellationToken)
     {
-        if (!documents.TryGet(request.TextDocument.Uri, out var snapshot) || snapshot?.Analysis?.Symbols is null)
+        if (!documents.TryGet(request.TextDocument.Uri, out var snapshot) || snapshot is null)
             return Task.FromResult<Hover?>(null);
 
-        var symbols = snapshot.Analysis.Symbols;
-        var line = request.Position.Line;
-        var column = request.Position.Character;
+        if (symbols.TryFindContext(snapshot, request.Position, out var declaration, out _) && declaration is not null)
+        {
+            var markdown = BuildSymbolMarkdown(declaration);
+            return Task.FromResult<Hover?>(new Hover
+            {
+                Contents = new MarkedStringsOrMarkupContent(new MarkupContent
+                {
+                    Kind = MarkupKind.Markdown,
+                    Value = markdown
+                }),
+                Range = LspConversions.ToRange(declaration.DeclarationSpan)
+            });
+        }
 
-        var reference = symbols.References.FirstOrDefault(r => LspConversions.Contains(r.Span, line, column));
-        var symbol = reference?.Resolved
-            ?? symbols.Declarations.FirstOrDefault(d => LspConversions.Contains(d.DeclarationSpan, line, column));
-        if (symbol is null)
+        if (!snapshotText.TryGetTokenAt(snapshot, request.Position, out var token))
             return Task.FromResult<Hover?>(null);
 
-        var markdown = BuildMarkdown(symbol);
+        if (!languageDocs.TryGet(token.Text, out var doc))
+            return Task.FromResult<Hover?>(null);
+
         return Task.FromResult<Hover?>(new Hover
         {
             Contents = new MarkedStringsOrMarkupContent(new MarkupContent
             {
                 Kind = MarkupKind.Markdown,
-                Value = markdown
+                Value = doc
             }),
-            Range = LspConversions.ToRange(symbol.DeclarationSpan)
+            Range = token.Range
         });
     }
 
-    private static string BuildMarkdown(SymbolInfo symbol)
+    private static string BuildSymbolMarkdown(SymbolInfo symbol)
     {
         var kind = symbol.Kind.ToString().ToLowerInvariant();
         var typeText = string.IsNullOrWhiteSpace(symbol.TypeText) ? string.Empty : $": `{symbol.TypeText}`";
         var constText = symbol.IsConst ? " const" : string.Empty;
-        return $"`{kind}{constText}` **{symbol.Name}**{typeText}";
+        var usageHint = symbol.Kind switch
+        {
+            LashSymbolKind.Function => "Call with `name(args...)`.",
+            LashSymbolKind.Parameter => "Function parameter in current function scope.",
+            LashSymbolKind.Constant => "Immutable binding.",
+            LashSymbolKind.Enum => "Enum type used with `Enum::Member`.",
+            _ => "Lexical variable binding."
+        };
+
+        return $"`{kind}{constText}` **{symbol.Name}**{typeText}\n\n{usageHint}";
     }
 }
