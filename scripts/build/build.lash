@@ -2,7 +2,10 @@
 
 set -euo pipefail
 
+cd ../..
+
 let PROJECT_NAME = "Lash"
+
 let OUTPUT_DIR = "./target/release"
 let PROJECTS = [
     "lash:./src/Lash.Cli/Lash.Cli.csproj",
