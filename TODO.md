@@ -38,11 +38,6 @@
       @completed 2026-02-27 20:17
       @completed_version 0.7.0
 
-- [x] Add heredoc redirection and until loops to Lash with direct Bash lowering #feature #language
-      @created 2026-02-28 19:09
-      @completed 2026-02-28 19:15
-      @completed_version 0.8.0
-
 - [x] Make into bindings explicit: 'into ' assigns existing vars, 'into let/const name' creates vars (high) #feature #language
       @created 2026-02-28 23:27
       @completed 2026-02-28 23:28
