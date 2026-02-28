@@ -278,34 +278,34 @@ public class FormatterRulesTests
     {
         const string input =
             """
-            subshell into pid
+            subshell into $pid
             echo "hi"
             end &
-            coproc into stream_pid
+            coproc into $stream_pid
             echo "stream"
             end
             select choice in ["a", "b"]
             break
             end
-            wait $pid into status
-            wait jobs into status
-            wait into status
+            wait $pid into $status
+            wait jobs into $status
+            wait into $status
             """;
 
         const string expected =
             """
-            subshell into pid
+            subshell into $pid
                 echo "hi"
             end &
-            coproc into stream_pid
+            coproc into $stream_pid
                 echo "stream"
             end
             select choice in ["a", "b"]
                 break
             end
-            wait $pid into status
-            wait jobs into status
-            wait into status
+            wait $pid into $status
+            wait jobs into $status
+            wait into $status
             """;
 
         var formatted = LashFormatter.Format(input);

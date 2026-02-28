@@ -140,7 +140,7 @@ public class TypeCheckerTests
             """
             let pid = 1
             let status = 0
-            wait $pid into status
+            wait $pid into $status
             let next = $status + 1
             """);
 
@@ -156,7 +156,7 @@ public class TypeCheckerTests
         var program = TestCompiler.ParseOrThrow(
             """
             let pid = 0
-            subshell into pid
+            subshell into $pid
                 echo "work"
             end &
             let next = $pid + 1

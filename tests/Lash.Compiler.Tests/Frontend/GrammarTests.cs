@@ -381,13 +381,13 @@ public class GrammarTests
             """
             let pid = 0
             let status = 0
-            subshell into pid
+            subshell into $pid
                 echo "hi"
             end &
-            wait $pid into status
+            wait $pid into $status
             wait jobs
-            wait into status
-            coproc into pid
+            wait into $status
+            coproc into $pid
                 echo "stream"
             end
             subshell into const const_pid
@@ -398,14 +398,14 @@ public class GrammarTests
 
         var subshell = Assert.IsType<SubshellStatement>(program.Statements[2]);
         Assert.Equal("pid", subshell.IntoVariable);
-        Assert.Equal(IntoBindingMode.Auto, subshell.IntoMode);
+        Assert.Equal(IntoBindingMode.Assign, subshell.IntoMode);
         Assert.True(subshell.RunInBackground);
         Assert.Single(subshell.Body);
 
         var waitPid = Assert.IsType<WaitStatement>(program.Statements[3]);
         Assert.Equal(WaitTargetKind.Target, waitPid.TargetKind);
         Assert.Equal("status", waitPid.IntoVariable);
-        Assert.Equal(IntoBindingMode.Auto, waitPid.IntoMode);
+        Assert.Equal(IntoBindingMode.Assign, waitPid.IntoMode);
         var waitTarget = Assert.IsType<IdentifierExpression>(waitPid.Target);
         Assert.Equal("pid", waitTarget.Name);
 
@@ -419,7 +419,7 @@ public class GrammarTests
 
         var coproc = Assert.IsType<CoprocStatement>(program.Statements[6]);
         Assert.Equal("pid", coproc.IntoVariable);
-        Assert.Equal(IntoBindingMode.Auto, coproc.IntoMode);
+        Assert.Equal(IntoBindingMode.Assign, coproc.IntoMode);
         Assert.Single(coproc.Body);
 
         var constSubshell = Assert.IsType<SubshellStatement>(program.Statements[7]);

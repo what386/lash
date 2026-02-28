@@ -148,7 +148,9 @@ waitTarget
     ;
 
 intoBinding
-    : 'into' ('let' | 'const')? IDENTIFIER
+    : 'into' variableReference
+    | 'into' 'let' IDENTIFIER
+    | 'into' 'const' IDENTIFIER
     ;
 
 breakStatement

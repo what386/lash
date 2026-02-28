@@ -282,7 +282,7 @@ public class AstBuilder : LashBaseVisitor<AstNode>
         {
             Line = context.Start.Line,
             Column = context.Start.Column,
-            IntoVariable = intoBinding?.IDENTIFIER().GetText(),
+            IntoVariable = GetIntoVariable(intoBinding),
             IntoMode = GetIntoMode(intoBinding),
             RunInBackground = context.AMP() != null,
             Body = context.statement().Select(s => Visit(s) as Statement).Where(s => s != null).ToList()!
@@ -297,7 +297,7 @@ public class AstBuilder : LashBaseVisitor<AstNode>
         {
             Line = context.Start.Line,
             Column = context.Start.Column,
-            IntoVariable = intoBinding?.IDENTIFIER().GetText(),
+            IntoVariable = GetIntoVariable(intoBinding),
             IntoMode = GetIntoMode(intoBinding),
             Body = context.statement().Select(s => Visit(s) as Statement).Where(s => s != null).ToList()!
         };
@@ -327,7 +327,7 @@ public class AstBuilder : LashBaseVisitor<AstNode>
             Column = context.Start.Column,
             TargetKind = targetKind,
             Target = target,
-            IntoVariable = context.intoBinding()?.IDENTIFIER().GetText(),
+            IntoVariable = GetIntoVariable(context.intoBinding()),
             IntoMode = GetIntoMode(context.intoBinding())
         };
     }
@@ -901,7 +901,10 @@ public class AstBuilder : LashBaseVisitor<AstNode>
     private static IntoBindingMode GetIntoMode(LashParser.IntoBindingContext? intoBinding)
     {
         if (intoBinding == null)
-            return IntoBindingMode.Auto;
+            return IntoBindingMode.Assign;
+
+        if (intoBinding.variableReference() is not null)
+            return IntoBindingMode.Assign;
 
         if (intoBinding.ChildCount >= 3)
         {
@@ -912,7 +915,18 @@ public class AstBuilder : LashBaseVisitor<AstNode>
                 return IntoBindingMode.Let;
         }
 
-        return IntoBindingMode.Auto;
+        return IntoBindingMode.Assign;
+    }
+
+    private static string? GetIntoVariable(LashParser.IntoBindingContext? intoBinding)
+    {
+        if (intoBinding == null)
+            return null;
+
+        if (intoBinding.variableReference() is { } variableRef)
+            return variableRef.IDENTIFIER().GetText();
+
+        return intoBinding.IDENTIFIER().GetText();
     }
 
     private static string UnquoteStringLiteral(string text)

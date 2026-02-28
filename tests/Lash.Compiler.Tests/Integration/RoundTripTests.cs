@@ -555,10 +555,10 @@ public class RoundTripTests
             """
             let pid = 0
             let status = 0
-            subshell into pid
+            subshell into $pid
                 sh "sleep 0.05"
             end &
-            wait $pid into status
+            wait $pid into $status
             echo "$status"
             """);
 
@@ -582,7 +582,7 @@ public class RoundTripTests
             subshell
                 sh "sleep 0.01"
             end &
-            wait jobs into status
+            wait jobs into $status
             echo "$status"
             """);
 

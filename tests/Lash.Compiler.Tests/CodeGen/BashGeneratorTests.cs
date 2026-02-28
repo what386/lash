@@ -646,11 +646,11 @@ public class BashGeneratorTests
             """
             let pid = 0
             let status = 0
-            subshell into pid
+            subshell into $pid
                 echo hi
             end &
-            wait $pid into status
-            wait jobs into status
+            wait $pid into $status
+            wait jobs into $status
             wait
             """);
 
@@ -672,10 +672,10 @@ public class BashGeneratorTests
             """
             let status = 0
             let pid = 0
-            coproc into pid
+            coproc into $pid
                 echo hi
             end
-            wait jobs into status
+            wait jobs into $status
             """);
 
         var bash = new BashGenerator().Generate(program);
@@ -691,7 +691,7 @@ public class BashGeneratorTests
         var program = TestCompiler.ParseOrThrow(
             """
             let status = 0
-            subshell into status
+            subshell into $status
                 echo hi
             end
             """);

@@ -628,6 +628,15 @@ public sealed class NameResolver
 
         if (TryResolveSymbol(targetName, out var resolved))
         {
+            if (mode is IntoBindingMode.Let or IntoBindingMode.Const)
+            {
+                // Declaration forms always declare in the current scope.
+                var createConstFromMode = mode == IntoBindingMode.Const;
+                Declare(targetName, createConstFromMode, node, isGlobal: false);
+                setResolution(true, createConstFromMode);
+                return;
+            }
+
             if (resolved.IsConst)
             {
                 Report(
@@ -636,6 +645,15 @@ public sealed class NameResolver
                     DiagnosticCodes.InvalidAssignmentTarget);
             }
 
+            return;
+        }
+
+        if (mode == IntoBindingMode.Assign)
+        {
+            Report(
+                node,
+                $"Cannot assign to undeclared variable '{targetName}'.",
+                DiagnosticCodes.UndeclaredVariable);
             return;
         }
 

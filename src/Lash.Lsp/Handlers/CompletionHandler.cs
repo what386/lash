@@ -188,8 +188,8 @@ internal sealed class CompletionHandler : CompletionHandlerBase
         yield return Snippet("for", "for ${1:item} in ${2:items}\n    $0\nend", "For loop");
         yield return Snippet("while", "while ${1:condition}\n    $0\nend", "While loop");
         yield return Snippet("switch", "switch ${1:value}\n    case ${2:pattern}:\n        $0\nend", "Switch block");
-        yield return Snippet("subshell", "subshell into ${1:pid}\n    $0\nend &", "Background subshell");
-        yield return Snippet("wait", "wait ${1:pid} into ${2:status}", "Wait with status capture");
+        yield return Snippet("subshell", "subshell into $${1:pid}\n    $0\nend &", "Background subshell");
+        yield return Snippet("wait", "wait $${1:pid} into $${2:status}", "Wait with status capture");
     }
 
     private static CompletionItem Snippet(string label, string body, string detail)

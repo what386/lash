@@ -49,7 +49,7 @@ public class ShiftStatement : Statement
 
 public enum IntoBindingMode
 {
-    Auto,
+    Assign,
     Let,
     Const
 }
@@ -57,7 +57,7 @@ public enum IntoBindingMode
 public class SubshellStatement : Statement
 {
     public string? IntoVariable { get; set; }
-    public IntoBindingMode IntoMode { get; set; } = IntoBindingMode.Auto;
+    public IntoBindingMode IntoMode { get; set; } = IntoBindingMode.Assign;
     public bool IntoCreatesVariable { get; set; }
     public bool IntoCreatesConst { get; set; }
     public bool RunInBackground { get; set; }
@@ -67,7 +67,7 @@ public class SubshellStatement : Statement
 public class CoprocStatement : Statement
 {
     public string? IntoVariable { get; set; }
-    public IntoBindingMode IntoMode { get; set; } = IntoBindingMode.Auto;
+    public IntoBindingMode IntoMode { get; set; } = IntoBindingMode.Assign;
     public bool IntoCreatesVariable { get; set; }
     public bool IntoCreatesConst { get; set; }
     public List<Statement> Body { get; set; } = new();
@@ -85,7 +85,7 @@ public class WaitStatement : Statement
     public WaitTargetKind TargetKind { get; set; } = WaitTargetKind.Default;
     public Expression? Target { get; set; }
     public string? IntoVariable { get; set; }
-    public IntoBindingMode IntoMode { get; set; } = IntoBindingMode.Auto;
+    public IntoBindingMode IntoMode { get; set; } = IntoBindingMode.Assign;
     public bool IntoCreatesVariable { get; set; }
     public bool IntoCreatesConst { get; set; }
 }

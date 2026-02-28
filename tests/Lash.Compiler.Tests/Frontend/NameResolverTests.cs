@@ -219,7 +219,7 @@ public class NameResolverTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            subshell into pid
+            subshell into let pid
                 echo "hi"
             end &
             let next = $pid + 1
@@ -254,7 +254,7 @@ public class NameResolverTests
         var program = TestCompiler.ParseOrThrow(
             """
             const status = 0
-            wait into status
+            wait into $status
             """);
 
         var diagnostics = new DiagnosticBag();
@@ -268,7 +268,7 @@ public class NameResolverTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            wait into status
+            wait into let status
             let next = $status + 1
             """);
 
