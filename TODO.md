@@ -5,9 +5,6 @@
 
 ## Tasks
 
-- [ ] Add heredoc redirection and until loops to Lash with direct Bash lowering #feature #language
-      @created 2026-02-28 19:09
-
 
 ## Completed
 
@@ -40,4 +37,8 @@
       @created 2026-02-27 20:17
       @completed 2026-02-27 20:17
       @completed_version 0.7.0
+
+- [x] Add heredoc redirection and until loops to Lash with direct Bash lowering #feature #language
+      @created 2026-02-28 19:09
+      @completed 2026-02-28 19:15
 
