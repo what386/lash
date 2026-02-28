@@ -422,6 +422,27 @@ public class RoundTripTests
     }
 
     [Fact]
+    public void RoundTrip_TrapIntoFunctionRunsOnExit()
+    {
+        var result = CompilerPipeline.Compile(
+            """
+            fn cleanup()
+                echo "cleanup"
+            end
+
+            trap EXIT into cleanup()
+            echo "work"
+            """);
+
+        Assert.False(result.Diagnostics.HasErrors, string.Join(Environment.NewLine, result.Diagnostics.GetErrors()));
+        var bash = Assert.IsType<string>(result.Bash);
+
+        var run = CompilerPipeline.RunBash(bash);
+        Assert.Equal(0, run.ExitCode);
+        Assert.Equal("work\ncleanup\n", run.StdOut);
+    }
+
+    [Fact]
     public void RoundTrip_ShellCaptureInterpolatesInsideSingleQuotedTemplateSegments()
     {
         var result = CompilerPipeline.Compile(

@@ -324,6 +324,19 @@ public class BashGenerator
                 case TestStatement testStatement:
                     CollectAssociativeUsages(testStatement.Condition, functionName);
                     break;
+                case TrapStatement trapStatement:
+                    if (trapStatement.Handler is not null)
+                    {
+                        foreach (var argument in trapStatement.Handler.Arguments)
+                            CollectAssociativeUsages(argument, functionName);
+                    }
+                    else if (trapStatement.Command is not null)
+                    {
+                        CollectAssociativeUsages(trapStatement.Command, functionName);
+                    }
+                    break;
+                case UntrapStatement:
+                    break;
                 case ExpressionStatement expressionStatement:
                     CollectAssociativeUsages(expressionStatement.Expression, functionName);
                     break;

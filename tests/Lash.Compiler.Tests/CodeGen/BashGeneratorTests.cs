@@ -528,6 +528,35 @@ public class BashGeneratorTests
     }
 
     [Fact]
+    public void BashGenerator_EmitsTrapIntoFunctionAndUntrap()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            fn cleanup()
+                echo "bye"
+            end
+            trap INT into cleanup()
+            untrap INT
+            """);
+
+        var bash = new BashGenerator().Generate(program);
+        Assert.Contains("trap 'cleanup' INT", bash);
+        Assert.Contains("trap - INT", bash);
+    }
+
+    [Fact]
+    public void BashGenerator_EmitsTrapRawCommandPayload()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            trap EXIT "echo done"
+            """);
+
+        var bash = new BashGenerator().Generate(program);
+        Assert.Contains("trap 'echo done' EXIT", bash);
+    }
+
+    [Fact]
     public void BashGenerator_InterpolatesVariablesInShAndShellCapturePayloads()
     {
         var program = TestCompiler.ParseOrThrow(

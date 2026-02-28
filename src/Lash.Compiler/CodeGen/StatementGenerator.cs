@@ -97,6 +97,14 @@ internal sealed partial class StatementGenerator
                 GenerateTestStatement(testStmt);
                 break;
 
+            case TrapStatement trapStatement:
+                GenerateTrapStatement(trapStatement);
+                break;
+
+            case UntrapStatement untrapStatement:
+                GenerateUntrapStatement(untrapStatement);
+                break;
+
             case CommandStatement commandStmt:
                 owner.Emit(RenderCommandStatement(commandStmt));
                 break;

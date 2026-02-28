@@ -233,6 +233,19 @@ public sealed class TypeChecker
             case TestStatement testStatement:
                 ValidateShellPayload(testStatement.Condition, testStatement, "Statement 'test'");
                 break;
+            case TrapStatement trapStatement:
+                if (trapStatement.Handler != null)
+                {
+                    foreach (var argument in trapStatement.Handler.Arguments)
+                        _ = InferType(argument);
+                }
+                else if (trapStatement.Command != null)
+                {
+                    ValidateShellPayload(trapStatement.Command, trapStatement, "Statement 'trap'");
+                }
+                break;
+            case UntrapStatement:
+                break;
             case ExpressionStatement expressionStatement:
                 if (expressionStatement.Expression is BinaryExpression binary &&
                     IsComparisonRedirect(binary))

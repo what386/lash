@@ -1,4 +1,5 @@
 namespace Lash.Compiler.Ast.Statements;
+using Lash.Compiler.Ast.Expressions;
 
 public class Assignment : Statement
 {
@@ -27,6 +28,18 @@ public class ShellStatement : Statement
 public class TestStatement : Statement
 {
     public Expression Condition { get; set; } = null!;
+}
+
+public class TrapStatement : Statement
+{
+    public string Signal { get; set; } = string.Empty;
+    public FunctionCallExpression? Handler { get; set; }
+    public Expression? Command { get; set; }
+}
+
+public class UntrapStatement : Statement
+{
+    public string Signal { get; set; } = string.Empty;
 }
 
 public class ShiftStatement : Statement

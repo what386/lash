@@ -10,7 +10,7 @@ internal static class IdentifierRules
         "let", "const", "global",
         "return", "break", "continue",
         "shift", "subshell", "wait", "into", "jobs",
-        "sh", "test", "enum",
+        "sh", "test", "trap", "untrap", "enum",
         "true", "false"
     };
 

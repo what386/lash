@@ -14,7 +14,7 @@ internal sealed class CompletionHandler : CompletionHandlerBase
         "if", "elif", "else", "end", "fn", "for", "while", "switch", "case",
         "until",
         "let", "const", "global", "return", "break", "continue", "shift",
-        "subshell", "wait", "in", "step", "into", "jobs", "sh", "test", "enum"
+        "subshell", "wait", "in", "step", "into", "jobs", "sh", "test", "trap", "untrap", "enum"
     ];
 
     private static readonly string[] Directives =

@@ -24,6 +24,8 @@ public static class DiagnosticCodes
     public const string FunctionArityMismatch = "E114";
     public const string InvalidControlFlowContext = "E115";
     public const string InvalidParameterDeclaration = "E116";
+    public const string InvalidTrapSignal = "E117";
+    public const string InvalidTrapHandler = "E118";
 
     // Type/Semantics
     public const string TypeMismatch = "E200";

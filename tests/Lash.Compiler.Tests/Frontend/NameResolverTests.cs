@@ -184,6 +184,37 @@ public class NameResolverTests
     }
 
     [Fact]
+    public void NameResolver_RejectsInvalidTrapSignal()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            trap IMPOSSIBLE "echo nope"
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new NameResolver(diagnostics).Analyze(program);
+
+        Assert.Contains(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.InvalidTrapSignal && e.Message.Contains("not a valid trap signal", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void NameResolver_RejectsTrapHandlerCallsWithArguments()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            fn cleanup(code = 0)
+                echo code
+            end
+            trap EXIT into cleanup(1)
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new NameResolver(diagnostics).Analyze(program);
+
+        Assert.Contains(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.InvalidTrapHandler);
+    }
+
+    [Fact]
     public void NameResolver_AllowsSubshellIntoUndeclaredVariableByDeclaringIt()
     {
         var program = TestCompiler.ParseOrThrow(

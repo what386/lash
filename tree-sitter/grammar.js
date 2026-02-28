@@ -46,6 +46,8 @@ module.exports = grammar({
       $.wait_statement,
       $.sh_statement,
       $.test_statement,
+      $.trap_statement,
+      $.untrap_statement,
       $.return_statement,
       $.shift_statement,
       $.break_statement,
@@ -62,6 +64,20 @@ module.exports = grammar({
     test_statement: $ => seq(
       "test",
       field("condition", $.expression),
+    ),
+
+    trap_statement: $ => seq(
+      "trap",
+      field("signal", $.identifier),
+      choice(
+        seq("into", field("handler", $.function_call)),
+        field("command", $.expression),
+      ),
+    ),
+
+    untrap_statement: $ => seq(
+      "untrap",
+      field("signal", $.identifier),
     ),
 
     preprocessor_directive: $ => choice(

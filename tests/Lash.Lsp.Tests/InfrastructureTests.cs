@@ -56,5 +56,8 @@ public class InfrastructureTests
 
         Assert.True(docs.TryGet("test", out var testDoc));
         Assert.Contains("$test", testDoc, StringComparison.Ordinal);
+
+        Assert.True(docs.TryGet("trap", out var trapDoc));
+        Assert.Contains("SIGNAL", trapDoc, StringComparison.Ordinal);
     }
 }

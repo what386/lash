@@ -64,6 +64,8 @@
 "jobs" @keyword
 "sh" @keyword
 "test" @keyword
+"trap" @keyword
+"untrap" @keyword
 "shift" @keyword.repeat
 "enum" @keyword
 (break_statement) @keyword

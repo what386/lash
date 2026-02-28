@@ -129,6 +129,27 @@ public sealed class CodegenFeasibilityAnalyzer
             case TestStatement testStatement:
                 ValidateShellPayload(testStatement.Condition, testStatement.Line, testStatement.Column);
                 break;
+            case TrapStatement trapStatement:
+                if (trapStatement.Handler != null)
+                {
+                    if (trapStatement.Handler.Arguments.Count != 0)
+                    {
+                        Report(
+                            trapStatement.Handler,
+                            "Trap handler function calls cannot include arguments.",
+                            DiagnosticCodes.UnsupportedStatementForCodegen);
+                    }
+
+                    foreach (var argument in trapStatement.Handler.Arguments)
+                        ValidateValueExpression(argument, ValueContext.FunctionArgument);
+                }
+                else if (trapStatement.Command != null)
+                {
+                    ValidateShellPayload(trapStatement.Command, trapStatement.Line, trapStatement.Column);
+                }
+                break;
+            case UntrapStatement:
+                break;
 
             case ExpressionStatement expressionStatement:
                 ValidateExpressionStatement(expressionStatement.Expression);

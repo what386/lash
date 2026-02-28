@@ -168,6 +168,20 @@ internal sealed class SymbolIndexBuilder
             case TestStatement testStatement:
                 VisitExpression(testStatement.Condition);
                 break;
+            case TrapStatement trapStatement:
+                if (trapStatement.Handler is not null)
+                {
+                    AddReference(trapStatement.Handler.FunctionName, trapStatement.Handler.Line, trapStatement.Handler.Column);
+                    foreach (var argument in trapStatement.Handler.Arguments)
+                        VisitExpression(argument);
+                }
+                else if (trapStatement.Command is not null)
+                {
+                    VisitExpression(trapStatement.Command);
+                }
+                break;
+            case UntrapStatement:
+                break;
             case CommandStatement:
             case BreakStatement:
             case ContinueStatement:

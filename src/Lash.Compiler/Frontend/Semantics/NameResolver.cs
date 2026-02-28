@@ -7,6 +7,14 @@ using Lash.Compiler.Diagnostics;
 
 public sealed class NameResolver
 {
+    private static readonly HashSet<string> ValidTrapSignals = new(StringComparer.Ordinal)
+    {
+        "EXIT", "ERR", "DEBUG", "RETURN",
+        "HUP", "INT", "QUIT", "ILL", "TRAP", "ABRT", "BUS", "FPE", "KILL", "USR1", "SEGV", "USR2",
+        "PIPE", "ALRM", "TERM", "STKFLT", "CHLD", "CONT", "STOP", "TSTP", "TTIN", "TTOU", "URG",
+        "XCPU", "XFSZ", "VTALRM", "PROF", "WINCH", "IO", "PWR", "SYS"
+    };
+
     private readonly DiagnosticBag diagnostics;
     private readonly Dictionary<string, SymbolInfo> globalScope;
     private readonly HashSet<string> globalDeclared = new(StringComparer.Ordinal);
@@ -312,6 +320,28 @@ public sealed class NameResolver
             case TestStatement testStatement:
                 CheckExpression(testStatement.Condition);
                 break;
+            case TrapStatement trapStatement:
+                ValidateTrapSignal(trapStatement.Signal, trapStatement);
+                if (trapStatement.Handler != null)
+                {
+                    if (trapStatement.Handler.Arguments.Count != 0)
+                    {
+                        Report(
+                            trapStatement.Handler,
+                            "Trap handler function calls cannot include arguments.",
+                            DiagnosticCodes.InvalidTrapHandler);
+                    }
+
+                    ValidateFunctionCall(trapStatement.Handler, implicitArgs: 0);
+                }
+                else if (trapStatement.Command != null)
+                {
+                    CheckExpression(trapStatement.Command);
+                }
+                break;
+            case UntrapStatement untrapStatement:
+                ValidateTrapSignal(untrapStatement.Signal, untrapStatement);
+                break;
 
             case ExpressionStatement expressionStatement:
                 CheckExpression(expressionStatement.Expression);
@@ -547,6 +577,34 @@ public sealed class NameResolver
                 $"Unknown enum member '{enumAccess.EnumName}::{enumAccess.MemberName}'.",
                 DiagnosticCodes.UndeclaredVariable);
         }
+    }
+
+    private void ValidateTrapSignal(string signal, AstNode node)
+    {
+        if (TryNormalizeTrapSignal(signal, out var normalized) && ValidTrapSignals.Contains(normalized))
+            return;
+
+        Report(
+            node,
+            $"'{signal}' is not a valid trap signal.",
+            DiagnosticCodes.InvalidTrapSignal);
+    }
+
+    private static bool TryNormalizeTrapSignal(string signal, out string normalized)
+    {
+        normalized = string.Empty;
+        if (string.IsNullOrWhiteSpace(signal))
+            return false;
+
+        var trimmed = signal.Trim();
+        if (trimmed.StartsWith("SIG", StringComparison.OrdinalIgnoreCase))
+            trimmed = trimmed[3..];
+
+        if (trimmed.Length == 0)
+            return false;
+
+        normalized = trimmed.ToUpperInvariant();
+        return normalized.All(static c => c is >= 'A' and <= 'Z');
     }
 
     private void ResolveIntoBinding(

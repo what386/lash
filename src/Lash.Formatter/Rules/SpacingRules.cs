@@ -170,6 +170,8 @@ internal static class SpacingRules
                || line.StartsWith("return", StringComparison.Ordinal)
                || line.StartsWith("sh ", StringComparison.Ordinal)
                || line.StartsWith("test ", StringComparison.Ordinal)
+               || line.StartsWith("trap ", StringComparison.Ordinal)
+               || line.StartsWith("untrap ", StringComparison.Ordinal)
                || line.StartsWith("shift", StringComparison.Ordinal)
                || line == "break"
                || line == "continue";

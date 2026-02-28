@@ -132,6 +132,34 @@ internal sealed partial class StatementGenerator
         owner.Emit($"[[ {payload} ]]");
     }
 
+    private void GenerateTrapStatement(TrapStatement trapStatement)
+    {
+        if (trapStatement.Handler != null)
+        {
+            owner.Emit($"trap '{trapStatement.Handler.FunctionName}' {trapStatement.Signal}");
+            return;
+        }
+
+        if (trapStatement.Command == null || !owner.TryGenerateShellPayload(trapStatement.Command, out var payload))
+        {
+            owner.EmitComment("Unsupported 'trap' command payload.");
+            owner.ReportUnsupported("trap command payload");
+            return;
+        }
+
+        owner.Emit($"trap '{EscapeSingleQuoted(payload)}' {trapStatement.Signal}");
+    }
+
+    private void GenerateUntrapStatement(UntrapStatement untrapStatement)
+    {
+        owner.Emit($"trap - {untrapStatement.Signal}");
+    }
+
+    private static string EscapeSingleQuoted(string value)
+    {
+        return value.Replace("'", "'\"'\"'", StringComparison.Ordinal);
+    }
+
     private string GenerateFunctionCallStatement(FunctionCallExpression call)
     {
         var args = string.Join(" ", call.Arguments.Select(GenerateSingleShellArg));

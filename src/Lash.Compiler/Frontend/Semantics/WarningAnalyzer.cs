@@ -348,6 +348,20 @@ public sealed class WarningAnalyzer
             case TestStatement testStatement:
                 AnalyzeExpression(testStatement.Condition);
                 return false;
+            case TrapStatement trapStatement:
+                if (trapStatement.Handler != null)
+                {
+                    MarkFunctionUsed(trapStatement.Handler.FunctionName);
+                    foreach (var argument in trapStatement.Handler.Arguments)
+                        AnalyzeExpression(argument);
+                }
+                else if (trapStatement.Command != null)
+                {
+                    AnalyzeExpression(trapStatement.Command);
+                }
+                return false;
+            case UntrapStatement:
+                return false;
 
             case ExpressionStatement expressionStatement:
                 AnalyzeExpression(expressionStatement.Expression);

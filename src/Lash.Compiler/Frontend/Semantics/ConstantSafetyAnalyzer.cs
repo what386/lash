@@ -143,6 +143,19 @@ public sealed class ConstantSafetyAnalyzer
             case TestStatement testStatement:
                 CheckExpression(testStatement.Condition);
                 break;
+            case TrapStatement trapStatement:
+                if (trapStatement.Handler != null)
+                {
+                    foreach (var argument in trapStatement.Handler.Arguments)
+                        CheckExpression(argument);
+                }
+                else if (trapStatement.Command != null)
+                {
+                    CheckExpression(trapStatement.Command);
+                }
+                break;
+            case UntrapStatement:
+                break;
 
             case ExpressionStatement expressionStatement:
                 CheckExpression(expressionStatement.Expression);

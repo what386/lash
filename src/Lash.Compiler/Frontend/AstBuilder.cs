@@ -372,6 +372,36 @@ public class AstBuilder : LashBaseVisitor<AstNode>
         };
     }
 
+    public override AstNode VisitTrapStatement(LashParser.TrapStatementContext context)
+    {
+        FunctionCallExpression? handler = null;
+        Expression? command = null;
+
+        if (context.functionCall() != null)
+            handler = Visit(context.functionCall()) as FunctionCallExpression;
+        else
+            command = Visit(context.expression()) as Expression ?? new NullLiteral();
+
+        return new TrapStatement
+        {
+            Line = context.Start.Line,
+            Column = context.Start.Column,
+            Signal = context.IDENTIFIER().GetText(),
+            Handler = handler,
+            Command = command
+        };
+    }
+
+    public override AstNode VisitUntrapStatement(LashParser.UntrapStatementContext context)
+    {
+        return new UntrapStatement
+        {
+            Line = context.Start.Line,
+            Column = context.Start.Column,
+            Signal = context.IDENTIFIER().GetText()
+        };
+    }
+
     public override AstNode VisitCommandStatement(LashParser.CommandStatementContext context)
     {
         const string marker = "__cmd";

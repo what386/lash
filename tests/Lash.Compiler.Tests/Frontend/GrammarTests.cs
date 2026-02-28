@@ -351,6 +351,30 @@ public class GrammarTests
     }
 
     [Fact]
+    public void ModuleLoader_ParsesTrapAndUntrapStatements()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            trap INT into cleanup()
+            trap EXIT "echo done"
+            untrap INT
+            """);
+
+        var first = Assert.IsType<TrapStatement>(program.Statements[0]);
+        Assert.Equal("INT", first.Signal);
+        Assert.NotNull(first.Handler);
+        Assert.Null(first.Command);
+
+        var second = Assert.IsType<TrapStatement>(program.Statements[1]);
+        Assert.Equal("EXIT", second.Signal);
+        Assert.Null(second.Handler);
+        Assert.NotNull(second.Command);
+
+        var third = Assert.IsType<UntrapStatement>(program.Statements[2]);
+        Assert.Equal("INT", third.Signal);
+    }
+
+    [Fact]
     public void ModuleLoader_ParsesSubshellAndWaitStatements()
     {
         var program = TestCompiler.ParseOrThrow(

@@ -17,6 +17,8 @@ statement
     | untilLoop
     | shStatement
     | testStatement
+    | trapStatement
+    | untrapStatement
     | commandStatement
     | returnStatement
     | shiftStatement
@@ -34,6 +36,14 @@ shStatement
 
 testStatement
     : 'test' expression
+    ;
+
+trapStatement
+    : 'trap' IDENTIFIER ('into' functionCall | expression)
+    ;
+
+untrapStatement
+    : 'untrap' IDENTIFIER
     ;
 
 commandStatement
