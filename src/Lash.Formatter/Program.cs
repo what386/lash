@@ -1,9 +1,16 @@
 namespace Lash.Formatter;
+using System.Reflection;
 
 public static class Program
 {
     public static int Main(string[] args)
     {
+        if (args.Length == 1 && IsVersionFlag(args[0]))
+        {
+            Console.WriteLine(GetVersionLabel());
+            return 0;
+        }
+
         if (args.Length == 0)
         {
             PrintUsage();
@@ -110,5 +117,26 @@ public static class Program
         Console.Error.WriteLine("Usage: lashfmt [--check] <path> [path...]");
         Console.Error.WriteLine();
         Console.Error.WriteLine("Paths can be .lash files or directories.");
+    }
+
+    private static bool IsVersionFlag(string arg)
+    {
+        return arg is "--version" or "-v";
+    }
+
+    private static string GetVersionLabel()
+    {
+        var version = Assembly.GetExecutingAssembly()
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+            .InformationalVersion;
+
+        if (string.IsNullOrWhiteSpace(version))
+            version = Assembly.GetExecutingAssembly().GetName().Version?.ToString();
+
+        if (string.IsNullOrWhiteSpace(version))
+            version = "0.0.0";
+
+        var clean = version.Split('+', 2, StringSplitOptions.TrimEntries)[0];
+        return $"lash v{clean}";
     }
 }

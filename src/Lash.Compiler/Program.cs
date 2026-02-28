@@ -12,6 +12,12 @@ public static class Program
 {
     public static int Main(string[] args)
     {
+        if (args.Length == 1 && IsVersionFlag(args[0]))
+        {
+            Console.WriteLine(GetVersionLabel());
+            return 0;
+        }
+
         if (args.Length < 1)
         {
             PrintUsage();
@@ -111,6 +117,27 @@ public static class Program
         Console.Error.WriteLine("  lashc examples/01_the-basics.lash --check");
         Console.Error.WriteLine("  lashc examples/01_the-basics.lash --emit-bash out.sh");
         Console.Error.WriteLine("  lashc examples/01_the-basics.lash --ast --emit-bash out.sh");
+    }
+
+    private static bool IsVersionFlag(string arg)
+    {
+        return arg is "--version" or "-v";
+    }
+
+    private static string GetVersionLabel()
+    {
+        var version = Assembly.GetExecutingAssembly()
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+            .InformationalVersion;
+
+        if (string.IsNullOrWhiteSpace(version))
+            version = Assembly.GetExecutingAssembly().GetName().Version?.ToString();
+
+        if (string.IsNullOrWhiteSpace(version))
+            version = "0.0.0";
+
+        var clean = version.Split('+', 2, StringSplitOptions.TrimEntries)[0];
+        return $"lash v{clean}";
     }
 
     private static Options ParseOptions(string[] args)
