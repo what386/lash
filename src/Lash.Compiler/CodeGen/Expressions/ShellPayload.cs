@@ -4,6 +4,11 @@ using System.Text;
 
 internal sealed partial class ExpressionGenerator
 {
+    private static string NormalizeLashShellPayload(string payload)
+    {
+        return ExpandLashArraySpread(payload);
+    }
+
     private static string RenderInterpolatedShellPayload(string template)
     {
         var builder = new StringBuilder();
@@ -50,6 +55,95 @@ internal sealed partial class ExpressionGenerator
         }
 
         return builder.ToString();
+    }
+
+    private static string ExpandLashArraySpread(string payload)
+    {
+        if (!payload.Contains("...", StringComparison.Ordinal))
+            return payload;
+
+        var builder = new StringBuilder(payload.Length + 16);
+        var inSingleQuote = false;
+        var inDoubleQuote = false;
+        var escapeNext = false;
+
+        for (var i = 0; i < payload.Length; i++)
+        {
+            var ch = payload[i];
+
+            if (inSingleQuote)
+            {
+                builder.Append(ch);
+                if (ch == '\'')
+                    inSingleQuote = false;
+                continue;
+            }
+
+            if (escapeNext)
+            {
+                builder.Append(ch);
+                escapeNext = false;
+                continue;
+            }
+
+            if (ch == '\\')
+            {
+                builder.Append(ch);
+                escapeNext = true;
+                continue;
+            }
+
+            if (ch == '\'')
+            {
+                builder.Append(ch);
+                inSingleQuote = true;
+                continue;
+            }
+
+            if (ch == '"')
+            {
+                builder.Append(ch);
+                inDoubleQuote = !inDoubleQuote;
+                continue;
+            }
+
+            if (ch == '$' && TryMatchSpreadVariable(payload, i, out var variableName, out var consumedLength))
+            {
+                builder.Append(inDoubleQuote
+                    ? "${" + variableName + "[@]}"
+                    : "\"${" + variableName + "[@]}\"");
+                i += consumedLength - 1;
+                continue;
+            }
+
+            builder.Append(ch);
+        }
+
+        return builder.ToString();
+    }
+
+    private static bool TryMatchSpreadVariable(string text, int dollarIndex, out string variableName, out int consumedLength)
+    {
+        variableName = string.Empty;
+        consumedLength = 0;
+
+        var nameStart = dollarIndex + 1;
+        if (nameStart >= text.Length || !IsIdentifierStart(text[nameStart]))
+            return false;
+
+        var cursor = nameStart + 1;
+        while (cursor < text.Length && IsIdentifierPart(text[cursor]))
+            cursor++;
+
+        if (cursor + 2 >= text.Length)
+            return false;
+
+        if (text[cursor] != '.' || text[cursor + 1] != '.' || text[cursor + 2] != '.')
+            return false;
+
+        variableName = text[nameStart..cursor];
+        consumedLength = (cursor + 3) - dollarIndex;
+        return true;
     }
 
     private struct ShellQuoteState

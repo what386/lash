@@ -93,9 +93,9 @@ internal sealed partial class ExpressionGenerator
             literal.LiteralType is PrimitiveType { PrimitiveKind: PrimitiveType.Kind.String })
         {
             var value = literal.Value?.ToString() ?? string.Empty;
-            payload = literal.IsInterpolated
+            payload = NormalizeLashShellPayload(literal.IsInterpolated
                 ? RenderInterpolatedShellPayload(value)
-                : UnescapeShellPayloadText(value);
+                : UnescapeShellPayloadText(value));
             return true;
         }
 
