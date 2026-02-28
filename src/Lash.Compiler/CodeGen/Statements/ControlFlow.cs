@@ -104,6 +104,43 @@ internal sealed partial class StatementGenerator
         owner.Emit("done");
     }
 
+    private void GenerateSelectLoop(SelectLoop selectLoop)
+    {
+        string optionsExpr;
+        if (!string.IsNullOrEmpty(selectLoop.GlobPattern))
+        {
+            optionsExpr = selectLoop.GlobPattern!;
+        }
+        else
+        {
+            if (selectLoop.Options is null)
+                throw new InvalidOperationException("Select-loop is missing its options expression.");
+
+            optionsExpr = selectLoop.Options switch
+            {
+                RangeExpression range =>
+                    $"$(seq {owner.GenerateExpression(range.Start)} {owner.GenerateExpression(range.End)})",
+                IdentifierExpression ident => string.Equals(ident.Name, "argv", StringComparison.Ordinal)
+                    ? $"\"${{{BashGenerator.ArgvName}[@]}}\""
+                    : $"\"${{{ident.Name}[@]}}\"",
+                _ => owner.GenerateExpression(selectLoop.Options)
+            };
+        }
+
+        owner.Emit($"select {selectLoop.Variable} in {optionsExpr}; do");
+        owner.IndentLevel++;
+
+        foreach (var stmt in selectLoop.Body)
+        {
+            owner.EmitLine();
+            GenerateStatement(stmt);
+        }
+
+        owner.IndentLevel--;
+        owner.EmitLine();
+        owner.Emit("done");
+    }
+
     private void GenerateSwitchStatement(SwitchStatement switchStatement)
     {
         var switchValue = owner.GenerateExpression(switchStatement.Value);

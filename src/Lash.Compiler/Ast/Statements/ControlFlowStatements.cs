@@ -24,6 +24,14 @@ public class ForLoop : Statement
     public List<Statement> Body { get; set; } = new();
 }
 
+public class SelectLoop : Statement
+{
+    public string Variable { get; set; } = string.Empty;
+    public Expression? Options { get; set; }
+    public string? GlobPattern { get; set; }
+    public List<Statement> Body { get; set; } = new();
+}
+
 public class WhileLoop : Statement
 {
     public Expression Condition { get; set; } = null!;
