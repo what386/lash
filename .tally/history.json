@@ -133,5 +133,31 @@
       "completed_at": "2026-02-28T23:28:04.203288347Z"
     },
     "version": null
+  },
+  {
+    "change": {
+      "description": "Add Bash bootstrap build script (scripts/build/build.sh) mirroring Lash build flags and output layout",
+      "priority": "Medium",
+      "tags": [
+        "feature",
+        "tooling"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-28T23:28:04.293336526Z"
+    },
+    "version": null
+  },
+  {
+    "change": {
+      "description": "Add Bash bootstrap pack script (scripts/build/pack.sh) to archive release bundles into dist/*.tar.gz",
+      "priority": "Medium",
+      "tags": [
+        "feature",
+        "tooling"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-28T23:28:04.298528183Z"
+    },
+    "version": null
   }
 ]
