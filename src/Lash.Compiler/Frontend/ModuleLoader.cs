@@ -833,6 +833,9 @@ public static class ModuleLoader
             if (IsIdentifier(left))
                 return true;
 
+            if (IsVariableReference(left))
+                return true;
+
             if (LooksLikeIndexTarget(left))
                 return true;
 
@@ -859,6 +862,13 @@ public static class ModuleLoader
         return true;
     }
 
+    private static bool IsVariableReference(string value)
+    {
+        return value.Length > 1
+               && value[0] == '$'
+               && IsIdentifier(value[1..]);
+    }
+
     private static bool LooksLikeIndexTarget(string value)
     {
         if (!value.EndsWith("]", StringComparison.Ordinal))
@@ -869,7 +879,7 @@ public static class ModuleLoader
             return false;
 
         var baseName = value[..bracket].Trim();
-        return IsIdentifier(baseName);
+        return IsIdentifier(baseName) || IsVariableReference(baseName);
     }
 }
 

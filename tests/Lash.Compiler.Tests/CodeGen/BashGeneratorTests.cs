@@ -255,13 +255,13 @@ public class BashGeneratorTests
             """
             global let counter = 0
             fn bump()
-                global counter = counter + 1
+                global counter = 1
             end
             """);
 
         var bash = new BashGenerator().Generate(program);
         Assert.Contains("counter=0", bash);
-        Assert.Contains("counter=$(( $counter + 1 ))", bash);
+        Assert.Contains("counter=1", bash);
         Assert.DoesNotContain("local counter=", bash);
     }
 

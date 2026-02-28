@@ -76,7 +76,7 @@ public class RoundTripTests
             let raw = [[line1
             echo "still text"
             line3]]
-            sh $"printf '%s\n' {raw}"
+            sh $"printf '%s\\n' \"{raw}\""
             """);
 
         Assert.False(result.Diagnostics.HasErrors, string.Join(Environment.NewLine, result.Diagnostics.GetErrors()));
