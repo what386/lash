@@ -181,10 +181,14 @@ primaryExpression
     : literal
     | enumAccess
     | shellCaptureExpression
+    | variableReference
     | functionCall
-    | IDENTIFIER
     | arrayLiteral
     | '(' expression ')'
+    ;
+
+variableReference
+    : '$' IDENTIFIER
     ;
 
 arrayLiteral

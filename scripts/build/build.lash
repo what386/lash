@@ -17,6 +17,7 @@ let PROJECTS = [
 // Build defaults
 const CONFIGURATION = "Release"
 let ENABLE_TRIMMING = true
+let NO_TRIM_TOOLS = []
 let ENABLE_SINGLE_FILE = true
 let ENABLE_READY_TO_RUN = true
 
@@ -31,7 +32,7 @@ fn show_help()
     echo "Usage: $0 [OPTIONS] <platform1> [platform2] ..."
     echo ""
     echo "Options:"
-    echo "  --no-trim          Disable trimming (faster builds, larger binaries)"
+    echo "  --no-trim [tool]   Disable trimming globally or for one tool"
     echo "  --no-single-file   Publish as multiple files (faster builds, easier debugging)"
     echo "  --no-ready2run     Disable ReadyToRun compilation (faster builds, slower startup)"
     echo "  -h, --help         Show this help message"
@@ -47,10 +48,42 @@ fn show_help()
     echo "Examples:"
     echo "  $0 win-x64                           # Build only Windows 64-bit"
     echo "  $0 --no-trim win-x64                 # Build Windows 64-bit without trimming"
+    echo "  $0 --no-trim lashlsp linux-x64       # Disable trimming only for lashlsp"
     echo "  $0 --no-single-file --no-trim win-x64  # Fast dev build"
     echo "  $0 win-x64 linux-x64                 # Build Windows and Linux 64-bit"
     echo "  $0 osx-x64 osx-arm64                 # Build both macOS versions"
     exit 0
+end
+
+fn is_known_tool(tool_name)
+    for entry in PROJECTS
+        let known = $sh $"printf '%s' \"{entry}\" | cut -d: -f1"
+        if known == tool_name
+            return true
+        end
+    end
+    return false
+end
+
+fn list_to_csv(values)
+    if #values == 0
+        return ""
+    end
+    return $sh $"printf '%s\n' \"${values[@]}\" | paste -sd, -"
+end
+
+fn should_trim_tool(tool_name)
+    if !ENABLE_TRIMMING
+        return false
+    end
+
+    for disabled in NO_TRIM_TOOLS
+        if disabled == tool_name
+            return false
+        end
+    end
+
+    return true
 end
 
 fn is_windows_rid(rid)
@@ -157,15 +190,15 @@ fn build_tool_for_platform(tool_name, project_path, rid, bundle_dir)
     ]
 
     if ENABLE_SINGLE_FILE
-        publish_args + = ["-p:PublishSingleFile=True"]
+        publish_args += ["-p:PublishSingleFile=True"]
     end
 
     if ENABLE_READY_TO_RUN
-        publish_args + = ["-p:PublishReadyToRun=True"]
+        publish_args += ["-p:PublishReadyToRun=True"]
     end
 
-    if ENABLE_TRIMMING
-        publish_args + = [
+    if should_trim_tool(tool_name)
+        publish_args += [
         "-p:PublishTrimmed=True",
         "-p:TrimMode=CopyUsed",
         "-p:EnableTrimAnalyzer=True",
@@ -252,8 +285,14 @@ while #argv > 0
     if arg == "-h" || arg == "--help"
         show_help()
     elif arg == "--no-trim"
-        ENABLE_TRIMMING = false
-        shift
+        if #argv > 1 && is_known_tool(argv[1])
+            NO_TRIM_TOOLS += [argv[1]]
+            shift
+            shift
+        else
+            ENABLE_TRIMMING = false
+            shift
+        end
     elif arg == "--no-single-file"
         ENABLE_SINGLE_FILE = false
         shift
@@ -261,7 +300,7 @@ while #argv > 0
         ENABLE_READY_TO_RUN = false
         shift
     else
-        BUILD_PLATFORMS + = [arg]
+        BUILD_PLATFORMS += [arg]
         shift
     end
 end
@@ -275,7 +314,12 @@ end
 echo -e "${GREEN}  Building ${PROJECT_NAME}${NC}"
 echo -e "${BLUE}Configuration:${NC}"
 if ENABLE_TRIMMING
-    echo -e "  Trimming:     ${GREEN}Enabled${NC}"
+    if #NO_TRIM_TOOLS == 0
+        echo -e "  Trimming:     ${GREEN}Enabled${NC}"
+    else
+        let disabled = list_to_csv(NO_TRIM_TOOLS)
+        echo -e "  Trimming:     ${YELLOW}Enabled (except: ${disabled})${NC}"
+    end
 else
     echo -e "  Trimming:     ${YELLOW}Disabled${NC}"
 end

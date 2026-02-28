@@ -436,19 +436,11 @@ public class AstBuilder : LashBaseVisitor<AstNode>
         if (context.shellCaptureExpression() != null)
             return Visit(context.shellCaptureExpression());
 
+        if (context.variableReference() != null)
+            return Visit(context.variableReference());
+
         if (context.functionCall() != null)
             return Visit(context.functionCall());
-
-        if (context.IDENTIFIER() != null)
-        {
-            return new IdentifierExpression
-            {
-                Name = context.IDENTIFIER().GetText(),
-                Line = context.Start.Line,
-                Column = context.Start.Column,
-                Type = ExpressionTypes.Unknown
-            };
-        }
 
         if (context.arrayLiteral() != null)
             return Visit(context.arrayLiteral());
@@ -457,6 +449,18 @@ public class AstBuilder : LashBaseVisitor<AstNode>
             return Visit(context.expression());
 
         return new NullLiteral();
+    }
+
+    public override AstNode VisitVariableReference(LashParser.VariableReferenceContext context)
+    {
+        var identifier = context.IDENTIFIER().Symbol;
+        return new IdentifierExpression
+        {
+            Name = context.IDENTIFIER().GetText(),
+            Line = identifier.Line,
+            Column = identifier.Column,
+            Type = ExpressionTypes.Unknown
+        };
     }
 
     public override AstNode VisitEnumAccess(LashParser.EnumAccessContext context)

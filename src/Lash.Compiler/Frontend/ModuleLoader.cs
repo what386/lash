@@ -301,18 +301,6 @@ public static class ModuleLoader
             if (ch == '/' && i + 1 < line.Length && line[i + 1] == '/')
                 break;
 
-            if (ch == '[' && i + 1 < line.Length && line[i + 1] == '[')
-            {
-                i++;
-                continue;
-            }
-
-            if (ch == ']' && i + 1 < line.Length && line[i + 1] == ']')
-            {
-                i++;
-                continue;
-            }
-
             if (ch is '(' or '[')
             {
                 depth++;

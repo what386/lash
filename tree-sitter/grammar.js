@@ -389,7 +389,6 @@ module.exports = grammar({
       $.array_literal,
       $.enum_access,
       $.function_call,
-      $.identifier,
       seq("(", $.expression, ")"),
     ),
 
