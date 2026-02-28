@@ -21,23 +21,35 @@ internal static class SyntaxErrorFormatter {
       return DiagnosticMessage.WithTip(
           $"Unrecognized symbol '{offendingText}'",
           "Use '@' for preprocessor directives and '#' only for length (for " +
-          "example '#items').");
+              "example '#items').");
 
     if (rawMessage.StartsWith("extraneous input", StringComparison.Ordinal))
       return DiagnosticMessage.WithTip(
           $"Unexpected token '{offendingText}'",
           "Check for a missing operator, delimiter, or block terminator.");
 
-    if (rawMessage.StartsWith("mismatched input", StringComparison.Ordinal))
+    if (rawMessage.StartsWith("mismatched input", StringComparison.Ordinal)) {
+      if (LooksLikeIdentifier(offendingText))
+        return DiagnosticMessage.WithTip(
+            $"Unexpected token '{offendingText}'",
+            $"Use '${offendingText}' for variable references.");
+
       return DiagnosticMessage.WithTip(
           $"Unexpected token '{offendingText}'",
           "Check surrounding syntax and matching block keywords.");
+    }
 
     if (rawMessage.StartsWith("no viable alternative",
-                              StringComparison.Ordinal))
+                              StringComparison.Ordinal)) {
+      if (LooksLikeIdentifier(offendingText))
+        return DiagnosticMessage.WithTip(
+            $"Invalid syntax near '{offendingText}'",
+            $"Use '${offendingText}' for variable references.");
+
       return DiagnosticMessage.WithTip(
           $"Invalid syntax near '{offendingText}'",
           "Check expression structure and quoting.");
+    }
 
     return $"Syntax error: {rawMessage}";
   }
@@ -70,6 +82,20 @@ internal static class SyntaxErrorFormatter {
         .Replace("\n", "\\n", StringComparison.Ordinal);
   }
 
+  private static bool LooksLikeIdentifier(string text) {
+    if (string.IsNullOrWhiteSpace(text))
+      return false;
+    if (text[0] is not(>= 'a' and <= 'z' or >= 'A' and <= 'Z' or '_'))
+      return false;
+
+    for (var i = 1; i < text.Length; i++)
+      if (text[i] is not(>= 'a' and <= 'z' or >= 'A' and <= 'Z' or >= '0' and <=
+                         '9' or '_'))
+        return false;
+
+    return true;
+  }
+
   public static bool IsMissingEndAtEof(IToken? offendingSymbol,
                                        string rawMessage) {
     if (!string.Equals(NormalizeToken(offendingSymbol?.Text), "<EOF>",
@@ -81,9 +107,9 @@ internal static class SyntaxErrorFormatter {
            expected.Contains("'end'", StringComparison.Ordinal);
   }
 
-  private static string FormatUnexpectedEndOfFile(string rawMessage,
-                                                  UnclosedBlockHint?
-                                                      unclosedBlockHint) {
+  private static string
+  FormatUnexpectedEndOfFile(string rawMessage,
+                            UnclosedBlockHint? unclosedBlockHint) {
     var expected = ExtractExpectedTokens(rawMessage);
     if (expected is null)
       return DiagnosticMessage.WithTip(

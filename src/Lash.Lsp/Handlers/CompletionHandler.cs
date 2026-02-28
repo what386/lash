@@ -52,7 +52,7 @@ internal sealed class CompletionHandler : CompletionHandlerBase
         if (!documents.TryGet(request.TextDocument.Uri, out var snapshot) || snapshot is null)
             return Task.FromResult(new CompletionList());
 
-        snapshotText.TryGetCompletionPrefix(snapshot, request.Position, out var prefix, out var directiveContext);
+        snapshotText.TryGetCompletionPrefix(snapshot, request.Position, out var prefix, out var directiveContext, out var dollarPrefix);
 
         var items = new List<CompletionItem>();
         var seen = new HashSet<string>(StringComparer.Ordinal);
@@ -64,8 +64,8 @@ internal sealed class CompletionHandler : CompletionHandlerBase
         }
 
         AddKeywordItems(items, seen, prefix);
-        AddBuiltinItems(items, seen, prefix);
-        AddSymbolItems(snapshot, items, seen, prefix);
+        AddBuiltinItems(items, seen, prefix, dollarPrefix);
+        AddSymbolItems(snapshot, items, seen, prefix, dollarPrefix);
         AddSnippetItems(items, seen, prefix);
         AddDirectiveItems(items, seen, prefix);
 
@@ -103,7 +103,7 @@ internal sealed class CompletionHandler : CompletionHandlerBase
         }
     }
 
-    private static void AddBuiltinItems(List<CompletionItem> items, HashSet<string> seen, string prefix)
+    private static void AddBuiltinItems(List<CompletionItem> items, HashSet<string> seen, string prefix, bool dollarPrefix)
     {
         foreach (var builtin in new[] { "argv" })
         {
@@ -114,20 +114,26 @@ internal sealed class CompletionHandler : CompletionHandlerBase
             {
                 Label = builtin,
                 Kind = CompletionItemKind.Variable,
-                InsertText = builtin,
+                InsertText = dollarPrefix ? builtin : "$" + builtin,
                 Detail = "Built-in",
                 SortText = $"2_{builtin}"
             });
         }
     }
 
-    private void AddSymbolItems(DocumentSnapshot snapshot, List<CompletionItem> items, HashSet<string> seen, string prefix)
+    private void AddSymbolItems(DocumentSnapshot snapshot, List<CompletionItem> items, HashSet<string> seen, string prefix, bool dollarPrefix)
     {
         foreach (var declaration in symbols.GetLocalDeclarations(snapshot).OrderBy(static d => d.Name, StringComparer.Ordinal))
         {
             var name = declaration.Name;
             if (!MatchesPrefix(name, prefix) || !seen.Add(name))
                 continue;
+
+            var insertText = declaration.Kind switch
+            {
+                LashSymbolKind.Variable or LashSymbolKind.Constant or LashSymbolKind.Parameter => dollarPrefix ? name : "$" + name,
+                _ => name
+            };
 
             items.Add(new CompletionItem
             {
@@ -139,7 +145,7 @@ internal sealed class CompletionHandler : CompletionHandlerBase
                     LashSymbolKind.Enum => CompletionItemKind.Enum,
                     _ => CompletionItemKind.Variable
                 },
-                InsertText = name,
+                InsertText = insertText,
                 Detail = declaration.Kind.ToString(),
                 SortText = $"0_{name}"
             });

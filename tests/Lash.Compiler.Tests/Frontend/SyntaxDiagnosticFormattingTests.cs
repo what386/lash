@@ -4,11 +4,9 @@ using Xunit;
 
 namespace Lash.Compiler.Tests.Frontend;
 
-public class SyntaxDiagnosticFormattingTests
-{
-    [Fact]
-    public void ParserErrors_ReportUnknownAtTokensAsUnrecognizedSymbols()
-    {
+public class SyntaxDiagnosticFormattingTests {
+  [Fact]
+  public void ParserErrors_ReportUnknownAtTokensAsUnrecognizedSymbols() {
         var diagnostics = Parse(
             """
             let x = #@
@@ -17,11 +15,10 @@ public class SyntaxDiagnosticFormattingTests
         var error = diagnostics.GetErrors().First();
         Assert.Contains("Unrecognized symbol '@'", error.Message);
         Assert.Contains("Tip:", error.Message, StringComparison.Ordinal);
-    }
+  }
 
-    [Fact]
-    public void ParserErrors_UseConciseUnexpectedTokenMessage_ForDanglingEnd()
-    {
+  [Fact]
+  public void ParserErrors_UseConciseUnexpectedTokenMessage_ForDanglingEnd() {
         var diagnostics = Parse(
             """
             let x = 1
@@ -31,22 +28,20 @@ public class SyntaxDiagnosticFormattingTests
         var error = Assert.Single(diagnostics.GetErrors());
         Assert.Contains("'end'", error.Message);
         Assert.DoesNotContain("expecting {", error.Message);
-    }
+  }
 
-    [Fact]
-    public void ParserErrors_ReportInvalidVariableName()
-    {
+  [Fact]
+  public void ParserErrors_ReportInvalidVariableName() {
         var diagnostics = Parse(
             """
             let 1abc = 1
             """);
 
         Assert.True(diagnostics.HasErrors);
-    }
+  }
 
-    [Fact]
-    public void ParserErrors_ReportMissingEndForUnexpectedEof()
-    {
+  [Fact]
+  public void ParserErrors_ReportMissingEndForUnexpectedEof() {
         var diagnostics = Parse(
             """
             if true
@@ -63,11 +58,11 @@ public class SyntaxDiagnosticFormattingTests
         Assert.Equal(DiagnosticCodes.ParseUnclosedBlockInfo, info.Code);
         Assert.Equal(1, info.Line);
         Assert.Contains("Unclosed 'if' block starts here.", info.Message, StringComparison.Ordinal);
-    }
+  }
 
-    [Fact]
-    public void ParserErrors_ReportInnermostUnclosedBlock_WhenNestedBlocksMissingEnd()
-    {
+  [Fact]
+  public void
+  ParserErrors_ReportInnermostUnclosedBlock_WhenNestedBlocksMissingEnd() {
         var diagnostics = Parse(
             """
             fn outer()
@@ -81,24 +76,35 @@ public class SyntaxDiagnosticFormattingTests
         var info = Assert.Single(diagnostics.GetInfos());
         Assert.Equal(2, info.Line);
         Assert.Contains("Unclosed 'if' block starts here.", info.Message, StringComparison.Ordinal);
+  }
+
+  [Fact]
+  public void ParserErrors_HintDollarPrefixedVariableReferences() {
+        var diagnostics = Parse(
+            """
+            let x = 1
+            if x == 1
+                echo "ok"
+            end
+            """);
+
+        var error = Assert.Single(diagnostics.GetErrors());
+        Assert.Contains("Use '$x' for variable references.", error.Message, StringComparison.Ordinal);
+  }
+
+  private static DiagnosticBag Parse(string source) {
+    var diagnostics = new DiagnosticBag();
+    var path = Path.Combine(Path.GetTempPath(),
+                            $"lash-syntax-{Guid.NewGuid():N}.lash");
+    File.WriteAllText(path, source);
+
+    try {
+      ModuleLoader.TryLoadProgram(path, diagnostics, out _);
+    } finally {
+      if (File.Exists(path))
+        File.Delete(path);
     }
 
-    private static DiagnosticBag Parse(string source)
-    {
-        var diagnostics = new DiagnosticBag();
-        var path = Path.Combine(Path.GetTempPath(), $"lash-syntax-{Guid.NewGuid():N}.lash");
-        File.WriteAllText(path, source);
-
-        try
-        {
-            ModuleLoader.TryLoadProgram(path, diagnostics, out _);
-        }
-        finally
-        {
-            if (File.Exists(path))
-                File.Delete(path);
-        }
-
-        return diagnostics;
-    }
+    return diagnostics;
+  }
 }

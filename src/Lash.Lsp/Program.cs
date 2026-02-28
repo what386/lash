@@ -35,6 +35,7 @@ public static class Program
                 .WithHandler<PrepareRenameHandler>()
                 .WithHandler<RenameHandler>()
                 .WithHandler<CompletionHandler>()
+                .WithHandler<CodeActionHandler>()
                 .WithHandler<DocumentFormattingHandler>()
                 .WithServices(services =>
                 {

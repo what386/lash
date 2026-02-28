@@ -48,10 +48,11 @@ internal sealed class SnapshotTextService
         return false;
     }
 
-    public bool TryGetCompletionPrefix(DocumentSnapshot snapshot, Position position, out string prefix, out bool directiveContext)
+    public bool TryGetCompletionPrefix(DocumentSnapshot snapshot, Position position, out string prefix, out bool directiveContext, out bool dollarPrefix)
     {
         prefix = string.Empty;
         directiveContext = false;
+        dollarPrefix = false;
 
         if (!TryGetLine(snapshot, (int)position.Line, out var lineText))
             return false;
@@ -73,6 +74,9 @@ internal sealed class SnapshotTextService
             prefix = "@" + prefix;
             return true;
         }
+
+        if (i >= 0 && lineText[i] == '$')
+            dollarPrefix = true;
 
         var nonWhitespace = 0;
         while (nonWhitespace < lineText.Length && char.IsWhiteSpace(lineText[nonWhitespace]))
