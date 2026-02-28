@@ -14,14 +14,14 @@ public class GrammarTests
         var program = TestCompiler.ParseOrThrow(
             """
             fn greet(name, greeting = "Hello")
-                return greeting + ", " + name
+                return $greeting + ", " + $name
             end
 
             let items = ["a", "b"]
-            const first = items[0]
+            const first = $items[0]
             let count = 2 + 3
 
-            switch first
+            switch $first
                 case "a":
                     echo ok
             end
@@ -41,7 +41,7 @@ public class GrammarTests
             """
             global let counter = 0
             fn bump()
-                global counter = counter + 1
+                global counter = $counter + 1
             end
             """);
 
@@ -105,7 +105,7 @@ public class GrammarTests
             """
             let word = "Rob"
             let greeting = ""
-            word | greet() | greeting
+            $word | greet() | $greeting
             """);
 
         var statement = Assert.IsType<ExpressionStatement>(program.Statements[2]);
@@ -120,7 +120,7 @@ public class GrammarTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            switch x
+            switch $x
                 case 1: echo "one"
             end
             """);
@@ -138,15 +138,15 @@ public class GrammarTests
             """
             let items = ["a", "b", "c"]
             for i in 0 .. 2 step 1
-                items[i] = "x"
+                $items[$i] = "x"
             end
             select choice in ["a", "b"]
                 break
             end
-            while #items > 0
+            while #$items > 0
                 break
             end
-            until #items == 0
+            until #$items == 0
                 continue
             end
             """);
@@ -181,9 +181,9 @@ public class GrammarTests
         var program = TestCompiler.ParseOrThrow(
             """
             let x = 5
-            if x > 10
+            if $x > 10
                 echo high
-            elif x > 0
+            elif $x > 0
                 echo mid
             else
                 echo low
@@ -437,7 +437,7 @@ public class GrammarTests
         var program = TestCompiler.ParseOrThrow(
             """
             let values = []
-            values["name"] = "lash"
+            $values["name"] = "lash"
             """);
 
         var assignment = Assert.IsType<Assignment>(program.Statements[1]);

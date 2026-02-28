@@ -13,7 +13,7 @@ public class AdditionalAnalyzerTests
         var program = TestCompiler.ParseOrThrow(
             """
             let x
-            let y = x + 1
+            let y = $x + 1
             """);
 
         var diagnostics = new DiagnosticBag();
@@ -30,7 +30,7 @@ public class AdditionalAnalyzerTests
         var program = TestCompiler.ParseOrThrow(
             """
             const z = 0
-            let x = 10 / z
+            let x = 10 / $z
             """);
 
         var diagnostics = new DiagnosticBag();
@@ -87,7 +87,7 @@ public class AdditionalAnalyzerTests
             end
 
             let payload = "text"
-            feed() << payload
+            feed() << $payload
             """);
 
         var diagnostics = new DiagnosticBag();
@@ -108,7 +108,7 @@ public class AdditionalAnalyzerTests
             let x = 1
             fn demo()
                 let x = 2
-                return x
+                return $x
                 echo "never"
             end
             wait jobs
@@ -192,7 +192,7 @@ public class AdditionalAnalyzerTests
         var program = TestCompiler.ParseOrThrow(
             """
             let x = 1
-            if false && x > 0
+            if false && $x > 0
                 echo "never"
             else
                 echo "ok"
@@ -242,8 +242,8 @@ public class AdditionalAnalyzerTests
         var program = TestCompiler.ParseOrThrow(
             """
             fn exists(path)
-                let ok = $(test -f \"$path\"; echo $?)
-                return ok == "0"
+                let ok = $(test $"-f {path}")
+                return $ok == "1"
             end
 
             exists("README.md")
@@ -284,7 +284,7 @@ public class AdditionalAnalyzerTests
         var program = TestCompiler.ParseOrThrow(
             """
             fn parse(value)
-                switch value
+                switch $value
                     case "ok":
                         return 1
                 end

@@ -79,17 +79,16 @@ public class SyntaxDiagnosticFormattingTests {
   }
 
   [Fact]
-  public void ParserErrors_HintDollarPrefixedVariableReferences() {
+  public void ParserErrors_AcceptsDollarPrefixedVariableReferences() {
         var diagnostics = Parse(
             """
             let x = 1
-            if x == 1
+            if $x == 1
                 echo "ok"
             end
             """);
 
-        var error = Assert.Single(diagnostics.GetErrors());
-        Assert.Contains("Use '$x' for variable references.", error.Message, StringComparison.Ordinal);
+        Assert.False(diagnostics.HasErrors, string.Join(Environment.NewLine, diagnostics.GetErrors()));
   }
 
   private static DiagnosticBag Parse(string source) {

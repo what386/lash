@@ -33,7 +33,7 @@ public class PreprocessorTests
         var program = TestCompiler.ParseOrThrow(
             """
             let items = ["a", "b"]
-            let count = #items
+            let count = #$items
             """);
 
         var count = Assert.IsType<VariableDeclaration>(program.Statements[1]);
@@ -269,7 +269,7 @@ public class PreprocessorTests
             var textPath = Path.Combine(tempDir, "doc.txt");
             var entryPath = Path.Combine(tempDir, "main.lash");
             File.WriteAllText(textPath, "hello\nworld");
-            File.WriteAllText(entryPath, "@import \"doc.txt\" into doc\nlet size = #doc\n");
+            File.WriteAllText(entryPath, "@import \"doc.txt\" into doc\nlet size = #$doc\n");
 
             var diagnostics = new DiagnosticBag();
             var success = ModuleLoader.TryLoadProgram(entryPath, diagnostics, out var program);

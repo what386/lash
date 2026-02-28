@@ -13,7 +13,7 @@ public class RoundTripTests
             let name = "Rob"
             let greeting = $"Hi {name}"
             let items = ["a", "b", "c"]
-            let count = #items
+            let count = #$items
             echo "$greeting"
             echo "$count"
             """);
@@ -33,7 +33,7 @@ public class RoundTripTests
             """
             global let counter = 0
             fn bump()
-                global counter = counter + 1
+                global counter = $counter + 1
             end
             bump()
             bump()
@@ -55,7 +55,7 @@ public class RoundTripTests
             """
             global let sum = 0
             for i in 1 .. 3
-                global sum = sum + i
+                global sum = $sum + $i
             end
             echo "$sum"
             """);
@@ -76,7 +76,7 @@ public class RoundTripTests
             let raw = [[line1
             echo "still text"
             line3]]
-            echo "$raw"
+            sh $"printf '%s\n' {raw}"
             """);
 
         Assert.False(result.Diagnostics.HasErrors, string.Join(Environment.NewLine, result.Diagnostics.GetErrors()));
@@ -102,6 +102,27 @@ public class RoundTripTests
         var run = CompilerPipeline.RunBash(bash);
         Assert.Equal(0, run.ExitCode);
         Assert.Equal("line1\nline2\n", run.StdOut);
+    }
+
+    [Fact]
+    public void RoundTrip_CommandCaptureSupportsInterpolationAndSpread()
+    {
+        var result = CompilerPipeline.Compile(
+            """
+            let name = "pilot"
+            let values = ["a", "b", "c"]
+            let greeting = $(printf $"hello-{name}")
+            let csv = $(printf '%s,' $values... | sed 's/,$//')
+            echo $greeting
+            echo $csv
+            """);
+
+        Assert.False(result.Diagnostics.HasErrors, string.Join(Environment.NewLine, result.Diagnostics.GetErrors()));
+        var bash = Assert.IsType<string>(result.Bash);
+
+        var run = CompilerPipeline.RunBash(bash);
+        Assert.Equal(0, run.ExitCode);
+        Assert.Equal("hello-pilot\na,b,c\n", run.StdOut);
     }
 
     [Fact]
@@ -304,12 +325,12 @@ public class RoundTripTests
         var result = CompilerPipeline.Compile(
             """
             let i = 0
-            while i < 5
-                i = i + 1
-                if i == 2
+            while $i < 5
+                i = $i + 1
+                if $i == 2
                     continue
                 end
-                if i == 4
+                if $i == 4
                     break
                 end
                 echo "$i"
@@ -330,8 +351,8 @@ public class RoundTripTests
         var result = CompilerPipeline.Compile(
             """
             let i = 0
-            until i >= 3
-                i = i + 1
+            until $i >= 3
+                i = $i + 1
             end
             echo "$i"
             """);
@@ -349,9 +370,9 @@ public class RoundTripTests
     {
         var result = CompilerPipeline.Compile(
             """
-            let first = argv[0]
+            let first = $argv[0]
             shift
-            let remaining = #argv
+            let remaining = #$argv
             echo "$first"
             echo "$remaining"
             """);
@@ -469,12 +490,12 @@ public class RoundTripTests
         var result = CompilerPipeline.Compile(
             """
             fn greet(word)
-                return "hello-" + word
+                return "hello-" + $word
             end
 
             let word = "Rob"
             let greeting = ""
-            word | greet() | greeting
+            $word | greet() | $greeting
             echo "$greeting"
             """);
 
@@ -492,8 +513,8 @@ public class RoundTripTests
         var result = CompilerPipeline.Compile(
             """
             let meta = []
-            meta["name"] = "lash"
-            let selected = meta["name"]
+            $meta["name"] = "lash"
+            let selected = $meta["name"]
             echo "$selected"
             """);
 
@@ -511,7 +532,7 @@ public class RoundTripTests
         var result = CompilerPipeline.Compile(
             """
             let os = "win-11"
-            switch os
+            switch $os
                 case "win-*":
                     echo match
                 case "linux-*":

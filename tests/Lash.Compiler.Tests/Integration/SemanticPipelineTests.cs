@@ -13,7 +13,7 @@ public class SemanticPipelineTests
             """
             let x = 1
             let y = "hello"
-            let z = x + y
+            let z = $x + $y
             """);
 
         Assert.True(result.Diagnostics.HasErrors);
@@ -41,7 +41,7 @@ public class SemanticPipelineTests
         var result = CompilerPipeline.Compile(
             """
             let x = 42
-            let y = #x
+            let y = #$x
             """);
 
         Assert.True(result.Diagnostics.HasErrors);
@@ -56,7 +56,7 @@ public class SemanticPipelineTests
             """
             global let x = 1
             fn inc()
-                global x = x + 1
+                global x = $x + 1
             end
             inc()
             """);
@@ -114,8 +114,8 @@ public class SemanticPipelineTests
         var result = CompilerPipeline.Compile(
             """
             let values = []
-            values[0] = "a"
-            values["name"] = "b"
+            $values[0] = "a"
+            $values["name"] = "b"
             """);
 
         Assert.True(result.Diagnostics.HasErrors);

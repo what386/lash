@@ -15,7 +15,7 @@ public class TypeCheckerTests
             """
             let x = 1
             let y = "hello"
-            let z = x + y
+            let z = $x + $y
             """);
 
         var diagnostics = new DiagnosticBag();
@@ -31,7 +31,7 @@ public class TypeCheckerTests
             """
             let x = 1
             let y = 2
-            let z = x + y
+            let z = $x + $y
             """);
 
         var diagnostics = new DiagnosticBag();
@@ -46,7 +46,7 @@ public class TypeCheckerTests
         var program = TestCompiler.ParseOrThrow(
             """
             let x = 42
-            let y = #x
+            let y = #$x
             """);
 
         var diagnostics = new DiagnosticBag();
@@ -61,7 +61,7 @@ public class TypeCheckerTests
         var program = TestCompiler.ParseOrThrow(
             """
             let values = [1, 2, 3]
-            let count = #values
+            let count = #$values
             """);
 
         var diagnostics = new DiagnosticBag();
@@ -106,8 +106,8 @@ public class TypeCheckerTests
         var program = TestCompiler.ParseOrThrow(
             """
             let values = []
-            values[0] = "a"
-            values["name"] = "b"
+            $values[0] = "a"
+            $values["name"] = "b"
             """);
 
         var diagnostics = new DiagnosticBag();
@@ -141,7 +141,7 @@ public class TypeCheckerTests
             let pid = 1
             let status = 0
             wait $pid into status
-            let next = status + 1
+            let next = $status + 1
             """);
 
         var diagnostics = new DiagnosticBag();
@@ -159,7 +159,7 @@ public class TypeCheckerTests
             subshell into pid
                 echo "work"
             end &
-            let next = pid + 1
+            let next = $pid + 1
             """);
 
         var diagnostics = new DiagnosticBag();
@@ -174,7 +174,7 @@ public class TypeCheckerTests
         var program = TestCompiler.ParseOrThrow(
             """
             let x = 1
-            let y = x[0]
+            let y = $x[0]
             """);
 
         var diagnostics = new DiagnosticBag();

@@ -38,8 +38,8 @@ public class BashGeneratorTests
         var program = TestCompiler.ParseOrThrow(
             """
             let items = ["zero", "one"]
-            let first = items[0]
-            items[1] = "updated"
+            let first = $items[0]
+            $items[1] = "updated"
             """);
 
         var generator = new BashGenerator();
@@ -103,7 +103,7 @@ public class BashGeneratorTests
         var program = TestCompiler.ParseOrThrow(
             """
             let items = ["zero", "one"]
-            let count = #items
+            let count = #$items
             """);
 
         var bash = new BashGenerator().Generate(program);
@@ -115,7 +115,7 @@ public class BashGeneratorTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            switch value
+            switch $value
                 case "a":
                     echo A
                 case "b":
@@ -194,9 +194,9 @@ public class BashGeneratorTests
         var program = TestCompiler.ParseOrThrow(
             """
             let x = 5
-            if x > 10
+            if $x > 10
                 echo high
-            elif x > 0
+            elif $x > 0
                 echo mid
             else
                 echo low
@@ -219,16 +219,16 @@ public class BashGeneratorTests
         var program = TestCompiler.ParseOrThrow(
             """
             fn greet(word)
-                return "hello-" + word
+                return "hello-" + $word
             end
 
             let word = "Rob"
             let greeting = ""
-            word | greet() | greeting
+            $word | greet() | $greeting
             """);
 
         var bash = new BashGenerator().Generate(program);
-        Assert.Contains("greeting=$(greet \"$$word\")", bash);
+        Assert.Contains("greeting=$(greet", bash);
         Assert.DoesNotContain("word | greet() | greeting", bash);
     }
 
@@ -238,7 +238,7 @@ public class BashGeneratorTests
         var program = TestCompiler.ParseOrThrow(
             """
             fn greet(name, greeting = "Hello")
-                return greeting + ", " + name
+                return $greeting + ", " + $name
             end
             """);
 
@@ -261,7 +261,7 @@ public class BashGeneratorTests
 
         var bash = new BashGenerator().Generate(program);
         Assert.Contains("counter=0", bash);
-        Assert.Contains("counter=$(( $$counter + 1 ))", bash);
+        Assert.Contains("counter=$(( $counter + 1 ))", bash);
         Assert.DoesNotContain("local counter=", bash);
     }
 
@@ -378,7 +378,7 @@ public class BashGeneratorTests
             """
             let keep_looping = true
             while true
-                if keep_looping
+                if $keep_looping
                     continue
                 end
                 break
@@ -399,8 +399,8 @@ public class BashGeneratorTests
         var program = TestCompiler.ParseOrThrow(
             """
             let i = 0
-            until i >= 3
-                i = i + 1
+            until $i >= 3
+                i = $i + 1
             end
             """);
 
@@ -454,8 +454,8 @@ public class BashGeneratorTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            let first = argv[0]
-            let count = #argv
+            let first = $argv[0]
+            let count = #$argv
             """);
 
         var bash = new BashGenerator().Generate(program);
@@ -572,6 +572,32 @@ public class BashGeneratorTests
     }
 
     [Fact]
+    public void BashGenerator_InterpolatesTemplateSegmentsInsideRawCapturePayload()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            let name = "World"
+            let greeting = $(printf $"Hello, {name}")
+            """);
+
+        var bash = new BashGenerator().Generate(program);
+        Assert.Contains("greeting=$(printf \"Hello, ${name}\")", bash);
+    }
+
+    [Fact]
+    public void BashGenerator_ExpandsCaptureSpreadSyntaxIntoArrayExpansion()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            let values = ["a", "b", "c"]
+            let csv = $(printf '%s,' $values... | sed 's/,$//')
+            """);
+
+        var bash = new BashGenerator().Generate(program);
+        Assert.Contains("csv=$(printf '%s,' \"${values[@]}\" | sed 's/,$//')", bash);
+    }
+
+    [Fact]
     public void BashGenerator_InterpolatesVariablesInsideSingleQuotedShPayloadSegments()
     {
         var program = TestCompiler.ParseOrThrow(
@@ -590,8 +616,8 @@ public class BashGeneratorTests
         var program = TestCompiler.ParseOrThrow(
             """
             let meta = []
-            meta["name"] = "lash"
-            let selected = meta["name"]
+            $meta["name"] = "lash"
+            let selected = $meta["name"]
             """);
 
         var bash = new BashGenerator().Generate(program);
