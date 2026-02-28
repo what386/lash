@@ -461,6 +461,7 @@ public static class ModuleLoader
                || line == "else"
                || line.StartsWith("for ", StringComparison.Ordinal)
                || line.StartsWith("while ", StringComparison.Ordinal)
+               || line.StartsWith("until ", StringComparison.Ordinal)
                || line.StartsWith("subshell", StringComparison.Ordinal)
                || line == "wait"
                || line.StartsWith("wait ", StringComparison.Ordinal)

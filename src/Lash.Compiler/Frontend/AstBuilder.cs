@@ -230,6 +230,17 @@ public class AstBuilder : LashBaseVisitor<AstNode>
         };
     }
 
+    public override AstNode VisitUntilLoop(LashParser.UntilLoopContext context)
+    {
+        return new UntilLoop
+        {
+            Line = context.Start.Line,
+            Column = context.Start.Column,
+            Condition = Visit(context.expression()) as Expression ?? new NullLiteral(),
+            Body = context.statement().Select(s => Visit(s) as Statement).Where(s => s != null).ToList()!
+        };
+    }
+
     public override AstNode VisitReturnStatement(LashParser.ReturnStatementContext context)
     {
         return new ReturnStatement

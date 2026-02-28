@@ -91,6 +91,11 @@ public sealed class DefiniteAssignmentAnalyzer
                 AnalyzeIsolatedBlock(whileLoop.Body);
                 break;
 
+            case UntilLoop untilLoop:
+                CheckExpression(untilLoop.Condition);
+                AnalyzeIsolatedBlock(untilLoop.Body);
+                break;
+
             case ReturnStatement returnStatement when returnStatement.Value != null:
                 CheckExpression(returnStatement.Value);
                 break;

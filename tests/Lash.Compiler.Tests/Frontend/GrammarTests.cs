@@ -143,10 +143,14 @@ public class GrammarTests
             while #items > 0
                 break
             end
+            until #items == 0
+                continue
+            end
             """);
 
         Assert.Contains(program.Statements, s => s is ForLoop { Body.Count: 1 });
         Assert.Contains(program.Statements, s => s is WhileLoop);
+        Assert.Contains(program.Statements, s => s is UntilLoop);
     }
 
     [Fact]
@@ -243,6 +247,8 @@ public class GrammarTests
             both() &> "combined-truncate.log"
             readwrite() <> "rw.log"
             feed() <<< "payload"
+            feed() << [[line1
+            line2]]
             dup() 3>&1
             closeout() 1>&-
             """);
@@ -263,6 +269,7 @@ public class GrammarTests
         var seventh = (RedirectExpression)((ExpressionStatement)program.Statements[6]).Expression;
         var eighth = (RedirectExpression)((ExpressionStatement)program.Statements[7]).Expression;
         var ninth = (RedirectExpression)((ExpressionStatement)program.Statements[8]).Expression;
+        var tenth = (RedirectExpression)((ExpressionStatement)program.Statements[9]).Expression;
         Assert.Equal(">>", first.Operator);
         Assert.Equal("2>>", second.Operator);
         Assert.Equal("&>>", third.Operator);
@@ -270,8 +277,9 @@ public class GrammarTests
         Assert.Equal("&>", fifth.Operator);
         Assert.Equal("<>", sixth.Operator);
         Assert.Equal("<<<", seventh.Operator);
-        Assert.Equal("3>&1", eighth.Operator);
-        Assert.Equal("1>&-", ninth.Operator);
+        Assert.Equal("<<", eighth.Operator);
+        Assert.Equal("3>&1", ninth.Operator);
+        Assert.Equal("1>&-", tenth.Operator);
     }
 
     [Fact]

@@ -130,6 +130,13 @@ internal sealed class ConstantFolder
                 whileLoop.Body = FoldIsolated(whileLoop.Body);
                 return new List<Statement> { whileLoop };
 
+            case UntilLoop untilLoop:
+                untilLoop.Condition = FoldExpression(untilLoop.Condition);
+                if (TryEvaluateCondition(untilLoop.Condition, out var untilCondition) && untilCondition)
+                    return new List<Statement>();
+                untilLoop.Body = FoldIsolated(untilLoop.Body);
+                return new List<Statement> { untilLoop };
+
             case ReturnStatement returnStatement when returnStatement.Value != null:
                 returnStatement.Value = FoldExpression(returnStatement.Value);
                 return new List<Statement> { returnStatement };
@@ -955,6 +962,9 @@ internal sealed class ConstantFolder
                 case WhileLoop whileLoop:
                     CollectEnums(whileLoop.Body);
                     break;
+                case UntilLoop untilLoop:
+                    CollectEnums(untilLoop.Body);
+                    break;
                 case SubshellStatement subshellStatement:
                     CollectEnums(subshellStatement.Body);
                     break;
@@ -998,6 +1008,9 @@ internal sealed class ConstantFolder
 
                 case WhileLoop whileLoop:
                     CollectPureFunctionCandidates(whileLoop.Body);
+                    break;
+                case UntilLoop untilLoop:
+                    CollectPureFunctionCandidates(untilLoop.Body);
                     break;
 
                 case SubshellStatement subshellStatement:

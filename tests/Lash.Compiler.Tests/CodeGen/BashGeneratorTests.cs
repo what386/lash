@@ -332,6 +332,8 @@ public class BashGeneratorTests
             feed() < "input.log"
             feed() <> "rw.log"
             feed() <<< "payload"
+            feed() << [[line1
+            line2]]
             feed() 3>&1
             feed() 1>&-
             """);
@@ -346,6 +348,9 @@ public class BashGeneratorTests
         Assert.Contains("feed < \"input.log\"", bash);
         Assert.Contains("feed <> \"rw.log\"", bash);
         Assert.Contains("feed <<< \"payload\"", bash);
+        Assert.Contains("feed <<'LASH_HEREDOC'", bash);
+        Assert.Contains("line1", bash);
+        Assert.Contains("line2", bash);
         Assert.Contains("feed 3>&1", bash);
         Assert.Contains("feed 1>&-", bash);
     }
@@ -385,6 +390,23 @@ public class BashGeneratorTests
         Assert.Contains("; do", bash);
         Assert.Contains("continue", bash);
         Assert.Contains("break", bash);
+        Assert.Contains("done", bash);
+    }
+
+    [Fact]
+    public void BashGenerator_EmitsUntilLoops()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            let i = 0
+            until i >= 3
+                i = i + 1
+            end
+            """);
+
+        var bash = new BashGenerator().Generate(program);
+        Assert.Contains("until ", bash);
+        Assert.Contains("; do", bash);
         Assert.Contains("done", bash);
     }
 

@@ -90,6 +90,10 @@ public sealed class NameResolver
                     CollectDeclarations(whileLoop.Body);
                     break;
 
+                case UntilLoop untilLoop:
+                    CollectDeclarations(untilLoop.Body);
+                    break;
+
                 case SubshellStatement subshellStatement:
                     CollectDeclarations(subshellStatement.Body);
                     break;
@@ -185,6 +189,16 @@ public sealed class NameResolver
                 PushScope();
                 loopDepth++;
                 foreach (var nested in whileLoop.Body)
+                    CheckStatement(nested);
+                loopDepth--;
+                PopScope();
+                break;
+
+            case UntilLoop untilLoop:
+                CheckExpression(untilLoop.Condition);
+                PushScope();
+                loopDepth++;
+                foreach (var nested in untilLoop.Body)
                     CheckStatement(nested);
                 loopDepth--;
                 PopScope();

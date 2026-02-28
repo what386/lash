@@ -69,6 +69,10 @@ while i < #items
     i = i + 1
 end
 
+until i == 0
+    i = i - 1
+end
+
 for item in items
     echo "item:" $item
 end
@@ -125,6 +129,13 @@ Capture shell output into a Lash value:
 ```lash
 let branch = $sh "git rev-parse --abbrev-ref HEAD"
 echo "branch:" $branch
+
+fn feed()
+    cat
+end
+
+feed() << [[line1
+line2]]
 ```
 
 ## 9. Subshells and Wait

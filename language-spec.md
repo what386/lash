@@ -40,7 +40,7 @@ Lash is a lua-like language that transpiles directly to Bash with minimal runtim
 - Import recursion/cycles are currently not detected by the preprocessor.
 - `@import <path> into <name>` imports file text into a variable by emitting an assignment to a multiline string literal.
 - `@import <path> into [let|const] <name>` controls the create-kind when the target does not already exist.
-- `@import` (both forms) is only valid at file/preprocessor scope, not inside runtime Lash blocks (`if/fn/for/while/switch/enum/subshell`).
+- `@import` (both forms) is only valid at file/preprocessor scope, not inside runtime Lash blocks (`if/fn/for/while/until/switch/enum/subshell`).
 - `@raw` copies enclosed lines literally into generated Bash, and directives inside `@raw` are not evaluated.
 - Directives are line-based: they must begin a logical line (indentation allowed).
 - `into` creates the variable when missing (default `let`), otherwise it assigns to the existing variable.
@@ -66,6 +66,7 @@ Lash is a lua-like language that transpiles directly to Bash with minimal runtim
   - `for x in expr [step expr] ... end`
   - `for x in glob-pattern ... end` (for example `for file in ./*.txt`)
   - `while expr ... end`
+  - `until expr ... end`
   - `switch expr`, with one or more `case expr: ...` clauses, then closing `end`
   - `break`
   - `continue`
@@ -109,6 +110,7 @@ Lash is a lua-like language that transpiles directly to Bash with minimal runtim
   - logical: `&&`, `||`
   - pipe: `|`
   - redirection: `>`, `2>`, `&>`, `<`, `<>`, `>>`, `2>>`, `&>>`, `<<<`, `n>&m`, `n>&-`
+  - heredoc: `<< [[multiline payload]]`
   - append assignment: `+=`
 
 ### Type model (coarse)
@@ -150,6 +152,7 @@ Lash is a lua-like language that transpiles directly to Bash with minimal runtim
   - `2>>` append stderr
   - `&>>` append both stdout+stderr
   - `<<<` here-string (feed string/expression value to stdin)
+  - `<<` heredoc (feed non-interpolated string literal payload as stdin block)
   - `n>&m` duplicate/open file descriptor `n` to `m` (for example `3>&1`)
   - `n>&-` close file descriptor `n` (for example `1>&-`)
 

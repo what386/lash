@@ -12,6 +12,7 @@ internal sealed class CompletionHandler : CompletionHandlerBase
     private static readonly string[] Keywords =
     [
         "if", "elif", "else", "end", "fn", "for", "while", "switch", "case",
+        "until",
         "let", "const", "global", "return", "break", "continue", "shift",
         "subshell", "wait", "in", "step", "into", "jobs", "sh", "enum"
     ];

@@ -90,6 +90,12 @@ public sealed class CodegenFeasibilityAnalyzer
                     CheckStatement(nested);
                 break;
 
+            case UntilLoop untilLoop:
+                ValidateValueExpression(untilLoop.Condition, ValueContext.Condition);
+                foreach (var nested in untilLoop.Body)
+                    CheckStatement(nested);
+                break;
+
             case ReturnStatement returnStatement when returnStatement.Value != null:
                 ValidateValueExpression(returnStatement.Value, ValueContext.GeneralValue);
                 break;
@@ -150,6 +156,16 @@ public sealed class CodegenFeasibilityAnalyzer
                 ValidateValueExpression(redirect.Left, ValueContext.GeneralValue);
                 if (redirect.Right is not NullLiteral)
                     ValidateValueExpression(redirect.Right, ValueContext.GeneralValue);
+
+                if (string.Equals(redirect.Operator, "<<", StringComparison.Ordinal) &&
+                    !IsSupportedHeredocPayload(redirect.Right))
+                {
+                    Report(
+                        redirect.Right,
+                        "Heredoc redirection ('<<') requires a non-interpolated string literal payload.",
+                        DiagnosticCodes.UnsupportedStatementForCodegen);
+                }
+
                 return;
         }
 
@@ -370,6 +386,17 @@ public sealed class CodegenFeasibilityAnalyzer
         };
 
         diagnostics.AddError(DiagnosticMessage.WithTip(message, tip), node.Line, node.Column, code);
+    }
+
+    private static bool IsSupportedHeredocPayload(Expression expression)
+    {
+        if (expression is not LiteralExpression literal ||
+            literal.LiteralType is not PrimitiveType { PrimitiveKind: PrimitiveType.Kind.String })
+        {
+            return false;
+        }
+
+        return !literal.IsInterpolated;
     }
 
     private enum ValueContext

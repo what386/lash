@@ -112,6 +112,10 @@ internal sealed class SymbolIndexBuilder
                 VisitExpression(whileLoop.Condition);
                 VisitScopedBlock(whileLoop.Body);
                 break;
+            case UntilLoop untilLoop:
+                VisitExpression(untilLoop.Condition);
+                VisitScopedBlock(untilLoop.Body);
+                break;
             case ReturnStatement returnStatement:
                 if (returnStatement.Value is not null)
                     VisitExpression(returnStatement.Value);

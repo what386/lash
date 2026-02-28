@@ -41,6 +41,7 @@ module.exports = grammar({
       $.switch_statement,
       $.for_loop,
       $.while_loop,
+      $.until_loop,
       $.subshell_statement,
       $.wait_statement,
       $.sh_statement,
@@ -205,6 +206,12 @@ module.exports = grammar({
       field("body", $.block),
     ),
 
+    until_loop: $ => seq(
+      "until",
+      field("condition", $.expression),
+      field("body", $.block),
+    ),
+
     subshell_statement: $ => seq(
       "subshell",
       optional(field("into", $.into_binding)),
@@ -296,7 +303,7 @@ module.exports = grammar({
 
     redirect_expression: $ => prec.left(1, seq(
       field("left", $.expression),
-      field("operator", choice("&>>", "2>>", ">>", "<<<", "&>", "2>", "<>")),
+      field("operator", choice("&>>", "2>>", ">>", "<<<", "<<", "&>", "2>", "<>")),
       field("right", $.expression),
     )),
 

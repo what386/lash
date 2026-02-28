@@ -178,6 +178,22 @@ public sealed class WarningAnalyzer
                 PopScope();
                 return false;
 
+            case UntilLoop untilLoop:
+                if (TryEvaluateBool(untilLoop.Condition, out var untilCondition) && untilCondition)
+                {
+                    WarnBlockUnreachable(untilLoop.Body, "Unreachable loop body: condition is always true.");
+                    return false;
+                }
+
+                PushScope();
+                PushTrackedJobs(CurrentTrackedJobs());
+                PushConstScope();
+                AnalyzeBlock(untilLoop.Body, inLoop: true);
+                PopConstScope();
+                PopTrackedJobs();
+                PopScope();
+                return false;
+
             case ReturnStatement returnStatement:
                 if (returnStatement.Value != null)
                     AnalyzeExpression(returnStatement.Value);

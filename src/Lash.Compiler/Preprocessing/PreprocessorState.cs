@@ -330,6 +330,7 @@ internal sealed class PreprocessorState
             || HasKeywordPrefix(line, "if")
             || HasKeywordPrefix(line, "for")
             || HasKeywordPrefix(line, "while")
+            || HasKeywordPrefix(line, "until")
             || HasKeywordPrefix(line, "switch")
             || HasKeywordPrefix(line, "enum")
             || HasKeywordPrefix(line, "subshell");

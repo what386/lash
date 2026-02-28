@@ -30,6 +30,12 @@ public class WhileLoop : Statement
     public List<Statement> Body { get; set; } = new();
 }
 
+public class UntilLoop : Statement
+{
+    public Expression Condition { get; set; } = null!;
+    public List<Statement> Body { get; set; } = new();
+}
+
 public class SwitchStatement : Statement
 {
     public Expression Value { get; set; } = null!;

@@ -44,6 +44,10 @@ public partial class BashGenerator
                 GenerateWhileLoop(whileLoop);
                 break;
 
+            case UntilLoop untilLoop:
+                GenerateUntilLoop(untilLoop);
+                break;
+
             case ReturnStatement returnStmt:
                 GenerateReturnStatement(returnStmt);
                 break;
@@ -415,6 +419,23 @@ public partial class BashGenerator
         Emit("done");
     }
 
+    private void GenerateUntilLoop(UntilLoop untilLoop)
+    {
+        var condition = GenerateCondition(untilLoop.Condition);
+        Emit($"until {condition}; do");
+        indentLevel++;
+
+        foreach (var stmt in untilLoop.Body)
+        {
+            EmitLine();
+            GenerateStatement(stmt);
+        }
+
+        indentLevel--;
+        EmitLine();
+        Emit("done");
+    }
+
     private void GenerateReturnStatement(ReturnStatement returnStmt)
     {
         if (returnStmt.Value != null)
@@ -447,7 +468,14 @@ public partial class BashGenerator
                 return;
 
             case RedirectExpression redirectExpression:
-                Emit(GenerateRedirectStatement(redirectExpression));
+                if (string.Equals(redirectExpression.Operator, "<<", StringComparison.Ordinal))
+                {
+                    GenerateHeredocStatement(redirectExpression);
+                }
+                else
+                {
+                    Emit(GenerateRedirectStatement(redirectExpression));
+                }
                 return;
         }
 
@@ -547,6 +575,66 @@ public partial class BashGenerator
             PipeExpression pipe => $"{GeneratePipeStatement(pipe)} {op} {fileTarget}",
             _ => $"echo {GenerateSingleShellArg(redirect.Left)} {op} {fileTarget}"
         };
+    }
+
+    private void GenerateHeredocStatement(RedirectExpression redirect)
+    {
+        if (!TryGetHeredocPayload(redirect.Right, out var payload))
+        {
+            EmitComment("Unsupported heredoc payload; expected non-interpolated string literal.");
+            ReportUnsupported("heredoc payload");
+            return;
+        }
+
+        var command = redirect.Left switch
+        {
+            FunctionCallExpression call => GenerateFunctionCallStatement(call),
+            PipeExpression pipe => GeneratePipeStatement(pipe),
+            _ => $"echo {GenerateSingleShellArg(redirect.Left)}"
+        };
+
+        var delimiter = ChooseHeredocDelimiter(payload);
+        Emit($"{command} <<'{delimiter}'");
+        EmitLine();
+
+        var lines = payload.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n').Split('\n');
+        foreach (var line in lines)
+        {
+            Emit(line);
+            EmitLine();
+        }
+
+        Emit(delimiter);
+    }
+
+    private static bool TryGetHeredocPayload(Expression expression, out string payload)
+    {
+        payload = string.Empty;
+        if (expression is not LiteralExpression literal ||
+            literal.LiteralType is not PrimitiveType { PrimitiveKind: PrimitiveType.Kind.String } ||
+            literal.IsInterpolated)
+        {
+            return false;
+        }
+
+        payload = literal.Value?.ToString() ?? string.Empty;
+        return true;
+    }
+
+    private static string ChooseHeredocDelimiter(string payload)
+    {
+        var normalized = payload.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n');
+        var lines = normalized.Split('\n');
+        var delimiter = "LASH_HEREDOC";
+        var suffix = 0;
+
+        while (lines.Any(line => string.Equals(line, delimiter, StringComparison.Ordinal)))
+        {
+            suffix++;
+            delimiter = $"LASH_HEREDOC_{suffix}";
+        }
+
+        return delimiter;
     }
 
     private static bool IsFdDupOperator(string op)

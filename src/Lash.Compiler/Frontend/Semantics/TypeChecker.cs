@@ -140,6 +140,13 @@ public sealed class TypeChecker
                     CheckStatement(nested);
                 PopScope();
                 break;
+            case UntilLoop untilLoop:
+                InferType(untilLoop.Condition);
+                PushScope();
+                foreach (var nested in untilLoop.Body)
+                    CheckStatement(nested);
+                PopScope();
+                break;
             case ReturnStatement returnStatement when returnStatement.Value != null:
                 InferType(returnStatement.Value);
                 break;

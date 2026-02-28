@@ -57,6 +57,7 @@
 "in" @keyword.repeat
 "step" @keyword.repeat
 "while" @keyword.repeat
+"until" @keyword.repeat
 "subshell" @keyword.repeat
 "wait" @keyword.repeat
 "into" @keyword
@@ -145,6 +146,7 @@
 (redirect_expression operator: "2>>" @operator)
 (redirect_expression operator: ">>" @operator)
 (redirect_expression operator: "<<<" @operator)
+(redirect_expression operator: "<<" @operator)
 (redirect_expression operator: "&>" @operator)
 (redirect_expression operator: "2>" @operator)
 (redirect_expression operator: "<>" @operator)

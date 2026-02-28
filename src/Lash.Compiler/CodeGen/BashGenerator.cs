@@ -131,6 +131,9 @@ public partial class BashGenerator
                 case WhileLoop whileLoop:
                     CollectFunctionLocals(whileLoop.Body);
                     break;
+                case UntilLoop untilLoop:
+                    CollectFunctionLocals(untilLoop.Body);
+                    break;
                 case SubshellStatement subshellStatement:
                     CollectFunctionLocals(subshellStatement.Body);
                     break;
@@ -173,6 +176,9 @@ public partial class BashGenerator
                     break;
                 case WhileLoop whileLoop:
                     CollectLocalDeclarations(whileLoop.Body, locals);
+                    break;
+                case UntilLoop untilLoop:
+                    CollectLocalDeclarations(untilLoop.Body, locals);
                     break;
                 case SubshellStatement subshellStatement:
                     CollectLocalDeclarations(subshellStatement.Body, locals);
@@ -232,6 +238,10 @@ public partial class BashGenerator
                 case WhileLoop whileLoop:
                     CollectAssociativeUsages(whileLoop.Condition, functionName);
                     CollectAssociativeUsages(whileLoop.Body, functionName);
+                    break;
+                case UntilLoop untilLoop:
+                    CollectAssociativeUsages(untilLoop.Condition, functionName);
+                    CollectAssociativeUsages(untilLoop.Body, functionName);
                     break;
                 case SubshellStatement subshellStatement:
                     CollectAssociativeUsages(subshellStatement.Body, functionName);
@@ -394,6 +404,10 @@ public partial class BashGenerator
 
                 case WhileLoop whileLoop:
                     if (RequiresTrackedJobs(whileLoop.Body))
+                        return true;
+                    break;
+                case UntilLoop untilLoop:
+                    if (RequiresTrackedJobs(untilLoop.Body))
                         return true;
                     break;
             }

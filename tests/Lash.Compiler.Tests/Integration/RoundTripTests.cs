@@ -256,6 +256,27 @@ public class RoundTripTests
     }
 
     [Fact]
+    public void RoundTrip_Heredoc_RedirectsMultilineInputToFunctionCall()
+    {
+        var result = CompilerPipeline.Compile(
+            """
+            fn feed()
+                cat
+            end
+
+            feed() << [[line1
+            line2]]
+            """);
+
+        Assert.False(result.Diagnostics.HasErrors, string.Join(Environment.NewLine, result.Diagnostics.GetErrors()));
+        var bash = Assert.IsType<string>(result.Bash);
+
+        var run = CompilerPipeline.RunBash(bash);
+        Assert.Equal(0, run.ExitCode);
+        Assert.Equal("line1\nline2\n", run.StdOut);
+    }
+
+    [Fact]
     public void RoundTrip_FdDupRedirection_CanMirrorStdoutToStderrAndPreserveStdout()
     {
         var result = CompilerPipeline.Compile(
@@ -301,6 +322,26 @@ public class RoundTripTests
         var run = CompilerPipeline.RunBash(bash);
         Assert.Equal(0, run.ExitCode);
         Assert.Equal("1\n3\n", run.StdOut);
+    }
+
+    [Fact]
+    public void RoundTrip_UntilLoopBehavesLikeBashUntil()
+    {
+        var result = CompilerPipeline.Compile(
+            """
+            let i = 0
+            until i >= 3
+                i = i + 1
+            end
+            echo "$i"
+            """);
+
+        Assert.False(result.Diagnostics.HasErrors, string.Join(Environment.NewLine, result.Diagnostics.GetErrors()));
+        var bash = Assert.IsType<string>(result.Bash);
+
+        var run = CompilerPipeline.RunBash(bash);
+        Assert.Equal(0, run.ExitCode);
+        Assert.Equal("3\n", run.StdOut);
     }
 
     [Fact]

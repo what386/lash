@@ -98,6 +98,11 @@ public sealed class ConstantSafetyAnalyzer
                 AnalyzeIsolated(whileLoop.Body);
                 break;
 
+            case UntilLoop untilLoop:
+                CheckExpression(untilLoop.Condition);
+                AnalyzeIsolated(untilLoop.Body);
+                break;
+
             case ReturnStatement returnStatement when returnStatement.Value != null:
                 CheckExpression(returnStatement.Value);
                 break;

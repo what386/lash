@@ -8,7 +8,7 @@ internal sealed class SnapshotTextService
 {
     private static readonly string[] OperatorsByLength =
     [
-        "n>&-", "n>&m", "2>>", "&>>", "<<<", "2>", "&>", ">>", "<>", "::", "&&", "||", "==", "!=", "<=", ">=", "+=", "..", "|", "#", ">", "<"
+        "n>&-", "n>&m", "2>>", "&>>", "<<<", "<<", "2>", "&>", ">>", "<>", "::", "&&", "||", "==", "!=", "<=", ">=", "+=", "..", "|", "#", ">", "<"
     ];
 
     public bool TryGetLine(DocumentSnapshot snapshot, int zeroBasedLine, out string lineText)

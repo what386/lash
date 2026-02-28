@@ -13,6 +13,7 @@ statement
     | switchStatement
     | forLoop
     | whileLoop
+    | untilLoop
     | shStatement
     | commandStatement
     | returnStatement
@@ -88,6 +89,10 @@ whileLoop
     : 'while' expression statement* 'end'
     ;
 
+untilLoop
+    : 'until' expression statement* 'end'
+    ;
+
 switchStatement
     : 'switch' expression switchCaseClause+ 'end'
     ;
@@ -137,7 +142,7 @@ expression
     : primaryExpression                                          # PrimaryExpr
     | expression '|' expression                                  # PipeExpr
     | expression FD_DUP                                          # FdDupExpr
-    | expression (APPEND | ERR_APPEND | BOTH_APPEND | HERE_STRING | ERR_REDIRECT | BOTH_REDIRECT | READ_WRITE_REDIRECT) expression  # RedirectExpr
+    | expression (APPEND | ERR_APPEND | BOTH_APPEND | HERE_STRING | HEREDOC | ERR_REDIRECT | BOTH_REDIRECT | READ_WRITE_REDIRECT) expression  # RedirectExpr
     | expression '[' expression ']'                              # IndexAccessExpr
     | ('!' | '-' | '+' | '#') expression                         # UnaryExpr
     | expression ('*' | '/' | '%') expression                    # MultiplicativeExpr
@@ -212,6 +217,10 @@ ERR_APPEND
 
 HERE_STRING
     : '<<<'
+    ;
+
+HEREDOC
+    : '<<'
     ;
 
 BOTH_REDIRECT

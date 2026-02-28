@@ -78,6 +78,29 @@ public class AdditionalAnalyzerTests
     }
 
     [Fact]
+    public void CodegenFeasibilityAnalyzer_RejectsHeredocWithNonLiteralPayload()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            fn feed()
+                cat
+            end
+
+            let payload = "text"
+            feed() << payload
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new NameResolver(diagnostics).Analyze(program);
+        new TypeChecker(diagnostics).Analyze(program);
+        new CodegenFeasibilityAnalyzer(diagnostics).Analyze(program);
+
+        Assert.Contains(diagnostics.GetErrors(), e =>
+            e.Code == DiagnosticCodes.UnsupportedStatementForCodegen
+            && e.Message.Contains("Heredoc redirection", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void WarningAnalyzer_EmitsUnreachableShadowingAndWaitJobsWarnings()
     {
         var program = TestCompiler.ParseOrThrow(

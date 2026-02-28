@@ -26,6 +26,10 @@ while p * p <= limit
     p = p + 1
 end
 
+for _ in 0..10
+
+end
+
 echo "Primes up to" $limit
 let n = 2
 while n <= limit
