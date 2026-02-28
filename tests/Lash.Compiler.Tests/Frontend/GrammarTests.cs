@@ -327,8 +327,8 @@ public class GrammarTests
             """
             fn demo()
                 shift 2
-                let size = $sh "du -sh ."
-                let ok = $test "-n \"${size}\""
+                let size = $(du -sh .)
+                let ok = $(test "-n \"${size}\"")
                 sh $"echo {size}"
                 test "-n \"${size}\""
                 let items = []
@@ -384,7 +384,7 @@ public class GrammarTests
             subshell into pid
                 echo "hi"
             end &
-            wait pid into status
+            wait $pid into status
             wait jobs
             wait into status
             coproc into pid
@@ -446,14 +446,14 @@ public class GrammarTests
     }
 
     [Fact]
-    public void ModuleLoader_RejectsLegacyExternalCommandSubstitutionSyntax()
+    public void ModuleLoader_ParsesRawCommandCaptureSyntax()
     {
         var result = TestCompiler.LoadProgram(
             """
             let size = $(du("-sh", "."))
             """);
 
-        Assert.False(result.Success);
-        Assert.Contains(result.Diagnostics.GetErrors(), d => d.Code == DiagnosticCodes.ParseSyntaxError);
+        Assert.True(result.Success);
+        Assert.NotNull(result.Program);
     }
 }

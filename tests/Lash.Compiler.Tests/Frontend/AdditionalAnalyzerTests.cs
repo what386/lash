@@ -242,7 +242,7 @@ public class AdditionalAnalyzerTests
         var program = TestCompiler.ParseOrThrow(
             """
             fn exists(path)
-                let ok = $sh $"test -f \"{path}\"; echo $?"
+                let ok = $(test -f \"$path\"; echo $?)
                 return ok == "0"
             end
 

@@ -140,7 +140,7 @@ public class TypeCheckerTests
             """
             let pid = 1
             let status = 0
-            wait pid into status
+            wait $pid into status
             let next = status + 1
             """);
 

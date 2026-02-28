@@ -369,7 +369,7 @@ public class RoundTripTests
     {
         var result = CompilerPipeline.Compile(
             """
-            let value = $sh "printf '%s' ok"
+            let value = $(printf '%s' ok)
             echo "$value"
             """);
 
@@ -387,7 +387,7 @@ public class RoundTripTests
         var result = CompilerPipeline.Compile(
             """
             let name = "ok"
-            let captured = $sh $"printf '%s' \"{name}\""
+            let captured = $(echo $name)
             sh $"echo from-sh-{name}"
             echo "$captured"
             """);
@@ -406,8 +406,8 @@ public class RoundTripTests
         var result = CompilerPipeline.Compile(
             """
             let value = "ok"
-            let is_ok = $test "-n \"${value}\""
-            if is_ok
+            let is_ok = $(test "-n \"${value}\"")
+            if $is_ok
                 echo "pass"
             end
             test "-n \"${value}\""
@@ -448,7 +448,7 @@ public class RoundTripTests
         var result = CompilerPipeline.Compile(
             """
             let raw_version = "v1.4.5"
-            let version = $sh $"printf '%s' '{raw_version}' | sed 's/^v//'"
+            let version = $(echo $raw_version | sed 's/^v//')
             let tag = $"v{version}"
             echo "$raw_version"
             echo "$version"
@@ -537,7 +537,7 @@ public class RoundTripTests
             subshell into pid
                 sh "sleep 0.05"
             end &
-            wait pid into status
+            wait $pid into status
             echo "$status"
             """);
 

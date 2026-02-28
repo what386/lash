@@ -228,7 +228,7 @@ public class BashGeneratorTests
             """);
 
         var bash = new BashGenerator().Generate(program);
-        Assert.Contains("greeting=$(greet \"${word}\")", bash);
+        Assert.Contains("greeting=$(greet \"$$word\")", bash);
         Assert.DoesNotContain("word | greet() | greeting", bash);
     }
 
@@ -261,7 +261,7 @@ public class BashGeneratorTests
 
         var bash = new BashGenerator().Generate(program);
         Assert.Contains("counter=0", bash);
-        Assert.Contains("counter=$(( ${counter} + 1 ))", bash);
+        Assert.Contains("counter=$(( $$counter + 1 ))", bash);
         Assert.DoesNotContain("local counter=", bash);
     }
 
@@ -484,7 +484,7 @@ public class BashGeneratorTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            let size = $sh "du -sh ."
+            let size = $(du -sh .)
             """);
 
         var bash = new BashGenerator().Generate(program);
@@ -520,7 +520,7 @@ public class BashGeneratorTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            let ok = $test "-n \"ok\""
+            let ok = $(test "-n \"ok\"")
             """);
 
         var bash = new BashGenerator().Generate(program);
@@ -562,12 +562,12 @@ public class BashGeneratorTests
         var program = TestCompiler.ParseOrThrow(
             """
             let name = "ok"
-            let value = $sh $"printf '%s' \"{name}\""
+            let value = $(echo $"$name")
             sh $"echo {name}"
             """);
 
         var bash = new BashGenerator().Generate(program);
-        Assert.Contains("value=$(printf '%s' \"${name}\")", bash);
+        Assert.Contains("value=$(echo \"$name\")", bash);
         Assert.Contains("echo ${name}", bash);
     }
 
@@ -577,11 +577,11 @@ public class BashGeneratorTests
         var program = TestCompiler.ParseOrThrow(
             """
             let raw_version = "v1.4.5"
-            let version = $sh $"printf '%s' '{raw_version}' | sed 's/^v//'"
+            let version = $(echo $raw_version | sed 's/^v//')
             """);
 
         var bash = new BashGenerator().Generate(program);
-        Assert.Contains("version=$(printf '%s' ''\"${raw_version}\"'' | sed 's/^v//')", bash);
+        Assert.Contains("version=$(echo $raw_version | sed 's/^v//')", bash);
     }
 
     [Fact]
@@ -623,7 +623,7 @@ public class BashGeneratorTests
             subshell into pid
                 echo hi
             end &
-            wait pid into status
+            wait $pid into status
             wait jobs into status
             wait
             """);

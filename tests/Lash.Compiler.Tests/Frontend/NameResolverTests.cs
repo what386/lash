@@ -174,7 +174,7 @@ public class NameResolverTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            let size = $sh "du -sh ."
+            let size = $(du -sh .)
             """);
 
         var diagnostics = new DiagnosticBag();

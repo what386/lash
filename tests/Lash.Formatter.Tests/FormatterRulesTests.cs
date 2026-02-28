@@ -287,7 +287,7 @@ public class FormatterRulesTests
             select choice in ["a", "b"]
             break
             end
-            wait pid into status
+            wait $pid into status
             wait jobs into status
             wait into status
             """;
@@ -303,7 +303,7 @@ public class FormatterRulesTests
             select choice in ["a", "b"]
                 break
             end
-            wait pid into status
+            wait $pid into status
             wait jobs into status
             wait into status
             """;
