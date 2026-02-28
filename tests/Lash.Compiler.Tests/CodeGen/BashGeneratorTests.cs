@@ -411,6 +411,22 @@ public class BashGeneratorTests
     }
 
     [Fact]
+    public void BashGenerator_EmitsSelectLoops()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            select choice in ["a", "b"]
+                break
+            end
+            """);
+
+        var bash = new BashGenerator().Generate(program);
+        Assert.Contains("select choice in (\"a\" \"b\"); do", bash);
+        Assert.Contains("break", bash);
+        Assert.Contains("done", bash);
+    }
+
+    [Fact]
     public void BashGenerator_EliminatesConstantDeadIfBranches()
     {
         var program = TestCompiler.ParseOrThrow(
@@ -568,6 +584,26 @@ public class BashGeneratorTests
         Assert.Contains("for __lash_wait_pid in \"${__lash_jobs[@]}\"; do", bash);
         Assert.Contains("wait \"${__lash_wait_pid}\"", bash);
         Assert.Contains("status=$?", bash);
+    }
+
+    [Fact]
+    public void BashGenerator_EmitsCoprocAndTracksJobsForWaitJobs()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            let status = 0
+            let pid = 0
+            coproc into pid
+                echo hi
+            end
+            wait jobs into status
+            """);
+
+        var bash = new BashGenerator().Generate(program);
+        Assert.Contains("coproc {", bash);
+        Assert.Contains("pid=${COPROC_PID}", bash);
+        Assert.Contains("__lash_jobs+=(\"${COPROC_PID}\")", bash);
+        Assert.Contains("for __lash_wait_pid in \"${__lash_jobs[@]}\"; do", bash);
     }
 
     [Fact]

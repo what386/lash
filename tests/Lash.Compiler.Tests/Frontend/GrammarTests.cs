@@ -140,6 +140,9 @@ public class GrammarTests
             for i in 0 .. 2 step 1
                 items[i] = "x"
             end
+            select choice in ["a", "b"]
+                break
+            end
             while #items > 0
                 break
             end
@@ -149,6 +152,7 @@ public class GrammarTests
             """);
 
         Assert.Contains(program.Statements, s => s is ForLoop { Body.Count: 1 });
+        Assert.Contains(program.Statements, s => s is SelectLoop { Body.Count: 1 });
         Assert.Contains(program.Statements, s => s is WhileLoop);
         Assert.Contains(program.Statements, s => s is UntilLoop);
     }
@@ -354,6 +358,9 @@ public class GrammarTests
             wait pid into status
             wait jobs
             wait into status
+            coproc into pid
+                echo "stream"
+            end
             subshell into const const_pid
                 echo "bye"
             end &
@@ -381,11 +388,16 @@ public class GrammarTests
         Assert.Equal(WaitTargetKind.Default, waitAll.TargetKind);
         Assert.Equal("status", waitAll.IntoVariable);
 
-        var constSubshell = Assert.IsType<SubshellStatement>(program.Statements[6]);
+        var coproc = Assert.IsType<CoprocStatement>(program.Statements[6]);
+        Assert.Equal("pid", coproc.IntoVariable);
+        Assert.Equal(IntoBindingMode.Auto, coproc.IntoMode);
+        Assert.Single(coproc.Body);
+
+        var constSubshell = Assert.IsType<SubshellStatement>(program.Statements[7]);
         Assert.Equal("const_pid", constSubshell.IntoVariable);
         Assert.Equal(IntoBindingMode.Const, constSubshell.IntoMode);
 
-        var letWait = Assert.IsType<WaitStatement>(program.Statements[7]);
+        var letWait = Assert.IsType<WaitStatement>(program.Statements[8]);
         Assert.Equal("local_status", letWait.IntoVariable);
         Assert.Equal(IntoBindingMode.Let, letWait.IntoMode);
     }

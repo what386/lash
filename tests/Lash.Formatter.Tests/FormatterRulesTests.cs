@@ -281,6 +281,12 @@ public class FormatterRulesTests
             subshell into pid
             echo "hi"
             end &
+            coproc into stream_pid
+            echo "stream"
+            end
+            select choice in ["a", "b"]
+            break
+            end
             wait pid into status
             wait jobs into status
             wait into status
@@ -291,6 +297,12 @@ public class FormatterRulesTests
             subshell into pid
                 echo "hi"
             end &
+            coproc into stream_pid
+                echo "stream"
+            end
+            select choice in ["a", "b"]
+                break
+            end
             wait pid into status
             wait jobs into status
             wait into status
