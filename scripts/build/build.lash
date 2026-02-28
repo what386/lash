@@ -57,7 +57,7 @@ end
 
 fn is_known_tool(tool_name)
     for entry in PROJECTS
-        let known = $sh $"printf '%s' \"{entry}\" | cut -d: -f1"
+        let known = $(printf '%s' "$entry" | cut -d: -f1)
         if known == tool_name
             return true
         end
@@ -69,7 +69,19 @@ fn list_to_csv(values)
     if #values == 0
         return ""
     end
-    return $sh $"printf '%s\n' \"${values[@]}\" | paste -sd, -"
+
+    let result = ""
+    let is_first = true
+    for value in values
+        if is_first
+            result = value
+            is_first = false
+        else
+            result = result + "," + value
+        end
+    end
+
+    return result
 end
 
 fn should_trim_tool(tool_name)
@@ -95,19 +107,11 @@ fn is_windows_rid(rid)
 end
 
 fn file_exists(path)
-    let exists = $sh $"if [ -f \"{path}\" ]; then echo 1; else echo 0; fi"
-    if exists == "1"
-        return true
-    end
-    return false
+    return $(test $"-f \"{path}\"") == 1
 end
 
 fn dir_exists(path)
-    let exists = $sh $"if [ -d \"{path}\" ]; then echo 1; else echo 0; fi"
-    if exists == "1"
-        return true
-    end
-    return false
+    return $(test $"-d \"{path}\"") == 1
 end
 
 fn get_output_dirname(rid)
@@ -161,7 +165,7 @@ fn find_published_executable(temp_dir, rid, project_stem)
         if file_exists(expected)
             src_file = expected
         else
-            src_file = $sh $"find \"{temp_dir}\" -maxdepth 1 -type f -name '*.exe' ! -name 'createdump.exe' -print -quit"
+            src_file = $(find "$temp_dir" -maxdepth 1 -type f -name '*.exe' ! -name 'createdump.exe' -print -quit)
         end
         return src_file
     end
@@ -170,7 +174,7 @@ fn find_published_executable(temp_dir, rid, project_stem)
     if file_exists(expected)
         src_file = expected
     else
-        src_file = $sh $"find \"{temp_dir}\" -maxdepth 1 -type f -perm -u+x -print -quit"
+        src_file = $(find "$temp_dir" -maxdepth 1 -type f -perm -u+x -print -quit)
     end
     return src_file
 end
@@ -208,7 +212,7 @@ fn build_tool_for_platform(tool_name, project_path, rid, bundle_dir)
 
     dotnet publish "${publish_args[@]}"
 
-    let project_stem = $sh $"basename \"{project_path}\" .csproj"
+    let project_stem = $(basename "$project_path" .csproj)
     let src_file = find_published_executable(temp_dir, rid, project_stem)
 
     if src_file == "" || !file_exists(src_file)
@@ -230,12 +234,13 @@ fn build_tool_for_platform(tool_name, project_path, rid, bundle_dir)
         chmod +x "$dest_file"
     end
 
-    let size = $sh $"du -h \"{dest_file}\" | cut -f1"
+    let size = $(du -h "$dest_file" | cut -f1)
     echo -e "${GREEN}✓ Built ${tool_name} (${size}) -> ${dest_file}${NC}"
 end
 
 fn build_platform(rid, description)
     let bundle_dir = OUTPUT_DIR + "/" + get_output_dirname(rid)
+    let publish_jobs = []
 
     echo ""
     echo -e "${YELLOW}Building for $description ($rid)...${NC}"
@@ -244,12 +249,27 @@ fn build_platform(rid, description)
     mkdir -p "$bundle_dir"
 
     for entry in PROJECTS
-        let tool_name = $sh $"printf '%s' \"{entry}\" | cut -d: -f1"
-        let project_path = $sh $"printf '%s' \"{entry}\" | cut -d: -f2-"
-        build_tool_for_platform(tool_name, project_path, rid, bundle_dir)
+        let tool_name = $(printf '%s' "$entry" | cut -d: -f1)
+        let project_path = $(printf '%s' "$entry" | cut -d: -f2-)
+        subshell into let publish_pid
+            build_tool_for_platform(tool_name, project_path, rid, bundle_dir)
+        end &
+
+        publish_jobs += [publish_pid + ":" + tool_name]
     end
 
-    let bundle_size = $sh $"du -sh \"{bundle_dir}\" | cut -f1"
+    for job in publish_jobs
+        let pid = $(printf '%s' "$job" | cut -d: -f1)
+        let tool_name = $(printf '%s' "$job" | cut -d: -f2-)
+
+        wait $pid into let wait_status
+        if wait_status != 0
+            echo -e "${RED}✗ Build failed for ${tool_name} (${rid})${NC}"
+            return wait_status
+        end
+    end
+
+    let bundle_size = $(du -sh "$bundle_dir" | cut -f1)
     echo -e "${GREEN}✓ Bundle ready (${bundle_size}) -> ${bundle_dir}${NC}"
     ls -lah "$bundle_dir"
 end

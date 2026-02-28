@@ -127,7 +127,7 @@ ls -1
 Capture shell output into a Lash value:
 
 ```lash
-let branch = $sh "git rev-parse --abbrev-ref HEAD"
+let branch = $(git rev-parse --abbrev-ref HEAD)
 echo "branch:" $branch
 
 fn feed()
@@ -145,7 +145,7 @@ subshell into pid
     sh "sleep 1"
 end &
 
-wait pid into status
+wait $pid into status
 echo "exit:" $status
 ```
 

@@ -16,7 +16,7 @@ for dir in ./*
 
     echo "Packing:" $dir "->" $archive
     tar -czf "$archive" "$dir"
-    packed = packed + 1
+    $packed++
 end
 
 if packed == 0
