@@ -1,9 +1,12 @@
 # TODO — lash-lang v0.7.0
 
 @created: 2026-02-24
-@modified: 2026-02-27
+@modified: 2026-02-28
 
 ## Tasks
+
+- [ ] Add heredoc redirection and until loops to Lash with direct Bash lowering #feature #language
+      @created 2026-02-28 19:09
 
 
 ## Completed
