@@ -14,6 +14,9 @@
 - [ ] Add Bash bootstrap pack script (scripts/build/pack.sh) to archive release bundles into dist/*.tar.gz #feature #tooling
       @created 2026-02-28 23:27
 
+- [ ] Use captured test expressions for file/dir checks in scripts/build/build.lash #bug #tooling
+      @created 2026-02-28 23:27
+
 
 ## Completed
 
