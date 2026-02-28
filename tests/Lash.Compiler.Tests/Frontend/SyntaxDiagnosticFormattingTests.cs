@@ -56,7 +56,31 @@ public class SyntaxDiagnosticFormattingTests
         var error = Assert.Single(diagnostics.GetErrors());
         Assert.Contains("Unexpected end of file", error.Message, StringComparison.Ordinal);
         Assert.Contains("missing 'end'", error.Message, StringComparison.Ordinal);
+        Assert.Contains("'if' opened at line 1", error.Message, StringComparison.Ordinal);
         Assert.Contains("Tip:", error.Message, StringComparison.Ordinal);
+
+        var info = Assert.Single(diagnostics.GetInfos());
+        Assert.Equal(DiagnosticCodes.ParseUnclosedBlockInfo, info.Code);
+        Assert.Equal(1, info.Line);
+        Assert.Contains("Unclosed 'if' block starts here.", info.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ParserErrors_ReportInnermostUnclosedBlock_WhenNestedBlocksMissingEnd()
+    {
+        var diagnostics = Parse(
+            """
+            fn outer()
+                if true
+                    echo "ok"
+            """);
+
+        var error = Assert.Single(diagnostics.GetErrors());
+        Assert.Contains("'if' opened at line 2", error.Message, StringComparison.Ordinal);
+
+        var info = Assert.Single(diagnostics.GetInfos());
+        Assert.Equal(2, info.Line);
+        Assert.Contains("Unclosed 'if' block starts here.", info.Message, StringComparison.Ordinal);
     }
 
     private static DiagnosticBag Parse(string source)

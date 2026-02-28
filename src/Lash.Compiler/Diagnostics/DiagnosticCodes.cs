@@ -5,6 +5,7 @@ public static class DiagnosticCodes
     // Parse/Lex
     public const string LexInvalidToken = "E000";
     public const string ParseSyntaxError = "E001";
+    public const string ParseUnclosedBlockInfo = "I001";
 
     // Preprocessor
     public const string PreprocessorUnknownDirective = "E010";

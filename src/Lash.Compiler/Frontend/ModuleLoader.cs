@@ -60,6 +60,8 @@ public static class ModuleLoader
         if (diagnostics.HasErrors)
             return false;
 
+        var unclosedBlockHint = BlockStructureAnalyzer.FindInnermostUnclosedBlock(source);
+
         var input = new AntlrInputStream(source);
         var lexer = new LashLexer(input);
         var tokens = new CommonTokenStream(lexer);
@@ -68,7 +70,7 @@ public static class ModuleLoader
         lexer.RemoveErrorListeners();
         parser.RemoveErrorListeners();
         lexer.AddErrorListener(new LoaderLexerErrorListener(diagnostics, path));
-        parser.AddErrorListener(new LoaderParserErrorListener(diagnostics, path));
+        parser.AddErrorListener(new LoaderParserErrorListener(diagnostics, path, unclosedBlockHint));
 
         var parseTree = parser.program();
         if (diagnostics.HasErrors)
@@ -753,15 +755,125 @@ internal sealed class LoaderLexerErrorListener : IAntlrErrorListener<int>
     }
 }
 
+internal static class BlockStructureAnalyzer
+{
+    private static readonly HashSet<string> BlockOpeners = new(StringComparer.Ordinal)
+    {
+        "fn",
+        "if",
+        "for",
+        "select",
+        "while",
+        "until",
+        "switch",
+        "enum",
+        "subshell",
+        "coproc"
+    };
+
+    public static UnclosedBlockHint? FindInnermostUnclosedBlock(string source)
+    {
+        var stack = new Stack<UnclosedBlockHint>();
+        var lines = source.Replace("\r\n", "\n", StringComparison.Ordinal).Split('\n');
+        var inBlockComment = false;
+        var inMultilineString = false;
+
+        for (var i = 0; i < lines.Length; i++)
+        {
+            var line = lines[i];
+            var normalized = NormalizeForBlockScan(line, ref inBlockComment, ref inMultilineString);
+            if (normalized.Length == 0)
+                continue;
+
+            var keyword = GetLeadingKeyword(normalized);
+            if (keyword == null)
+                continue;
+
+            if (string.Equals(keyword, "end", StringComparison.Ordinal))
+            {
+                if (stack.Count > 0)
+                    stack.Pop();
+                continue;
+            }
+
+            if (!BlockOpeners.Contains(keyword))
+                continue;
+
+            var column = line.Length - line.TrimStart().Length;
+            stack.Push(new UnclosedBlockHint(keyword, i + 1, column));
+        }
+
+        return stack.Count == 0 ? null : stack.Peek();
+    }
+
+    private static string NormalizeForBlockScan(string line, ref bool inBlockComment, ref bool inMultilineString)
+    {
+        if (line.Length == 0)
+            return string.Empty;
+
+        var trimmed = line.Trim();
+        if (trimmed.Length == 0)
+            return string.Empty;
+
+        if (inMultilineString)
+        {
+            if (trimmed.Contains("]]", StringComparison.Ordinal))
+                inMultilineString = false;
+            return string.Empty;
+        }
+
+        if (inBlockComment)
+        {
+            var commentEnd = trimmed.IndexOf("*/", StringComparison.Ordinal);
+            if (commentEnd >= 0)
+                inBlockComment = false;
+            return string.Empty;
+        }
+
+        if (trimmed.StartsWith("//", StringComparison.Ordinal))
+            return string.Empty;
+
+        if (trimmed.StartsWith("/*", StringComparison.Ordinal))
+        {
+            if (!trimmed.Contains("*/", StringComparison.Ordinal))
+                inBlockComment = true;
+            return string.Empty;
+        }
+
+        if (trimmed.StartsWith("__cmd ", StringComparison.Ordinal))
+            return string.Empty;
+
+        if (trimmed.Contains("[[", StringComparison.Ordinal) && !trimmed.Contains("]]", StringComparison.Ordinal))
+        {
+            inMultilineString = true;
+            return string.Empty;
+        }
+
+        return trimmed;
+    }
+
+    private static string? GetLeadingKeyword(string line)
+    {
+        var firstSpace = line.IndexOfAny([' ', '\t']);
+        if (firstSpace < 0)
+            return line;
+
+        return line[..firstSpace];
+    }
+}
+
 internal sealed class LoaderParserErrorListener : BaseErrorListener
 {
     private readonly DiagnosticBag diagnostics;
     private readonly string path;
+    private readonly UnclosedBlockHint? unclosedBlockHint;
+    private bool emittedUnclosedBlockInfo;
 
-    public LoaderParserErrorListener(DiagnosticBag diagnostics, string path)
+    public LoaderParserErrorListener(DiagnosticBag diagnostics, string path, UnclosedBlockHint? unclosedBlockHint)
     {
         this.diagnostics = diagnostics;
         this.path = path;
+        this.unclosedBlockHint = unclosedBlockHint;
     }
 
     public override void SyntaxError(
@@ -784,11 +896,27 @@ internal sealed class LoaderParserErrorListener : BaseErrorListener
         diagnostics.AddDiagnostic(new Diagnostic
         {
             Severity = DiagnosticSeverity.Error,
-            Message = SyntaxErrorFormatter.FormatParserError(offendingSymbol, msg),
+            Message = SyntaxErrorFormatter.FormatParserError(offendingSymbol, msg, unclosedBlockHint),
             Line = line,
             Column = charPositionInLine,
             Code = DiagnosticCodes.ParseSyntaxError,
             FilePath = path
         });
+
+        if (!emittedUnclosedBlockInfo &&
+            unclosedBlockHint is UnclosedBlockHint hint &&
+            SyntaxErrorFormatter.IsMissingEndAtEof(offendingSymbol, msg))
+        {
+            emittedUnclosedBlockInfo = true;
+            diagnostics.AddDiagnostic(new Diagnostic
+            {
+                Severity = DiagnosticSeverity.Info,
+                Message = $"Unclosed '{hint.Keyword}' block starts here.",
+                Line = hint.Line,
+                Column = hint.Column,
+                Code = DiagnosticCodes.ParseUnclosedBlockInfo,
+                FilePath = path
+            });
+        }
     }
 }

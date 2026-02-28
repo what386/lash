@@ -6,9 +6,15 @@ using Antlr4.Runtime;
 internal static class SyntaxErrorFormatter {
   public static string FormatParserError(IToken? offendingSymbol,
                                          string rawMessage) {
+    return FormatParserError(offendingSymbol, rawMessage, null);
+  }
+
+  public static string FormatParserError(IToken? offendingSymbol,
+                                         string rawMessage,
+                                         UnclosedBlockHint? unclosedBlockHint) {
     var offendingText = NormalizeToken(offendingSymbol?.Text);
     if (string.Equals(offendingText, "<EOF>", StringComparison.Ordinal))
-      return FormatUnexpectedEndOfFile(rawMessage);
+      return FormatUnexpectedEndOfFile(rawMessage, unclosedBlockHint);
 
     if (IsPreprocessorLike(offendingText) ||
         rawMessage.Contains("'#", StringComparison.Ordinal))
@@ -64,12 +70,31 @@ internal static class SyntaxErrorFormatter {
         .Replace("\n", "\\n", StringComparison.Ordinal);
   }
 
-  private static string FormatUnexpectedEndOfFile(string rawMessage) {
+  public static bool IsMissingEndAtEof(IToken? offendingSymbol,
+                                       string rawMessage) {
+    if (!string.Equals(NormalizeToken(offendingSymbol?.Text), "<EOF>",
+                       StringComparison.Ordinal))
+      return false;
+
+    var expected = ExtractExpectedTokens(rawMessage);
+    return expected != null &&
+           expected.Contains("'end'", StringComparison.Ordinal);
+  }
+
+  private static string FormatUnexpectedEndOfFile(string rawMessage,
+                                                  UnclosedBlockHint?
+                                                      unclosedBlockHint) {
     var expected = ExtractExpectedTokens(rawMessage);
     if (expected is null)
       return DiagnosticMessage.WithTip(
           "Unexpected end of file.",
           "Check for an unclosed block, string, or directive.");
+
+    if (expected.Contains("'end'", StringComparison.Ordinal) &&
+        unclosedBlockHint is UnclosedBlockHint hint)
+      return DiagnosticMessage.WithTip(
+          "Unexpected end of file: missing 'end' to close an open block.",
+          $"Add 'end' to close '{hint.Keyword}' opened at line {hint.Line}.");
 
     if (expected.Contains("'end'", StringComparison.Ordinal))
       return DiagnosticMessage.WithTip(
@@ -94,3 +119,6 @@ internal static class SyntaxErrorFormatter {
     return expected;
   }
 }
+
+internal readonly record struct UnclosedBlockHint(string Keyword, int Line,
+                                                  int Column);
