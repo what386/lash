@@ -159,5 +159,18 @@
       "completed_at": "2026-02-28T23:28:04.298528183Z"
     },
     "version": null
+  },
+  {
+    "change": {
+      "description": "Use captured test expressions for file/dir checks in scripts/build/build.lash",
+      "priority": "Medium",
+      "tags": [
+        "bug",
+        "tooling"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-28T23:28:14.161486262Z"
+    },
+    "version": null
   }
 ]
