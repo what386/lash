@@ -101,11 +101,12 @@
 (function_call
   name: (identifier) @function.call)
 
-; Shell capture expression ($sh ...)
+; Shell capture expression ($(...))
 (shell_capture_expression
   "$" @operator
-  keyword: (_) @keyword
-  payload: (_))
+  "(" @punctuation.bracket
+  payload: (capture_payload) @string.special
+  ")" @punctuation.bracket)
 
 ; Command statements (bare word invocations)
 (command_statement

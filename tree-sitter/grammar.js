@@ -394,9 +394,12 @@ module.exports = grammar({
 
     shell_capture_expression: $ => prec.right(11, seq(
       "$",
-      field("keyword", choice("sh", "test")),
-      field("payload", $.expression),
+      "(",
+      field("payload", $.capture_payload),
+      ")",
     )),
+
+    capture_payload: _ => token(prec(1, /[^)\r\n]+/)),
 
     // $ is exclusively a variable sigil — $name always means var_ref
     var_ref: $ => seq("$", field("name", $.identifier)),
