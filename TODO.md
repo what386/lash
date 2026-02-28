@@ -1,4 +1,4 @@
-# TODO — lash-lang v0.7.0
+# TODO — lash-lang v0.8.0
 
 @created: 2026-02-24
 @modified: 2026-02-28
@@ -41,20 +41,25 @@
 - [x] Add heredoc redirection and until loops to Lash with direct Bash lowering #feature #language
       @created 2026-02-28 19:09
       @completed 2026-02-28 19:15
+      @completed_version 0.8.0
 
 - [x] Make into bindings explicit: 'into ' assigns existing vars, 'into let/const name' creates vars (high) #feature #language
       @created 2026-02-28 23:27
       @completed 2026-02-28 23:28
+      @completed_version 0.8.0
 
 - [x] Add Bash bootstrap build script (scripts/build/build.sh) mirroring Lash build flags and output layout #feature #tooling
       @created 2026-02-28 23:27
       @completed 2026-02-28 23:28
+      @completed_version 0.8.0
 
 - [x] Add Bash bootstrap pack script (scripts/build/pack.sh) to archive release bundles into dist/*.tar.gz #feature #tooling
       @created 2026-02-28 23:27
       @completed 2026-02-28 23:28
+      @completed_version 0.8.0
 
 - [x] Use captured test expressions for file/dir checks in scripts/build/build.lash #bug #tooling
       @created 2026-02-28 23:27
       @completed 2026-02-28 23:28
+      @completed_version 0.8.0
 
