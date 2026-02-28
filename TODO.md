@@ -5,6 +5,9 @@
 
 ## Tasks
 
+- [ ] Make into bindings explicit: 'into ' assigns existing vars, 'into let/const name' creates vars (high) #feature #language
+      @created 2026-02-28 23:27
+
 
 ## Completed
 
