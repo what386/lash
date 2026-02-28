@@ -16,7 +16,7 @@ internal sealed class ImportDirective : IPreprocessorDirective
             state.AddError(
                 DiagnosticMessage.WithTip(
                     "@import is only allowed at file/preprocessor scope, not inside runtime blocks.",
-                    "Move @import outside runtime blocks (if/fn/for/select/while/switch/subshell/coproc)."),
+                    "Move @import outside runtime blocks, or close/open blocks so the directive is at top level."),
                 DiagnosticCodes.PreprocessorImportUsage);
             return;
         }
