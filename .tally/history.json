@@ -120,5 +120,18 @@
       "completed_at": "2026-02-28T19:15:11.163890809Z"
     },
     "version": null
+  },
+  {
+    "change": {
+      "description": "Make into bindings explicit: 'into ' assigns existing vars, 'into let/const name' creates vars",
+      "priority": "High",
+      "tags": [
+        "feature",
+        "language"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-28T23:28:04.203288347Z"
+    },
+    "version": null
   }
 ]

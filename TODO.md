@@ -5,9 +5,6 @@
 
 ## Tasks
 
-- [ ] Make into bindings explicit: 'into ' assigns existing vars, 'into let/const name' creates vars (high) #feature #language
-      @created 2026-02-28 23:27
-
 - [ ] Add Bash bootstrap build script (scripts/build/build.sh) mirroring Lash build flags and output layout #feature #tooling
       @created 2026-02-28 23:27
 
@@ -53,4 +50,8 @@
 - [x] Add heredoc redirection and until loops to Lash with direct Bash lowering #feature #language
       @created 2026-02-28 19:09
       @completed 2026-02-28 19:15
+
+- [x] Make into bindings explicit: 'into ' assigns existing vars, 'into let/const name' creates vars (high) #feature #language
+      @created 2026-02-28 23:27
+      @completed 2026-02-28 23:28
 
