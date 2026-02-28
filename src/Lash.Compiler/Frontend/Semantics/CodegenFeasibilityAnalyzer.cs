@@ -83,6 +83,12 @@ public sealed class CodegenFeasibilityAnalyzer
                 foreach (var nested in forLoop.Body)
                     CheckStatement(nested);
                 break;
+            case SelectLoop selectLoop:
+                if (selectLoop.Options != null)
+                    ValidateValueExpression(selectLoop.Options, ValueContext.ForRange);
+                foreach (var nested in selectLoop.Body)
+                    CheckStatement(nested);
+                break;
 
             case WhileLoop whileLoop:
                 ValidateValueExpression(whileLoop.Condition, ValueContext.Condition);
@@ -106,6 +112,10 @@ public sealed class CodegenFeasibilityAnalyzer
 
             case SubshellStatement subshellStatement:
                 foreach (var nested in subshellStatement.Body)
+                    CheckStatement(nested);
+                break;
+            case CoprocStatement coprocStatement:
+                foreach (var nested in coprocStatement.Body)
                     CheckStatement(nested);
                 break;
 

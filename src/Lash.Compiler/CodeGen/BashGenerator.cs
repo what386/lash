@@ -171,6 +171,9 @@ public class BashGenerator
                 case ForLoop forLoop:
                     CollectFunctionLocals(forLoop.Body);
                     break;
+                case SelectLoop selectLoop:
+                    CollectFunctionLocals(selectLoop.Body);
+                    break;
                 case WhileLoop whileLoop:
                     CollectFunctionLocals(whileLoop.Body);
                     break;
@@ -179,6 +182,9 @@ public class BashGenerator
                     break;
                 case SubshellStatement subshellStatement:
                     CollectFunctionLocals(subshellStatement.Body);
+                    break;
+                case CoprocStatement coprocStatement:
+                    CollectFunctionLocals(coprocStatement.Body);
                     break;
             }
         }
@@ -217,6 +223,9 @@ public class BashGenerator
                 case ForLoop forLoop:
                     CollectLocalDeclarations(forLoop.Body, locals);
                     break;
+                case SelectLoop selectLoop:
+                    CollectLocalDeclarations(selectLoop.Body, locals);
+                    break;
                 case WhileLoop whileLoop:
                     CollectLocalDeclarations(whileLoop.Body, locals);
                     break;
@@ -225,6 +234,9 @@ public class BashGenerator
                     break;
                 case SubshellStatement subshellStatement:
                     CollectLocalDeclarations(subshellStatement.Body, locals);
+                    break;
+                case CoprocStatement coprocStatement:
+                    CollectLocalDeclarations(coprocStatement.Body, locals);
                     break;
             }
         }
@@ -278,6 +290,11 @@ public class BashGenerator
                         CollectAssociativeUsages(forLoop.Step, functionName);
                     CollectAssociativeUsages(forLoop.Body, functionName);
                     break;
+                case SelectLoop selectLoop:
+                    if (selectLoop.Options != null)
+                        CollectAssociativeUsages(selectLoop.Options, functionName);
+                    CollectAssociativeUsages(selectLoop.Body, functionName);
+                    break;
                 case WhileLoop whileLoop:
                     CollectAssociativeUsages(whileLoop.Condition, functionName);
                     CollectAssociativeUsages(whileLoop.Body, functionName);
@@ -288,6 +305,9 @@ public class BashGenerator
                     break;
                 case SubshellStatement subshellStatement:
                     CollectAssociativeUsages(subshellStatement.Body, functionName);
+                    break;
+                case CoprocStatement coprocStatement:
+                    CollectAssociativeUsages(coprocStatement.Body, functionName);
                     break;
                 case WaitStatement waitStatement when waitStatement.TargetKind == WaitTargetKind.Target && waitStatement.Target != null:
                     CollectAssociativeUsages(waitStatement.Target, functionName);
@@ -411,6 +431,10 @@ public class BashGenerator
                     if (RequiresTrackedJobs(subshellStatement.Body))
                         return true;
                     break;
+                case CoprocStatement coprocStatement:
+                    if (RequiresTrackedJobs(coprocStatement.Body))
+                        return true;
+                    break;
 
                 case WaitStatement waitStatement when waitStatement.TargetKind == WaitTargetKind.Jobs:
                     return true;
@@ -442,6 +466,10 @@ public class BashGenerator
 
                 case ForLoop forLoop:
                     if (RequiresTrackedJobs(forLoop.Body))
+                        return true;
+                    break;
+                case SelectLoop selectLoop:
+                    if (RequiresTrackedJobs(selectLoop.Body))
                         return true;
                     break;
 

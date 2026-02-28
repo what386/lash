@@ -133,6 +133,15 @@ public sealed class TypeChecker
                     CheckStatement(nested);
                 PopScope();
                 break;
+            case SelectLoop selectLoop:
+                PushScope();
+                Declare(selectLoop.Variable, ExpressionTypes.String);
+                if (selectLoop.Options != null)
+                    InferType(selectLoop.Options);
+                foreach (var nested in selectLoop.Body)
+                    CheckStatement(nested);
+                PopScope();
+                break;
             case WhileLoop whileLoop:
                 InferType(whileLoop.Condition);
                 PushScope();
@@ -171,6 +180,27 @@ public sealed class TypeChecker
                                 Line = subshellStatement.Line,
                                 Column = subshellStatement.Column,
                                 Name = subshellStatement.IntoVariable!,
+                                Type = ExpressionTypes.Unknown
+                            },
+                            ExpressionTypes.Number);
+                    }
+                    break;
+                }
+            case CoprocStatement coprocStatement:
+                {
+                    PushScope();
+                    foreach (var nested in coprocStatement.Body)
+                        CheckStatement(nested);
+                    PopScope();
+
+                    if (!string.IsNullOrEmpty(coprocStatement.IntoVariable))
+                    {
+                        Assign(
+                            new IdentifierExpression
+                            {
+                                Line = coprocStatement.Line,
+                                Column = coprocStatement.Column,
+                                Name = coprocStatement.IntoVariable!,
                                 Type = ExpressionTypes.Unknown
                             },
                             ExpressionTypes.Number);

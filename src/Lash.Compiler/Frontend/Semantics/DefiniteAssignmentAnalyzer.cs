@@ -85,6 +85,11 @@ public sealed class DefiniteAssignmentAnalyzer
 
                 AnalyzeLoopBody(forLoop.Variable, forLoop.Body);
                 break;
+            case SelectLoop selectLoop:
+                if (selectLoop.Options != null)
+                    CheckExpression(selectLoop.Options);
+                AnalyzeLoopBody(selectLoop.Variable, selectLoop.Body);
+                break;
 
             case WhileLoop whileLoop:
                 CheckExpression(whileLoop.Condition);
@@ -108,6 +113,11 @@ public sealed class DefiniteAssignmentAnalyzer
                 AnalyzeIsolatedBlock(subshellStatement.Body);
                 if (!string.IsNullOrEmpty(subshellStatement.IntoVariable))
                     SetAssigned(subshellStatement.IntoVariable!, isGlobal: false);
+                break;
+            case CoprocStatement coprocStatement:
+                AnalyzeIsolatedBlock(coprocStatement.Body);
+                if (!string.IsNullOrEmpty(coprocStatement.IntoVariable))
+                    SetAssigned(coprocStatement.IntoVariable!, isGlobal: false);
                 break;
 
             case WaitStatement waitStatement:

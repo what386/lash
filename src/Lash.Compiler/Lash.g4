@@ -12,6 +12,7 @@ statement
     | ifStatement
     | switchStatement
     | forLoop
+    | selectLoop
     | whileLoop
     | untilLoop
     | shStatement
@@ -19,6 +20,7 @@ statement
     | returnStatement
     | shiftStatement
     | subshellStatement
+    | coprocStatement
     | waitStatement
     | breakStatement
     | continueStatement
@@ -85,6 +87,10 @@ forLoop
     : 'for' IDENTIFIER 'in' (expression ('step' expression)? | GLOB_PATTERN) statement* 'end'
     ;
 
+selectLoop
+    : 'select' IDENTIFIER 'in' (expression | GLOB_PATTERN) statement* 'end'
+    ;
+
 whileLoop
     : 'while' expression statement* 'end'
     ;
@@ -111,6 +117,10 @@ shiftStatement
 
 subshellStatement
     : 'subshell' intoBinding? statement* 'end' AMP?
+    ;
+
+coprocStatement
+    : 'coproc' intoBinding? statement* 'end'
     ;
 
 waitStatement

@@ -162,6 +162,27 @@ public sealed class WarningAnalyzer
                 PopScope();
                 return false;
 
+            case SelectLoop selectLoop:
+                if (selectLoop.Options != null)
+                    AnalyzeExpression(selectLoop.Options);
+
+                PushScope();
+                PushTrackedJobs(CurrentTrackedJobs());
+                PushConstScope();
+                WarnIfShadowing(selectLoop.Variable, selectLoop.Line, selectLoop.Column);
+                DeclareSymbol(
+                    selectLoop.Variable,
+                    SymbolKind.Variable,
+                    selectLoop.Line,
+                    selectLoop.Column,
+                    ignoreUnused: ShouldIgnoreUnusedSymbol(selectLoop.Variable));
+                InvalidateConst(selectLoop.Variable);
+                AnalyzeBlock(selectLoop.Body, inLoop: true);
+                PopConstScope();
+                PopTrackedJobs();
+                PopScope();
+                return false;
+
             case WhileLoop whileLoop:
                 if (TryEvaluateBool(whileLoop.Condition, out var whileCondition) && !whileCondition)
                 {
@@ -234,11 +255,39 @@ public sealed class WarningAnalyzer
                     SetCurrentTrackedJobs(CurrentTrackedJobs() + 1);
                 return false;
 
+            case CoprocStatement coprocStatement:
+                PushScope();
+                PushTrackedJobs(0);
+                PushConstScope();
+                AnalyzeBlock(coprocStatement.Body, inLoop: false);
+                PopConstScope();
+                PopTrackedJobs();
+                PopScope();
+
+                if (!string.IsNullOrEmpty(coprocStatement.IntoVariable))
+                {
+                    if (coprocStatement.IntoCreatesVariable)
+                    {
+                        WarnIfShadowing(coprocStatement.IntoVariable!, coprocStatement.Line, coprocStatement.Column);
+                        DeclareSymbol(
+                            coprocStatement.IntoVariable!,
+                            SymbolKind.Variable,
+                            coprocStatement.Line,
+                            coprocStatement.Column,
+                            ignoreUnused: ShouldIgnoreUnusedSymbol(coprocStatement.IntoVariable!));
+                    }
+
+                    InvalidateConst(coprocStatement.IntoVariable!);
+                }
+
+                SetCurrentTrackedJobs(CurrentTrackedJobs() + 1);
+                return false;
+
             case WaitStatement waitStatement when waitStatement.TargetKind == WaitTargetKind.Jobs:
                 if (CurrentTrackedJobs() == 0)
                 {
                     AddWarning(
-                        "'wait jobs' has no tracked background subshells to wait for.",
+                        "'wait jobs' has no tracked background jobs to wait for.",
                         waitStatement.Line,
                         waitStatement.Column,
                         DiagnosticCodes.WaitJobsWithoutTrackedJobs);
@@ -1131,7 +1180,7 @@ public sealed class WarningAnalyzer
         {
             DiagnosticCodes.UnreachableStatement => "Remove dead code, or change the controlling condition to make this path reachable.",
             DiagnosticCodes.ShadowedVariable => "Rename the inner variable if shadowing was not intentional.",
-            DiagnosticCodes.WaitJobsWithoutTrackedJobs => "Start a background subshell first, or remove this wait call.",
+            DiagnosticCodes.WaitJobsWithoutTrackedJobs => "Start a background subshell or coproc first, or remove this wait call.",
             DiagnosticCodes.UnusedVariable => "Remove it, use it, or prefix with '_' to explicitly mark it as intentionally unused.",
             DiagnosticCodes.UnusedParameter => "Remove it, use it, or prefix with '_' to explicitly mark it as intentionally unused.",
             DiagnosticCodes.UnusedFunction => "Call it, remove it, or mark as public if it is an external entrypoint.",

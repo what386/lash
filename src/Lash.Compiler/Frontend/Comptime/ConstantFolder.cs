@@ -123,6 +123,12 @@ internal sealed class ConstantFolder
                 forLoop.Body = FoldIsolated(forLoop.Body);
                 return new List<Statement> { forLoop };
 
+            case SelectLoop selectLoop:
+                if (selectLoop.Options != null)
+                    selectLoop.Options = FoldExpression(selectLoop.Options);
+                selectLoop.Body = FoldIsolated(selectLoop.Body);
+                return new List<Statement> { selectLoop };
+
             case WhileLoop whileLoop:
                 whileLoop.Condition = FoldExpression(whileLoop.Condition);
                 if (TryEvaluateCondition(whileLoop.Condition, out var whileCondition) && !whileCondition)
@@ -148,6 +154,10 @@ internal sealed class ConstantFolder
             case SubshellStatement subshellStatement:
                 subshellStatement.Body = FoldIsolated(subshellStatement.Body);
                 return new List<Statement> { subshellStatement };
+
+            case CoprocStatement coprocStatement:
+                coprocStatement.Body = FoldIsolated(coprocStatement.Body);
+                return new List<Statement> { coprocStatement };
 
             case WaitStatement waitStatement when waitStatement.TargetKind == WaitTargetKind.Target && waitStatement.Target != null:
                 waitStatement.Target = FoldExpression(waitStatement.Target);
@@ -959,6 +969,9 @@ internal sealed class ConstantFolder
                 case ForLoop forLoop:
                     CollectEnums(forLoop.Body);
                     break;
+                case SelectLoop selectLoop:
+                    CollectEnums(selectLoop.Body);
+                    break;
                 case WhileLoop whileLoop:
                     CollectEnums(whileLoop.Body);
                     break;
@@ -967,6 +980,9 @@ internal sealed class ConstantFolder
                     break;
                 case SubshellStatement subshellStatement:
                     CollectEnums(subshellStatement.Body);
+                    break;
+                case CoprocStatement coprocStatement:
+                    CollectEnums(coprocStatement.Body);
                     break;
             }
         }
@@ -1005,6 +1021,9 @@ internal sealed class ConstantFolder
                 case ForLoop forLoop:
                     CollectPureFunctionCandidates(forLoop.Body);
                     break;
+                case SelectLoop selectLoop:
+                    CollectPureFunctionCandidates(selectLoop.Body);
+                    break;
 
                 case WhileLoop whileLoop:
                     CollectPureFunctionCandidates(whileLoop.Body);
@@ -1015,6 +1034,9 @@ internal sealed class ConstantFolder
 
                 case SubshellStatement subshellStatement:
                     CollectPureFunctionCandidates(subshellStatement.Body);
+                    break;
+                case CoprocStatement coprocStatement:
+                    CollectPureFunctionCandidates(coprocStatement.Body);
                     break;
             }
         }

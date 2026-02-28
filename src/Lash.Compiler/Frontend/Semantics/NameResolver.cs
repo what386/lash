@@ -85,6 +85,9 @@ public sealed class NameResolver
                 case ForLoop forLoop:
                     CollectDeclarations(forLoop.Body);
                     break;
+                case SelectLoop selectLoop:
+                    CollectDeclarations(selectLoop.Body);
+                    break;
 
                 case WhileLoop whileLoop:
                     CollectDeclarations(whileLoop.Body);
@@ -169,16 +172,29 @@ public sealed class NameResolver
                 }
                 break;
 
-            case ForLoop forLoop:
-                if (forLoop.Range != null)
-                    CheckExpression(forLoop.Range);
-                if (forLoop.Step != null)
-                    CheckExpression(forLoop.Step);
+                case ForLoop forLoop:
+                    if (forLoop.Range != null)
+                        CheckExpression(forLoop.Range);
+                    if (forLoop.Step != null)
+                        CheckExpression(forLoop.Step);
 
                 PushScope();
                 loopDepth++;
                 Declare(forLoop.Variable, isConst: false, forLoop);
                 foreach (var nested in forLoop.Body)
+                    CheckStatement(nested);
+                loopDepth--;
+                PopScope();
+                break;
+
+            case SelectLoop selectLoop:
+                if (selectLoop.Options != null)
+                    CheckExpression(selectLoop.Options);
+
+                PushScope();
+                loopDepth++;
+                Declare(selectLoop.Variable, isConst: false, selectLoop);
+                foreach (var nested in selectLoop.Body)
                     CheckStatement(nested);
                 loopDepth--;
                 PopScope();
@@ -255,6 +271,23 @@ public sealed class NameResolver
                     {
                         subshellStatement.IntoCreatesVariable = creates;
                         subshellStatement.IntoCreatesConst = createConst;
+                    });
+                break;
+
+            case CoprocStatement coprocStatement:
+                PushScope();
+                foreach (var nested in coprocStatement.Body)
+                    CheckStatement(nested);
+                PopScope();
+
+                ResolveIntoBinding(
+                    coprocStatement.IntoVariable,
+                    coprocStatement.IntoMode,
+                    coprocStatement,
+                    (creates, createConst) =>
+                    {
+                        coprocStatement.IntoCreatesVariable = creates;
+                        coprocStatement.IntoCreatesConst = createConst;
                     });
                 break;
 

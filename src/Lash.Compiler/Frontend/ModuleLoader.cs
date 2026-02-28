@@ -460,9 +460,11 @@ public static class ModuleLoader
                || line.StartsWith("elif ", StringComparison.Ordinal)
                || line == "else"
                || line.StartsWith("for ", StringComparison.Ordinal)
+               || line.StartsWith("select ", StringComparison.Ordinal)
                || line.StartsWith("while ", StringComparison.Ordinal)
                || line.StartsWith("until ", StringComparison.Ordinal)
                || line.StartsWith("subshell", StringComparison.Ordinal)
+               || line.StartsWith("coproc", StringComparison.Ordinal)
                || line == "wait"
                || line.StartsWith("wait ", StringComparison.Ordinal)
                || line.StartsWith("switch ", StringComparison.Ordinal)

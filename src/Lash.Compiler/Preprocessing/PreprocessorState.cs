@@ -329,11 +329,13 @@ internal sealed class PreprocessorState
         return HasKeywordPrefix(line, "fn")
             || HasKeywordPrefix(line, "if")
             || HasKeywordPrefix(line, "for")
+            || HasKeywordPrefix(line, "select")
             || HasKeywordPrefix(line, "while")
             || HasKeywordPrefix(line, "until")
             || HasKeywordPrefix(line, "switch")
             || HasKeywordPrefix(line, "enum")
-            || HasKeywordPrefix(line, "subshell");
+            || HasKeywordPrefix(line, "subshell")
+            || HasKeywordPrefix(line, "coproc");
     }
 
     private static bool IsRuntimeBlockEnd(string line)

@@ -3,82 +3,94 @@ namespace Lash.Compiler.Diagnostics;
 using System.Text.RegularExpressions;
 using Antlr4.Runtime;
 
-internal static class SyntaxErrorFormatter
-{
-    public static string FormatParserError(IToken? offendingSymbol, string rawMessage)
-    {
-        var offendingText = NormalizeToken(offendingSymbol?.Text);
-        if (string.Equals(offendingText, "<EOF>", StringComparison.Ordinal))
-            return FormatUnexpectedEndOfFile(rawMessage);
+internal static class SyntaxErrorFormatter {
+  public static string FormatParserError(IToken? offendingSymbol,
+                                         string rawMessage) {
+    var offendingText = NormalizeToken(offendingSymbol?.Text);
+    if (string.Equals(offendingText, "<EOF>", StringComparison.Ordinal))
+      return FormatUnexpectedEndOfFile(rawMessage);
 
-        if (IsPreprocessorLike(offendingText) || rawMessage.Contains("'#", StringComparison.Ordinal))
-            return DiagnosticMessage.WithTip($"Unrecognized symbol '{offendingText}'", "Use '@' for preprocessor directives and '#' only for length (for example '#items').");
+    if (IsPreprocessorLike(offendingText) ||
+        rawMessage.Contains("'#", StringComparison.Ordinal))
+      return DiagnosticMessage.WithTip(
+          $"Unrecognized symbol '{offendingText}'",
+          "Use '@' for preprocessor directives and '#' only for length (for " +
+          "example '#items').");
 
-        if (rawMessage.StartsWith("extraneous input", StringComparison.Ordinal))
-            return DiagnosticMessage.WithTip($"Unexpected token '{offendingText}'", "Check for a missing operator, delimiter, or block terminator.");
+    if (rawMessage.StartsWith("extraneous input", StringComparison.Ordinal))
+      return DiagnosticMessage.WithTip(
+          $"Unexpected token '{offendingText}'",
+          "Check for a missing operator, delimiter, or block terminator.");
 
-        if (rawMessage.StartsWith("mismatched input", StringComparison.Ordinal))
-            return DiagnosticMessage.WithTip($"Unexpected token '{offendingText}'", "Check surrounding syntax and matching block keywords.");
+    if (rawMessage.StartsWith("mismatched input", StringComparison.Ordinal))
+      return DiagnosticMessage.WithTip(
+          $"Unexpected token '{offendingText}'",
+          "Check surrounding syntax and matching block keywords.");
 
-        if (rawMessage.StartsWith("no viable alternative", StringComparison.Ordinal))
-            return DiagnosticMessage.WithTip($"Invalid syntax near '{offendingText}'", "Check expression structure and quoting.");
+    if (rawMessage.StartsWith("no viable alternative",
+                              StringComparison.Ordinal))
+      return DiagnosticMessage.WithTip(
+          $"Invalid syntax near '{offendingText}'",
+          "Check expression structure and quoting.");
 
-        return $"Syntax error: {rawMessage}";
-    }
+    return $"Syntax error: {rawMessage}";
+  }
 
-    public static string FormatLexerError(string rawMessage)
-    {
-        // Example: token recognition error at: '#'
-        var m = Regex.Match(rawMessage, @"token recognition error at: '(.+)'");
-        if (m.Success)
-            return DiagnosticMessage.WithTip($"Unrecognized symbol '{m.Groups[1].Value}'", "Check for unsupported punctuation or an unclosed string.");
+  public static string FormatLexerError(string rawMessage) {
+    // Example: token recognition error at: '#'
+    var m = Regex.Match(rawMessage, @"token recognition error at: '(.+)'");
+    if (m.Success)
+      return DiagnosticMessage.WithTip(
+          $"Unrecognized symbol '{m.Groups[1].Value}'",
+          "Check for unsupported punctuation or an unclosed string.");
 
-        return $"Lexer error: {rawMessage}";
-    }
+    return $"Lexer error: {rawMessage}";
+  }
 
-    private static bool IsPreprocessorLike(string? text)
-    {
-        if (string.IsNullOrWhiteSpace(text))
-            return false;
-        if (string.Equals(text, "<EOF>", StringComparison.Ordinal))
-            return false;
+  private static bool IsPreprocessorLike(string? text) {
+    if (string.IsNullOrWhiteSpace(text))
+      return false;
+    if (string.Equals(text, "<EOF>", StringComparison.Ordinal))
+      return false;
 
-        return text.StartsWith("#", StringComparison.Ordinal);
-    }
+    return text.StartsWith("#", StringComparison.Ordinal);
+  }
 
-    private static string NormalizeToken(string? tokenText)
-    {
-        if (string.IsNullOrWhiteSpace(tokenText))
-            return "<unknown>";
+  private static string NormalizeToken(string? tokenText) {
+    if (string.IsNullOrWhiteSpace(tokenText))
+      return "<unknown>";
 
-        return tokenText
-            .Replace("\r", "\\r", StringComparison.Ordinal)
-            .Replace("\n", "\\n", StringComparison.Ordinal);
-    }
+    return tokenText.Replace("\r", "\\r", StringComparison.Ordinal)
+        .Replace("\n", "\\n", StringComparison.Ordinal);
+  }
 
-    private static string FormatUnexpectedEndOfFile(string rawMessage)
-    {
-        var expected = ExtractExpectedTokens(rawMessage);
-        if (expected is null)
-            return DiagnosticMessage.WithTip("Unexpected end of file.", "Check for an unclosed block, string, or directive.");
+  private static string FormatUnexpectedEndOfFile(string rawMessage) {
+    var expected = ExtractExpectedTokens(rawMessage);
+    if (expected is null)
+      return DiagnosticMessage.WithTip(
+          "Unexpected end of file.",
+          "Check for an unclosed block, string, or directive.");
 
-        if (expected.Contains("'end'", StringComparison.Ordinal))
-            return DiagnosticMessage.WithTip("Unexpected end of file: missing 'end' to close an open block.", "Add 'end' for each open if/fn/for/while/switch/subshell block.");
+    if (expected.Contains("'end'", StringComparison.Ordinal))
+      return DiagnosticMessage.WithTip(
+          "Unexpected end of file: missing 'end' to close an open block.",
+          "Add an 'end' to each opened block.");
 
-        return DiagnosticMessage.WithTip($"Unexpected end of file: expected {expected}.", "Finish the statement or close the open construct before end of file.");
-    }
+    return DiagnosticMessage.WithTip(
+        $"Unexpected end of file: expected {expected}.",
+        "Finish the statement or close the open construct before end of file.");
+  }
 
-    private static string? ExtractExpectedTokens(string rawMessage)
-    {
-        var marker = "expecting ";
-        var index = rawMessage.IndexOf(marker, StringComparison.Ordinal);
-        if (index < 0)
-            return null;
+  private static string? ExtractExpectedTokens(string rawMessage) {
+    var marker = "expecting ";
+    var index = rawMessage.IndexOf(marker, StringComparison.Ordinal);
+    if (index < 0)
+      return null;
 
-        var expected = rawMessage[(index + marker.Length)..].Trim();
-        if (expected.Length == 0)
-            return null;
+    var expected = rawMessage[(index + marker.Length)..].Trim();
+    if (expected.Length == 0)
+      return null;
 
-        return expected;
-    }
+    return expected;
+  }
 }

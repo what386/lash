@@ -108,6 +108,20 @@ internal sealed class SymbolIndexBuilder
                 VisitStatements(forLoop.Body);
                 PopScope();
                 break;
+            case SelectLoop selectLoop:
+                if (selectLoop.Options is not null)
+                    VisitExpression(selectLoop.Options);
+                PushScope();
+                Declare(
+                    selectLoop,
+                    selectLoop.Variable,
+                    LashSymbolKind.Variable,
+                    isConst: false,
+                    typeText: "string");
+                Predeclare(selectLoop.Body);
+                VisitStatements(selectLoop.Body);
+                PopScope();
+                break;
             case WhileLoop whileLoop:
                 VisitExpression(whileLoop.Condition);
                 VisitScopedBlock(whileLoop.Body);
@@ -133,6 +147,11 @@ internal sealed class SymbolIndexBuilder
                         subshellStatement.Column);
                 }
                 VisitScopedBlock(subshellStatement.Body);
+                break;
+            case CoprocStatement coprocStatement:
+                if (coprocStatement.IntoVariable is not null)
+                    AddReference(coprocStatement.IntoVariable, coprocStatement.Line, coprocStatement.Column);
+                VisitScopedBlock(coprocStatement.Body);
                 break;
             case WaitStatement waitStatement:
                 if (waitStatement.Target is not null)

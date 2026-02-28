@@ -92,6 +92,11 @@ public sealed class ConstantSafetyAnalyzer
                 }
                 AnalyzeIsolated(forLoop.Body);
                 break;
+            case SelectLoop selectLoop:
+                if (selectLoop.Options != null)
+                    CheckExpression(selectLoop.Options);
+                AnalyzeIsolated(selectLoop.Body);
+                break;
 
             case WhileLoop whileLoop:
                 CheckExpression(whileLoop.Condition);
@@ -123,6 +128,9 @@ public sealed class ConstantSafetyAnalyzer
 
             case SubshellStatement subshellStatement:
                 AnalyzeIsolated(subshellStatement.Body);
+                break;
+            case CoprocStatement coprocStatement:
+                AnalyzeIsolated(coprocStatement.Body);
                 break;
 
             case WaitStatement waitStatement when waitStatement.TargetKind == WaitTargetKind.Target && waitStatement.Target != null:

@@ -9,18 +9,20 @@ internal static class IndentationRules
         if (StartsWithKeyword(line, "elif")) return "elif";
         if (StartsWithKeyword(line, "else")) return "else";
         if (StartsWithKeyword(line, "for")) return "for";
+        if (StartsWithKeyword(line, "select")) return "select";
         if (StartsWithKeyword(line, "while")) return "while";
         if (StartsWithKeyword(line, "switch")) return "switch";
         if (StartsWithKeyword(line, "case")) return "case";
         if (StartsWithKeyword(line, "enum")) return "enum";
         if (StartsWithKeyword(line, "subshell")) return "subshell";
+        if (StartsWithKeyword(line, "coproc")) return "coproc";
         if (StartsWithKeyword(line, "end")) return "end";
         return null;
     }
 
     public static bool IsIndentOpeningKeyword(string keyword)
     {
-        return keyword is "fn" or "if" or "for" or "while" or "switch" or "enum" or "subshell";
+        return keyword is "fn" or "if" or "for" or "select" or "while" or "switch" or "enum" or "subshell" or "coproc";
     }
 
     private static bool StartsWithKeyword(string line, string keyword)

@@ -219,6 +219,19 @@ public class AstBuilder : LashBaseVisitor<AstNode>
         };
     }
 
+    public override AstNode VisitSelectLoop(LashParser.SelectLoopContext context)
+    {
+        return new SelectLoop
+        {
+            Line = context.Start.Line,
+            Column = context.Start.Column,
+            Variable = context.IDENTIFIER().GetText(),
+            Options = context.expression() != null ? Visit(context.expression()) as Expression ?? new NullLiteral() : null,
+            GlobPattern = context.GLOB_PATTERN()?.GetText(),
+            Body = context.statement().Select(s => Visit(s) as Statement).Where(s => s != null).ToList()!
+        };
+    }
+
     public override AstNode VisitWhileLoop(LashParser.WhileLoopContext context)
     {
         return new WhileLoop
@@ -272,6 +285,20 @@ public class AstBuilder : LashBaseVisitor<AstNode>
             IntoVariable = intoBinding?.IDENTIFIER().GetText(),
             IntoMode = GetIntoMode(intoBinding),
             RunInBackground = context.AMP() != null,
+            Body = context.statement().Select(s => Visit(s) as Statement).Where(s => s != null).ToList()!
+        };
+    }
+
+    public override AstNode VisitCoprocStatement(LashParser.CoprocStatementContext context)
+    {
+        var intoBinding = context.intoBinding();
+
+        return new CoprocStatement
+        {
+            Line = context.Start.Line,
+            Column = context.Start.Column,
+            IntoVariable = intoBinding?.IDENTIFIER().GetText(),
+            IntoMode = GetIntoMode(intoBinding),
             Body = context.statement().Select(s => Visit(s) as Statement).Where(s => s != null).ToList()!
         };
     }

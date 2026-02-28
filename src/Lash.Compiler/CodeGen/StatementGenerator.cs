@@ -45,6 +45,10 @@ internal sealed partial class StatementGenerator
                 GenerateForLoop(forLoop);
                 break;
 
+            case SelectLoop selectLoop:
+                GenerateSelectLoop(selectLoop);
+                break;
+
             case WhileLoop whileLoop:
                 GenerateWhileLoop(whileLoop);
                 break;
@@ -63,6 +67,10 @@ internal sealed partial class StatementGenerator
 
             case SubshellStatement subshellStatement:
                 GenerateSubshellStatement(subshellStatement);
+                break;
+
+            case CoprocStatement coprocStatement:
+                GenerateCoprocStatement(coprocStatement);
                 break;
 
             case WaitStatement waitStatement:
