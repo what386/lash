@@ -345,6 +345,9 @@ public sealed class WarningAnalyzer
             case ShellStatement shellStatement:
                 AnalyzeExpression(shellStatement.Command);
                 return false;
+            case TestStatement testStatement:
+                AnalyzeExpression(testStatement.Condition);
+                return false;
 
             case ExpressionStatement expressionStatement:
                 AnalyzeExpression(expressionStatement.Expression);
@@ -564,6 +567,9 @@ public sealed class WarningAnalyzer
 
             case ShellCaptureExpression shellCapture:
                 AnalyzeExpression(shellCapture.Command);
+                break;
+            case TestCaptureExpression testCapture:
+                AnalyzeExpression(testCapture.Condition);
                 break;
 
             case PipeExpression pipe:

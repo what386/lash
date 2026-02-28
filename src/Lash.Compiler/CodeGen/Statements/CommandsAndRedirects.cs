@@ -120,6 +120,18 @@ internal sealed partial class StatementGenerator
         owner.Emit(payload);
     }
 
+    private void GenerateTestStatement(TestStatement testStatement)
+    {
+        if (!owner.TryGenerateShellPayload(testStatement.Condition, out var payload))
+        {
+            owner.EmitComment("Unsupported 'test' condition payload.");
+            owner.ReportUnsupported("test condition payload");
+            return;
+        }
+
+        owner.Emit($"[[ {payload} ]]");
+    }
+
     private string GenerateFunctionCallStatement(FunctionCallExpression call)
     {
         var args = string.Join(" ", call.Arguments.Select(GenerateSingleShellArg));

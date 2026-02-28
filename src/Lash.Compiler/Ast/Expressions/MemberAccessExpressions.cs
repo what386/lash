@@ -11,6 +11,11 @@ public class ShellCaptureExpression : Expression
     public Expression Command { get; set; } = null!;
 }
 
+public class TestCaptureExpression : Expression
+{
+    public Expression Condition { get; set; } = null!;
+}
+
 public class IndexAccessExpression : Expression
 {
     public Expression Array { get; set; } = null!;

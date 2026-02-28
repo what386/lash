@@ -321,14 +321,16 @@ public class GrammarTests
     }
 
     [Fact]
-    public void ModuleLoader_ParsesShiftShellCaptureShStatementAndAppendAssignment()
+    public void ModuleLoader_ParsesShiftShellCaptureShTestAndAppendAssignment()
     {
         var program = TestCompiler.ParseOrThrow(
             """
             fn demo()
                 shift 2
                 let size = $sh "du -sh ."
+                let ok = $test "-n \"${size}\""
                 sh $"echo {size}"
+                test "-n \"${size}\""
                 let items = []
                 items += ["x"]
             end
@@ -339,9 +341,12 @@ public class GrammarTests
 
         var sizeDeclaration = Assert.IsType<VariableDeclaration>(fn.Body[1]);
         Assert.IsType<ShellCaptureExpression>(sizeDeclaration.Value);
-        Assert.IsType<ShellStatement>(fn.Body[2]);
+        var okDeclaration = Assert.IsType<VariableDeclaration>(fn.Body[2]);
+        Assert.IsType<TestCaptureExpression>(okDeclaration.Value);
+        Assert.IsType<ShellStatement>(fn.Body[3]);
+        Assert.IsType<TestStatement>(fn.Body[4]);
 
-        var append = Assert.IsType<Assignment>(fn.Body[4]);
+        var append = Assert.IsType<Assignment>(fn.Body[6]);
         Assert.Equal("+=", append.Operator);
     }
 

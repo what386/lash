@@ -504,6 +504,30 @@ public class BashGeneratorTests
     }
 
     [Fact]
+    public void BashGenerator_EmitsTestStatementPayloadAsBashTest()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            test "-n \"ok\""
+            """);
+
+        var bash = new BashGenerator().Generate(program);
+        Assert.Contains("[[ -n \"ok\" ]]", bash);
+    }
+
+    [Fact]
+    public void BashGenerator_EmitsTestCaptureAsNumericTruthiness()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            let ok = $test "-n \"ok\""
+            """);
+
+        var bash = new BashGenerator().Generate(program);
+        Assert.Contains("ok=$(if [[ -n \"ok\" ]]; then echo 1; else echo 0; fi)", bash);
+    }
+
+    [Fact]
     public void BashGenerator_InterpolatesVariablesInShAndShellCapturePayloads()
     {
         var program = TestCompiler.ParseOrThrow(

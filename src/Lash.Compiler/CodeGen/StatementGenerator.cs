@@ -93,6 +93,10 @@ internal sealed partial class StatementGenerator
                 GenerateShellStatement(shellStmt);
                 break;
 
+            case TestStatement testStmt:
+                GenerateTestStatement(testStmt);
+                break;
+
             case CommandStatement commandStmt:
                 owner.Emit(RenderCommandStatement(commandStmt));
                 break;

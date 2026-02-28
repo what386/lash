@@ -23,6 +23,7 @@ internal sealed partial class ExpressionGenerator
             UnaryExpression unary => GenerateUnaryExpression(unary),
             FunctionCallExpression call => GenerateFunctionCall(call),
             ShellCaptureExpression shellCapture => GenerateShellCaptureExpression(shellCapture),
+            TestCaptureExpression testCapture => GenerateTestCaptureExpression(testCapture),
             EnumAccessExpression enumAccess => $"\"{owner.EscapeString(enumAccess.EnumName + enumAccess.MemberName)}\"",
             IndexAccessExpression index => GenerateIndexAccess(index),
             ArrayLiteral array => GenerateArrayLiteral(array),

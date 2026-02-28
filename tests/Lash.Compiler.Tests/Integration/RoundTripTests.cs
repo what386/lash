@@ -401,6 +401,27 @@ public class RoundTripTests
     }
 
     [Fact]
+    public void RoundTrip_TestStatementAndCaptureWork()
+    {
+        var result = CompilerPipeline.Compile(
+            """
+            let value = "ok"
+            let is_ok = $test "-n \"${value}\""
+            if is_ok
+                echo "pass"
+            end
+            test "-n \"${value}\""
+            """);
+
+        Assert.False(result.Diagnostics.HasErrors, string.Join(Environment.NewLine, result.Diagnostics.GetErrors()));
+        var bash = Assert.IsType<string>(result.Bash);
+
+        var run = CompilerPipeline.RunBash(bash);
+        Assert.Equal(0, run.ExitCode);
+        Assert.Equal("pass\n", run.StdOut);
+    }
+
+    [Fact]
     public void RoundTrip_ShellCaptureInterpolatesInsideSingleQuotedTemplateSegments()
     {
         var result = CompilerPipeline.Compile(

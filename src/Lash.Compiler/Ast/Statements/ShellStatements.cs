@@ -24,6 +24,11 @@ public class ShellStatement : Statement
     public Expression Command { get; set; } = null!;
 }
 
+public class TestStatement : Statement
+{
+    public Expression Condition { get; set; } = null!;
+}
+
 public class ShiftStatement : Statement
 {
     public Expression? Amount { get; set; }

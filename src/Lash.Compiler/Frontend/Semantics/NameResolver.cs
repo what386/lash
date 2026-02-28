@@ -309,6 +309,9 @@ public sealed class NameResolver
             case ShellStatement shellStatement:
                 CheckExpression(shellStatement.Command);
                 break;
+            case TestStatement testStatement:
+                CheckExpression(testStatement.Condition);
+                break;
 
             case ExpressionStatement expressionStatement:
                 CheckExpression(expressionStatement.Expression);
@@ -376,6 +379,9 @@ public sealed class NameResolver
 
             case ShellCaptureExpression shellCapture:
                 CheckExpression(shellCapture.Command);
+                break;
+            case TestCaptureExpression testCapture:
+                CheckExpression(testCapture.Condition);
                 break;
 
             case PipeExpression pipe:

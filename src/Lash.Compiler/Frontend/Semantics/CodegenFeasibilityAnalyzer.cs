@@ -126,6 +126,9 @@ public sealed class CodegenFeasibilityAnalyzer
             case ShellStatement shellStatement:
                 ValidateShellPayload(shellStatement.Command, shellStatement.Line, shellStatement.Column);
                 break;
+            case TestStatement testStatement:
+                ValidateShellPayload(testStatement.Condition, testStatement.Line, testStatement.Column);
+                break;
 
             case ExpressionStatement expressionStatement:
                 ValidateExpressionStatement(expressionStatement.Expression);
@@ -256,6 +259,9 @@ public sealed class CodegenFeasibilityAnalyzer
 
             case ShellCaptureExpression shellCapture:
                 ValidateShellPayload(shellCapture.Command, shellCapture.Line, shellCapture.Column);
+                return;
+            case TestCaptureExpression testCapture:
+                ValidateShellPayload(testCapture.Condition, testCapture.Line, testCapture.Column);
                 return;
 
             case RangeExpression:

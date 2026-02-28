@@ -230,6 +230,9 @@ public sealed class TypeChecker
             case ShellStatement shellStatement:
                 ValidateShellPayload(shellStatement.Command, shellStatement, "Statement 'sh'");
                 break;
+            case TestStatement testStatement:
+                ValidateShellPayload(testStatement.Condition, testStatement, "Statement 'test'");
+                break;
             case ExpressionStatement expressionStatement:
                 if (expressionStatement.Expression is BinaryExpression binary &&
                     IsComparisonRedirect(binary))
@@ -304,6 +307,7 @@ public sealed class TypeChecker
             IndexAccessExpression indexAccess => InferIndexAccessType(indexAccess),
             FunctionCallExpression functionCall => InferFunctionCallType(functionCall),
             ShellCaptureExpression shellCapture => InferShellCaptureType(shellCapture),
+            TestCaptureExpression testCapture => InferTestCaptureType(testCapture),
             UnaryExpression unary => InferUnaryType(unary),
             BinaryExpression binary => InferBinaryType(binary),
             PipeExpression pipe => InferPipeType(pipe),
@@ -360,6 +364,12 @@ public sealed class TypeChecker
     {
         ValidateShellPayload(shellCapture.Command, shellCapture, "Expression '$sh'");
         return ExpressionTypes.Unknown;
+    }
+
+    private ExpressionType InferTestCaptureType(TestCaptureExpression testCapture)
+    {
+        ValidateShellPayload(testCapture.Condition, testCapture, "Expression '$test'");
+        return ExpressionTypes.Number;
     }
 
     private ExpressionType InferUnaryType(UnaryExpression unary)

@@ -63,6 +63,7 @@
 "into" @keyword
 "jobs" @keyword
 "sh" @keyword
+"test" @keyword
 "shift" @keyword.repeat
 "enum" @keyword
 (break_statement) @keyword
@@ -101,8 +102,8 @@
 ; Shell capture expression ($sh ...)
 (shell_capture_expression
   "$" @operator
-  "sh" @keyword
-  command: (_))
+  keyword: (_) @keyword
+  payload: (_))
 
 ; Command statements (bare word invocations)
 (command_statement

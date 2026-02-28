@@ -16,6 +16,7 @@ statement
     | whileLoop
     | untilLoop
     | shStatement
+    | testStatement
     | commandStatement
     | returnStatement
     | shiftStatement
@@ -29,6 +30,10 @@ statement
 
 shStatement
     : 'sh' expression
+    ;
+
+testStatement
+    : 'test' expression
     ;
 
 commandStatement
@@ -185,7 +190,7 @@ functionCall
     ;
 
 shellCaptureExpression
-    : '$' 'sh' expression
+    : '$' ('sh' | 'test') expression
     ;
 
 enumAccess

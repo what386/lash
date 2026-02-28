@@ -53,5 +53,8 @@ public class InfrastructureTests
 
         Assert.True(docs.TryGet("3>&1", out var fdDupDoc));
         Assert.Contains("Duplicate file descriptor", fdDupDoc, StringComparison.Ordinal);
+
+        Assert.True(docs.TryGet("test", out var testDoc));
+        Assert.Contains("$test", testDoc, StringComparison.Ordinal);
     }
 }

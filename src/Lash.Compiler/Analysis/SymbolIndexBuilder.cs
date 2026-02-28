@@ -165,6 +165,9 @@ internal sealed class SymbolIndexBuilder
             case ShellStatement shellStatement:
                 VisitExpression(shellStatement.Command);
                 break;
+            case TestStatement testStatement:
+                VisitExpression(testStatement.Condition);
+                break;
             case CommandStatement:
             case BreakStatement:
             case ContinueStatement:
@@ -245,6 +248,9 @@ internal sealed class SymbolIndexBuilder
                 break;
             case ShellCaptureExpression shellCapture:
                 VisitExpression(shellCapture.Command);
+                break;
+            case TestCaptureExpression testCapture:
+                VisitExpression(testCapture.Condition);
                 break;
             case IndexAccessExpression indexAccess:
                 VisitExpression(indexAccess.Array);

@@ -321,6 +321,9 @@ public class BashGenerator
                 case ShellStatement shellStatement:
                     CollectAssociativeUsages(shellStatement.Command, functionName);
                     break;
+                case TestStatement testStatement:
+                    CollectAssociativeUsages(testStatement.Condition, functionName);
+                    break;
                 case ExpressionStatement expressionStatement:
                     CollectAssociativeUsages(expressionStatement.Expression, functionName);
                     break;
@@ -348,6 +351,9 @@ public class BashGenerator
                 break;
             case ShellCaptureExpression shellCapture:
                 CollectAssociativeUsages(shellCapture.Command, functionName);
+                break;
+            case TestCaptureExpression testCapture:
+                CollectAssociativeUsages(testCapture.Condition, functionName);
                 break;
             case PipeExpression pipe:
                 CollectAssociativeUsages(pipe.Left, functionName);

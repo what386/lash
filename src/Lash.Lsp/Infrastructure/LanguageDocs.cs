@@ -28,6 +28,7 @@ internal sealed class LanguageDocs
         ["into"] = "`into` captures values from `subshell`, `wait`, and `@import ... into`.",
         ["jobs"] = "`jobs` in `wait jobs` waits for tracked background subshells.",
         ["sh"] = "`sh expr` emits shell command payload as a statement. `$sh expr` captures shell output as an expression.",
+        ["test"] = "`test expr` emits a Bash test command (`[[ ... ]]`). `$test expr` captures a numeric truth value (`1` or `0`).",
         ["argv"] = "`argv` is the script argument array.",
 
         ["@if"] = "Preprocessor conditional start. Evaluated at compile-time.",

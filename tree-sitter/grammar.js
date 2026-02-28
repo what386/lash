@@ -45,6 +45,7 @@ module.exports = grammar({
       $.subshell_statement,
       $.wait_statement,
       $.sh_statement,
+      $.test_statement,
       $.return_statement,
       $.shift_statement,
       $.break_statement,
@@ -56,6 +57,11 @@ module.exports = grammar({
     sh_statement: $ => seq(
       "sh",
       field("command", $.expression),
+    ),
+
+    test_statement: $ => seq(
+      "test",
+      field("condition", $.expression),
     ),
 
     preprocessor_directive: $ => choice(
@@ -373,8 +379,8 @@ module.exports = grammar({
 
     shell_capture_expression: $ => prec.right(11, seq(
       "$",
-      "sh",
-      field("command", $.expression),
+      field("keyword", choice("sh", "test")),
+      field("payload", $.expression),
     )),
 
     // $ is exclusively a variable sigil — $name always means var_ref

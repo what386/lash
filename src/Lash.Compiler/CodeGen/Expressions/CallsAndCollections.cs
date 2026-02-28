@@ -21,6 +21,14 @@ internal sealed partial class ExpressionGenerator
         return $"$({payload})";
     }
 
+    private string GenerateTestCaptureExpression(TestCaptureExpression testCapture)
+    {
+        if (!TryGenerateShellPayload(testCapture.Condition, out var payload))
+            return HandleUnsupportedExpression(testCapture, "test capture payload");
+
+        return $"$(if [[ {payload} ]]; then echo 1; else echo 0; fi)";
+    }
+
     private string GenerateFunctionCallArg(Expression expression)
     {
         if (expression is IdentifierExpression identifier &&

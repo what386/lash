@@ -362,6 +362,16 @@ public class AstBuilder : LashBaseVisitor<AstNode>
         };
     }
 
+    public override AstNode VisitTestStatement(LashParser.TestStatementContext context)
+    {
+        return new TestStatement
+        {
+            Line = context.Start.Line,
+            Column = context.Start.Column,
+            Condition = Visit(context.expression()) as Expression ?? new NullLiteral()
+        };
+    }
+
     public override AstNode VisitCommandStatement(LashParser.CommandStatementContext context)
     {
         const string marker = "__cmd";
@@ -454,11 +464,25 @@ public class AstBuilder : LashBaseVisitor<AstNode>
 
     public override AstNode VisitShellCaptureExpression(LashParser.ShellCaptureExpressionContext context)
     {
+        var keyword = context.GetChild(1).GetText();
+        var payload = Visit(context.expression()) as Expression ?? new NullLiteral();
+
+        if (string.Equals(keyword, "test", StringComparison.Ordinal))
+        {
+            return new TestCaptureExpression
+            {
+                Line = context.Start.Line,
+                Column = context.Start.Column,
+                Condition = payload,
+                Type = ExpressionTypes.Unknown
+            };
+        }
+
         return new ShellCaptureExpression
         {
             Line = context.Start.Line,
             Column = context.Start.Column,
-            Command = Visit(context.expression()) as Expression ?? new NullLiteral(),
+            Command = payload,
             Type = ExpressionTypes.Unknown
         };
     }
