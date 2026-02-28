@@ -8,66 +8,57 @@ using Microsoft.Extensions.Logging;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 using OmniSharp.Extensions.LanguageServer.Server;
 
-public static class Program
-{
-    public static async Task Main(string[] args)
-    {
-        if (args.Length == 1 && IsVersionFlag(args[0]))
-        {
-            Console.WriteLine(GetVersionLabel());
-            return;
-        }
-
-        var server = await LanguageServer.From(options =>
-        {
-            options
-                .WithInput(Console.OpenStandardInput())
-                .WithOutput(Console.OpenStandardOutput())
-                .ConfigureLogging(builder =>
-                {
-                    builder
-                        .AddLanguageProtocolLogging()
-                        .SetMinimumLevel(LogLevel.Warning);
-                })
-                .WithHandler<TextDocumentSyncHandler>()
-                .WithHandler<HoverHandler>()
-                .WithHandler<DefinitionHandler>()
-                .WithHandler<PrepareRenameHandler>()
-                .WithHandler<RenameHandler>()
-                .WithHandler<CompletionHandler>()
-                .WithHandler<CodeActionHandler>()
-                .WithHandler<DocumentFormattingHandler>()
-                .WithServices(services =>
-                {
-                    services.AddSingleton<DocumentStore>();
-                    services.AddSingleton<AnalysisService>();
-                    services.AddSingleton<SnapshotTextService>();
-                    services.AddSingleton<SymbolQueryService>();
-                    services.AddSingleton<LanguageDocs>();
-                });
-        });
-
-        await server.WaitForExit;
+public static class Program {
+  public static async Task Main(string[] args) {
+    if (args.Length == 1 && IsVersionFlag(args[0])) {
+      Console.WriteLine(GetVersionLabel());
+      return;
     }
 
-    private static bool IsVersionFlag(string arg)
-    {
-        return arg is "--version" or "-v";
-    }
+    var server = await LanguageServer.From(options => {
+      options.WithInput(Console.OpenStandardInput())
+          .WithOutput(Console.OpenStandardOutput())
+          .ConfigureLogging(builder => {
+            builder.AddLanguageProtocolLogging().SetMinimumLevel(
+                LogLevel.Warning);
+          })
+          .WithHandler<TextDocumentSyncHandler>()
+          .WithHandler<HoverHandler>()
+          .WithHandler<DefinitionHandler>()
+          .WithHandler<PrepareRenameHandler>()
+          .WithHandler<RenameHandler>()
+          .WithHandler<CompletionHandler>()
+          .WithHandler<CodeActionHandler>()
+          .WithHandler<DocumentFormattingHandler>()
+          .WithServices(services => {
+            services.AddSingleton<DocumentStore>();
+            services.AddSingleton<AnalysisService>();
+            services.AddSingleton<SnapshotTextService>();
+            services.AddSingleton<SymbolQueryService>();
+            services.AddSingleton<LanguageDocs>();
+          });
+    });
 
-    private static string GetVersionLabel()
-    {
-        var version = Assembly.GetExecutingAssembly()
-            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
-            .InformationalVersion;
+    await server.WaitForExit;
+  }
 
-        if (string.IsNullOrWhiteSpace(version))
-            version = Assembly.GetExecutingAssembly().GetName().Version?.ToString();
+  private static bool IsVersionFlag(string arg) {
+    return arg is "--version" or "-v";
+  }
 
-        if (string.IsNullOrWhiteSpace(version))
-            version = "0.0.0";
+  private static string GetVersionLabel() {
+    var version =
+        Assembly.GetExecutingAssembly()
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+        ?.InformationalVersion;
 
-        var clean = version.Split('+', 2, StringSplitOptions.TrimEntries)[0];
-        return $"lash v{clean}";
-    }
+    if (string.IsNullOrWhiteSpace(version))
+      version = Assembly.GetExecutingAssembly().GetName().Version?.ToString();
+
+    if (string.IsNullOrWhiteSpace(version))
+      version = "0.0.0";
+
+    var clean = version.Split('+', 2, StringSplitOptions.TrimEntries)[0];
+    return $"lashlsp v{clean}";
+  }
 }
