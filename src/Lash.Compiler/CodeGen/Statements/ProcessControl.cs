@@ -64,6 +64,38 @@ internal sealed partial class StatementGenerator
         }
     }
 
+    private void GenerateCoprocStatement(CoprocStatement coprocStatement)
+    {
+        owner.Emit("coproc {");
+        owner.IndentLevel++;
+
+        foreach (var stmt in coprocStatement.Body)
+        {
+            owner.EmitLine();
+            GenerateStatement(stmt);
+        }
+
+        owner.IndentLevel--;
+        owner.EmitLine();
+        owner.Emit("}");
+
+        if (!string.IsNullOrEmpty(coprocStatement.IntoVariable))
+        {
+            owner.EmitLine();
+            EmitIntoCaptureAssignment(
+                coprocStatement.IntoVariable!,
+                "${COPROC_PID}",
+                coprocStatement.IntoCreatesVariable,
+                coprocStatement.IntoCreatesConst);
+        }
+
+        if (owner.NeedsTrackedJobs)
+        {
+            owner.EmitLine();
+            owner.Emit($"{BashGenerator.TrackedJobsName}+=(\"${{COPROC_PID}}\")");
+        }
+    }
+
     private void GenerateWaitStatement(WaitStatement waitStatement)
     {
         switch (waitStatement.TargetKind)

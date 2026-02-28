@@ -46,6 +46,15 @@ public class SubshellStatement : Statement
     public List<Statement> Body { get; set; } = new();
 }
 
+public class CoprocStatement : Statement
+{
+    public string? IntoVariable { get; set; }
+    public IntoBindingMode IntoMode { get; set; } = IntoBindingMode.Auto;
+    public bool IntoCreatesVariable { get; set; }
+    public bool IntoCreatesConst { get; set; }
+    public List<Statement> Body { get; set; } = new();
+}
+
 public enum WaitTargetKind
 {
     Default,
