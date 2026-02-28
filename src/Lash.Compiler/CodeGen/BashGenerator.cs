@@ -7,12 +7,14 @@ using Lash.Compiler.Ast.Statements;
 using Lash.Compiler.Ast.Types;
 using Lash.Compiler.Frontend.Comptime;
 
-public partial class BashGenerator
+public class BashGenerator
 {
     private readonly StringBuilder output = new();
     private readonly List<string> warnings = new();
     private readonly HashSet<string> associativeVariables = new(StringComparer.Ordinal);
     private readonly Dictionary<string, HashSet<string>> functionLocalSymbols = new(StringComparer.Ordinal);
+    private readonly ExpressionGenerator expressions;
+    private readonly StatementGenerator statements;
     private int indentLevel = 0;
     private const string IndentString = "    ";
     private const string GlobalScope = "<global>";
@@ -23,7 +25,36 @@ public partial class BashGenerator
     private string? currentFunctionName;
     private bool needsTrackedJobs;
 
+    public BashGenerator()
+    {
+        expressions = new ExpressionGenerator(this);
+        statements = new StatementGenerator(this);
+    }
+
     public IReadOnlyList<string> Warnings => warnings;
+
+    internal static string ArgvName => ArgvRuntimeName;
+    internal static string TrackedJobsName => TrackedJobsRuntimeName;
+    internal static string WaitPidName => WaitPidRuntimeName;
+    internal string? CurrentFunctionName
+    {
+        get => currentFunctionName;
+        set => currentFunctionName = value;
+    }
+
+    internal string CurrentContext
+    {
+        get => currentContext;
+        set => currentContext = value;
+    }
+
+    internal int IndentLevel
+    {
+        get => indentLevel;
+        set => indentLevel = value;
+    }
+
+    internal bool NeedsTrackedJobs => needsTrackedJobs;
 
     public string Generate(ProgramNode program)
     {
@@ -38,13 +69,11 @@ public partial class BashGenerator
         AnalyzeAssociativeVariables(program);
         needsTrackedJobs = RequiresTrackedJobs(program.Statements);
 
-        // Bash shebang
         EmitLine("#!/usr/bin/env bash");
         EmitLine($"declare -a {ArgvRuntimeName}=(\"$@\")");
         if (needsTrackedJobs)
             EmitLine($"declare -a {TrackedJobsRuntimeName}=()");
 
-        // Generate code for each statement
         foreach (var stmt in program.Statements)
         {
             GenerateStatement(stmt);
@@ -54,25 +83,25 @@ public partial class BashGenerator
         return output.ToString();
     }
 
-    private void Emit(string code)
+    internal void Emit(string code)
     {
         output.Append(new string(' ', indentLevel * IndentString.Length));
         output.Append(code);
     }
 
-    private void EmitLine(string code = "")
+    internal void EmitLine(string code = "")
     {
         if (!string.IsNullOrEmpty(code))
             Emit(code);
         output.AppendLine();
     }
 
-    private void EmitComment(string comment)
+    internal void EmitComment(string comment)
     {
         Emit($"# {comment}");
     }
 
-    private string EscapeString(string str, bool preserveLineBreaks = false)
+    internal string EscapeString(string str, bool preserveLineBreaks = false)
     {
         var escaped = str.Replace("\\", "\\\\")
                          .Replace("\"", "\\\"")
@@ -88,17 +117,31 @@ public partial class BashGenerator
         return escaped.Replace("\t", "\\t");
     }
 
-    private void ReportUnsupported(string feature)
+    internal void ReportUnsupported(string feature)
     {
         if (!warnings.Contains(feature))
             warnings.Add(feature);
     }
 
-    private string UnsupportedExpression(Expression expr)
+    internal string UnsupportedExpression(Expression expr)
     {
         ReportUnsupported($"expression '{expr.GetType().Name}' in {currentContext}");
         return "\"\"";
     }
+
+    internal string GenerateExpression(Expression expr) => expressions.GenerateExpression(expr);
+
+    internal string GenerateArithmeticExpression(Expression expr) => expressions.GenerateArithmeticExpression(expr);
+
+    internal string GenerateArrayLiteral(ArrayLiteral array) => expressions.GenerateArrayLiteral(array);
+
+    internal string GenerateCollectionIndex(Expression index, bool preferString) => expressions.GenerateCollectionIndex(index, preferString);
+
+    internal bool TryGenerateShellPayload(Expression expression, out string payload) => expressions.TryGenerateShellPayload(expression, out payload);
+
+    internal static string GenerateInterpolatedStringLiteral(string template) => ExpressionGenerator.GenerateInterpolatedStringLiteral(template);
+
+    internal void GenerateStatement(Statement stmt) => statements.GenerateStatement(stmt);
 
     private void AnalyzeAssociativeVariables(ProgramNode program)
     {
@@ -344,13 +387,13 @@ public partial class BashGenerator
 
     private static string ScopedVariableKey(string scope, string name) => $"{scope}::{name}";
 
-    private bool IsAssociativeVariable(string name, bool isGlobal)
+    internal bool IsAssociativeVariable(string name, bool isGlobal)
     {
         var scope = isGlobal ? GlobalScope : (currentFunctionName ?? GlobalScope);
         return associativeVariables.Contains(ScopedVariableKey(scope, name));
     }
 
-    private bool IsCurrentScopeAssociative(string name)
+    internal bool IsCurrentScopeAssociative(string name)
     {
         var scope = ResolveScopeForIdentifier(name, currentFunctionName, forceGlobal: false);
         return associativeVariables.Contains(ScopedVariableKey(scope, name));
@@ -415,5 +458,4 @@ public partial class BashGenerator
 
         return false;
     }
-
 }
