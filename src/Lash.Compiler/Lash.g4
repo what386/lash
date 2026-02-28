@@ -19,7 +19,6 @@ statement
     | testStatement
     | trapStatement
     | untrapStatement
-    | commandStatement
     | returnStatement
     | shiftStatement
     | subshellStatement
@@ -27,6 +26,7 @@ statement
     | waitStatement
     | breakStatement
     | continueStatement
+    | commandStatement
     | expressionStatement
     ;
 
@@ -180,7 +180,6 @@ expression
 primaryExpression
     : literal
     | enumAccess
-    | shellCaptureExpression
     | variableReference
     | functionCall
     | arrayLiteral
@@ -201,10 +200,6 @@ argumentList
 
 functionCall
     : IDENTIFIER '(' argumentList? ')'
-    ;
-
-shellCaptureExpression
-    : '$' ('sh' | 'test') expression
     ;
 
 enumAccess

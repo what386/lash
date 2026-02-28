@@ -100,6 +100,12 @@ public static class ModuleLoader
             var rawLine = lines[lineIndex];
             var trimmed = rawLine.Trim();
 
+            if (!inMultilineString && !ShouldRewriteAsBareCommand(trimmed))
+            {
+                rawLine = RewriteInlineCaptureExpressions(rawLine);
+                trimmed = rawLine.Trim();
+            }
+
             if (inMultilineString)
             {
                 output.Add(rawLine);
@@ -286,13 +292,13 @@ public static class ModuleLoader
                 continue;
             }
 
-            if (ch == '"')
+            if (ch == '"' && !(i > 0 && line[i - 1] == '\\'))
             {
                 inDoubleQuote = true;
                 continue;
             }
 
-            if (ch == '\'')
+            if (ch == '\'' && !(i > 0 && line[i - 1] == '\\'))
             {
                 inSingleQuote = true;
                 continue;
@@ -366,6 +372,159 @@ public static class ModuleLoader
         for (int i = index - 1; i >= 0 && source[i] == '\\'; i--)
             backslashes++;
         return (backslashes % 2) != 0;
+    }
+
+    private static string RewriteInlineCaptureExpressions(string line)
+    {
+        if (!line.Contains("$(", StringComparison.Ordinal))
+            return line;
+
+        var builder = new System.Text.StringBuilder(line.Length + 16);
+        var inSingleQuote = false;
+        var inDoubleQuote = false;
+        var escaped = false;
+        var cursor = 0;
+
+        for (var i = 0; i < line.Length; i++)
+        {
+            var ch = line[i];
+
+            if (inDoubleQuote)
+            {
+                if (escaped)
+                {
+                    escaped = false;
+                    continue;
+                }
+
+                if (ch == '\\')
+                {
+                    escaped = true;
+                    continue;
+                }
+
+                if (ch == '"')
+                    inDoubleQuote = false;
+
+                continue;
+            }
+
+            if (inSingleQuote)
+            {
+                if (ch == '\'')
+                    inSingleQuote = false;
+                continue;
+            }
+
+            if (ch == '"' && !(i > 0 && line[i - 1] == '\\'))
+            {
+                inDoubleQuote = true;
+                continue;
+            }
+
+            if (ch == '\'' && !(i > 0 && line[i - 1] == '\\'))
+            {
+                inSingleQuote = true;
+                continue;
+            }
+
+            if (ch == '/' && i + 1 < line.Length && line[i + 1] == '/')
+                break;
+
+            if (ch != '$' || i + 1 >= line.Length || line[i + 1] != '(')
+                continue;
+
+            if (!TryFindCaptureClose(line, i + 2, out var closeIndex))
+                continue;
+
+            var payload = line[(i + 2)..closeIndex];
+            var encoded = RawCaptureEncoding.EncodePayload(payload);
+            var replacement = $"{RawCaptureEncoding.HelperName}(\"{encoded}\")";
+
+            builder.Append(line, cursor, i - cursor);
+            builder.Append(replacement);
+
+            i = closeIndex;
+            cursor = i + 1;
+        }
+
+        if (cursor == 0)
+            return line;
+
+        builder.Append(line, cursor, line.Length - cursor);
+        return builder.ToString();
+    }
+
+    private static bool TryFindCaptureClose(string line, int start, out int closeIndex)
+    {
+        closeIndex = -1;
+
+        var depth = 1;
+        var inSingleQuote = false;
+        var inDoubleQuote = false;
+        var escaped = false;
+
+        for (var i = start; i < line.Length; i++)
+        {
+            var ch = line[i];
+
+            if (inDoubleQuote)
+            {
+                if (escaped)
+                {
+                    escaped = false;
+                    continue;
+                }
+
+                if (ch == '\\')
+                {
+                    escaped = true;
+                    continue;
+                }
+
+                if (ch == '"')
+                    inDoubleQuote = false;
+
+                continue;
+            }
+
+            if (inSingleQuote)
+            {
+                if (ch == '\'')
+                    inSingleQuote = false;
+                continue;
+            }
+
+            if (ch == '"')
+            {
+                inDoubleQuote = true;
+                continue;
+            }
+
+            if (ch == '\'')
+            {
+                inSingleQuote = true;
+                continue;
+            }
+
+            if (ch == '(')
+            {
+                depth++;
+                continue;
+            }
+
+            if (ch != ')')
+                continue;
+
+            depth--;
+            if (depth == 0)
+            {
+                closeIndex = i;
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static bool TryExpandInlineCase(string line, string trimmed, out IReadOnlyList<string> expandedLines)

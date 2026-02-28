@@ -433,9 +433,6 @@ public class AstBuilder : LashBaseVisitor<AstNode>
         if (context.enumAccess() != null)
             return Visit(context.enumAccess());
 
-        if (context.shellCaptureExpression() != null)
-            return Visit(context.shellCaptureExpression());
-
         if (context.variableReference() != null)
             return Visit(context.variableReference());
 
@@ -477,6 +474,9 @@ public class AstBuilder : LashBaseVisitor<AstNode>
 
     public override AstNode VisitFunctionCall(LashParser.FunctionCallContext context)
     {
+        if (TryBuildRawCaptureExpression(context, out var captureExpression))
+            return captureExpression;
+
         var call = new FunctionCallExpression
         {
             Line = context.Start.Line,
@@ -494,31 +494,6 @@ public class AstBuilder : LashBaseVisitor<AstNode>
         }
 
         return call;
-    }
-
-    public override AstNode VisitShellCaptureExpression(LashParser.ShellCaptureExpressionContext context)
-    {
-        var keyword = context.GetChild(1).GetText();
-        var payload = Visit(context.expression()) as Expression ?? new NullLiteral();
-
-        if (string.Equals(keyword, "test", StringComparison.Ordinal))
-        {
-            return new TestCaptureExpression
-            {
-                Line = context.Start.Line,
-                Column = context.Start.Column,
-                Condition = payload,
-                Type = ExpressionTypes.Unknown
-            };
-        }
-
-        return new ShellCaptureExpression
-        {
-            Line = context.Start.Line,
-            Column = context.Start.Column,
-            Command = payload,
-            Type = ExpressionTypes.Unknown
-        };
     }
 
     public override AstNode VisitIndexAccessExpr(LashParser.IndexAccessExprContext context)
@@ -693,6 +668,219 @@ public class AstBuilder : LashBaseVisitor<AstNode>
         return new NullLiteral { Line = context.Start.Line, Column = context.Start.Column };
     }
 
+    private bool TryBuildRawCaptureExpression(
+        LashParser.FunctionCallContext context,
+        out AstNode expression)
+    {
+        expression = null!;
+
+        if (!string.Equals(context.IDENTIFIER().GetText(), RawCaptureEncoding.HelperName, StringComparison.Ordinal))
+            return false;
+
+        var args = context.argumentList()?.expression();
+        if (args == null || args.Length != 1)
+            return false;
+
+        if (Visit(args[0]) is not LiteralExpression
+            {
+                LiteralType: PrimitiveType { PrimitiveKind: PrimitiveType.Kind.String },
+                Value: string encoded
+            })
+        {
+            return false;
+        }
+
+        if (!RawCaptureEncoding.TryDecodePayload(encoded, out var payload))
+            return false;
+
+        var trimmed = payload.TrimStart();
+        if (trimmed.StartsWith("test ", StringComparison.Ordinal))
+        {
+            var rawCondition = trimmed[5..];
+            if (TryBuildShellLiteral(rawCondition, context.Start.Line, context.Start.Column, out var conditionLiteral))
+            {
+                expression = new TestCaptureExpression
+                {
+                    Line = context.Start.Line,
+                    Column = context.Start.Column,
+                    Condition = conditionLiteral,
+                    Type = ExpressionTypes.Unknown
+                };
+                return true;
+            }
+
+            expression = new TestCaptureExpression
+            {
+                Line = context.Start.Line,
+                Column = context.Start.Column,
+                Condition = new LiteralExpression
+                {
+                    Line = context.Start.Line,
+                    Column = context.Start.Column,
+                    Value = trimmed[5..],
+                    LiteralType = new PrimitiveType { PrimitiveKind = PrimitiveType.Kind.String },
+                    Type = ExpressionTypes.String
+                },
+                Type = ExpressionTypes.Unknown
+            };
+            return true;
+        }
+
+        if (string.Equals(trimmed, "test", StringComparison.Ordinal))
+        {
+            expression = new TestCaptureExpression
+            {
+                Line = context.Start.Line,
+                Column = context.Start.Column,
+                Condition = new LiteralExpression
+                {
+                    Line = context.Start.Line,
+                    Column = context.Start.Column,
+                    Value = string.Empty,
+                    LiteralType = new PrimitiveType { PrimitiveKind = PrimitiveType.Kind.String },
+                    Type = ExpressionTypes.String
+                },
+                Type = ExpressionTypes.Unknown
+            };
+            return true;
+        }
+
+        expression = new ShellCaptureExpression
+        {
+            Line = context.Start.Line,
+            Column = context.Start.Column,
+            Command = new LiteralExpression
+            {
+                Line = context.Start.Line,
+                Column = context.Start.Column,
+                Value = RewriteInlineInterpolatedSegments(payload),
+                LiteralType = new PrimitiveType { PrimitiveKind = PrimitiveType.Kind.String },
+                Type = ExpressionTypes.String
+            },
+            Type = ExpressionTypes.Unknown
+        };
+        return true;
+    }
+
+    private static bool TryBuildShellLiteral(string raw, int line, int column, out LiteralExpression literal)
+    {
+        literal = null!;
+
+        if (raw.Length < 2)
+            return false;
+
+        var isInterpolated = raw.StartsWith("$\"", StringComparison.Ordinal) && raw.EndsWith("\"", StringComparison.Ordinal);
+        var isString = raw.StartsWith("\"", StringComparison.Ordinal) && raw.EndsWith("\"", StringComparison.Ordinal);
+        var isMultiline = raw.StartsWith("[[", StringComparison.Ordinal) && raw.EndsWith("]]", StringComparison.Ordinal);
+        if (!isInterpolated && !isString && !isMultiline)
+            return false;
+
+        literal = new LiteralExpression
+        {
+            Line = line,
+            Column = column,
+            Value = UnquoteStringLiteral(raw),
+            LiteralType = new PrimitiveType { PrimitiveKind = PrimitiveType.Kind.String },
+            Type = ExpressionTypes.String,
+            IsInterpolated = isInterpolated,
+            IsMultiline = isMultiline
+        };
+        return true;
+    }
+
+    private static string RewriteInlineInterpolatedSegments(string payload)
+    {
+        if (!payload.Contains("$\"", StringComparison.Ordinal))
+            return payload;
+
+        var output = new System.Text.StringBuilder(payload.Length);
+        for (var i = 0; i < payload.Length; i++)
+        {
+            if (payload[i] != '$' || i + 1 >= payload.Length || payload[i + 1] != '"')
+            {
+                output.Append(payload[i]);
+                continue;
+            }
+
+            var start = i + 2;
+            var end = start;
+            var escaped = false;
+            while (end < payload.Length)
+            {
+                var ch = payload[end];
+                if (escaped)
+                {
+                    escaped = false;
+                    end++;
+                    continue;
+                }
+
+                if (ch == '\\')
+                {
+                    escaped = true;
+                    end++;
+                    continue;
+                }
+
+                if (ch == '"')
+                    break;
+
+                end++;
+            }
+
+            if (end >= payload.Length)
+            {
+                output.Append(payload[i]);
+                continue;
+            }
+
+            var template = payload[start..end];
+            output.Append('"');
+            output.Append(ConvertTemplateToBashInterpolation(template));
+            output.Append('"');
+            i = end;
+        }
+
+        return output.ToString();
+    }
+
+    private static string ConvertTemplateToBashInterpolation(string template)
+    {
+        var output = new System.Text.StringBuilder(template.Length + 8);
+
+        for (var i = 0; i < template.Length; i++)
+        {
+            var ch = template[i];
+            if (ch != '{')
+            {
+                output.Append(ch);
+                continue;
+            }
+
+            var close = template.IndexOf('}', i + 1);
+            if (close < 0)
+            {
+                output.Append(ch);
+                continue;
+            }
+
+            var name = template[(i + 1)..close].Trim();
+            if (IsSimpleIdentifier(name))
+            {
+                output.Append("${");
+                output.Append(name);
+                output.Append('}');
+                i = close;
+                continue;
+            }
+
+            output.Append(template, i, close - i + 1);
+            i = close;
+        }
+
+        return output.ToString();
+    }
+
     private AstNode BuildBinaryExpression(
         ParserRuleContext context,
         LashParser.ExpressionContext leftContext,
@@ -736,5 +924,22 @@ public class AstBuilder : LashBaseVisitor<AstNode>
         if (text.StartsWith("[[") && text.EndsWith("]]") && text.Length >= 4)
             return text[2..^2];
         return text;
+    }
+
+    private static bool IsSimpleIdentifier(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return false;
+        if (!(char.IsLetter(value[0]) || value[0] == '_'))
+            return false;
+
+        for (var i = 1; i < value.Length; i++)
+        {
+            var ch = value[i];
+            if (!(char.IsLetterOrDigit(ch) || ch == '_'))
+                return false;
+        }
+
+        return true;
     }
 }

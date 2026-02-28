@@ -375,13 +375,13 @@ public sealed class TypeChecker
 
     private ExpressionType InferShellCaptureType(ShellCaptureExpression shellCapture)
     {
-        ValidateShellPayload(shellCapture.Command, shellCapture, "Expression '$sh'");
+        ValidateShellPayload(shellCapture.Command, shellCapture, "Expression '$(...)'");
         return ExpressionTypes.Unknown;
     }
 
     private ExpressionType InferTestCaptureType(TestCaptureExpression testCapture)
     {
-        ValidateShellPayload(testCapture.Condition, testCapture, "Expression '$test'");
+        ValidateShellPayload(testCapture.Condition, testCapture, "Expression '$(test ...)'");
         return ExpressionTypes.Number;
     }
 
