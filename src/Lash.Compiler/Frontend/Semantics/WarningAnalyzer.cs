@@ -580,10 +580,10 @@ public sealed class WarningAnalyzer
                 break;
 
             case ShellCaptureExpression shellCapture:
-                AnalyzeExpression(shellCapture.Command);
+                AnalyzeShellPayload(shellCapture.Command);
                 break;
             case TestCaptureExpression testCapture:
-                AnalyzeExpression(testCapture.Condition);
+                AnalyzeShellPayload(testCapture.Condition);
                 break;
 
             case PipeExpression pipe:
@@ -650,6 +650,14 @@ public sealed class WarningAnalyzer
 
         foreach (Match match in PlainCommandVariableRegex.Matches(script))
             MarkVariableRead(match.Groups[1].Value);
+    }
+
+    private void AnalyzeShellPayload(Expression payload)
+    {
+        AnalyzeExpression(payload);
+
+        if (payload is LiteralExpression { Value: string script })
+            AnalyzeCommandScript(script);
     }
 
     private void AnalyzeInterpolatedLiteral(LiteralExpression literal)

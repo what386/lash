@@ -20,6 +20,21 @@ public class CommandStatement : Statement
     public bool IsRawLiteral { get; set; }
 }
 
+public enum ShellCommandKind
+{
+    Set,
+    Export,
+    Shopt,
+    Alias,
+    Source
+}
+
+public class ShellCommandStatement : CommandStatement
+{
+    public ShellCommandKind Kind { get; set; }
+    public List<string> Arguments { get; set; } = new();
+}
+
 public class ShellStatement : Statement
 {
     public Expression Command { get; set; } = null!;

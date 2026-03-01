@@ -411,6 +411,19 @@ public class AstBuilder : LashBaseVisitor<AstNode>
             : raw;
         var isRawLiteral = RawCommandEncoding.TryDecode(script, out var decodedScript);
 
+        if (ShellCommandRegistry.TryParseShellCommand(decodedScript, out var kind, out var arguments))
+        {
+            return new ShellCommandStatement
+            {
+                Line = context.Start.Line,
+                Column = context.Start.Column,
+                Script = decodedScript,
+                IsRawLiteral = isRawLiteral,
+                Kind = kind,
+                Arguments = arguments
+            };
+        }
+
         return new CommandStatement
         {
             Line = context.Start.Line,
