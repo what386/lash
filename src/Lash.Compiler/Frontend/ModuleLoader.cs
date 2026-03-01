@@ -830,8 +830,9 @@ public static class ModuleLoader
             if (left.EndsWith("+", StringComparison.Ordinal))
                 left = left[..^1].TrimEnd();
 
-            if (IsIdentifier(left))
-                return true;
+            const string globalPrefix = "global ";
+            if (left.StartsWith(globalPrefix, StringComparison.Ordinal))
+                left = left[globalPrefix.Length..].TrimStart();
 
             if (IsVariableReference(left))
                 return true;
@@ -879,7 +880,7 @@ public static class ModuleLoader
             return false;
 
         var baseName = value[..bracket].Trim();
-        return IsIdentifier(baseName) || IsVariableReference(baseName);
+        return IsVariableReference(baseName);
     }
 }
 

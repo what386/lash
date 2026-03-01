@@ -27,7 +27,7 @@ public class SemanticPipelineTests
         var result = CompilerPipeline.Compile(
             """
             const x = 1
-            x = 2
+            $x = 2
             """);
 
         Assert.True(result.Diagnostics.HasErrors);
@@ -56,7 +56,7 @@ public class SemanticPipelineTests
             """
             global let x = 1
             fn inc()
-                global x = $x + 1
+                global $x = $x + 1
             end
             inc()
             """);

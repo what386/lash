@@ -16,12 +16,13 @@ internal sealed partial class StatementGenerator
         {
             if (isFunctionLocal)
             {
-                owner.Emit($"local -A {varDecl.Name}={value}");
                 if (varDecl.Kind == VariableDeclaration.VarKind.Const)
                 {
-                    owner.EmitLine();
-                    owner.Emit($"readonly {varDecl.Name}");
+                    owner.Emit($"local -rA {varDecl.Name}={value}");
+                    return;
                 }
+
+                owner.Emit($"local -A {varDecl.Name}={value}");
                 return;
             }
 

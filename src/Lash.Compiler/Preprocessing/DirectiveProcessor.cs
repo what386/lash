@@ -215,13 +215,15 @@ internal sealed class DirectiveProcessor
         var lines = normalizedContent.Split('\n');
         if (lines.Length == 1)
         {
-            output.Add($"{declarationPrefix}{variableName} = [[{lines[0]}]]");
+            var target = shouldDeclare ? variableName : $"${variableName}";
+            output.Add($"{declarationPrefix}{target} = [[{lines[0]}]]");
             if (shouldDeclare)
                 state.MarkKnownTopLevelVariable(variableName);
             return;
         }
 
-        output.Add($"{declarationPrefix}{variableName} = [[{lines[0]}");
+        var multilineTarget = shouldDeclare ? variableName : $"${variableName}";
+        output.Add($"{declarationPrefix}{multilineTarget} = [[{lines[0]}");
         for (int i = 1; i < lines.Length - 1; i++)
             output.Add(lines[i]);
         output.Add($"{lines[^1]}]]");

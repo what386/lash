@@ -63,7 +63,7 @@ enumMember
     ;
 
 assignment
-    : 'global'? (IDENTIFIER | indexAccess) ('=' | ADD_ASSIGN) expression
+    : 'global'? (variableReference | indexAccess) ('=' | ADD_ASSIGN) expression
     ;
 
 functionDeclaration

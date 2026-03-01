@@ -14,7 +14,7 @@ public class NameResolverTests
         var program = TestCompiler.ParseOrThrow(
             """
             const x = 1
-            x = 2
+            $x = 2
             """);
 
         var diagnostics = new DiagnosticBag();
@@ -31,7 +31,7 @@ public class NameResolverTests
             """
             global const x = 1
             fn mutate()
-                global x = 2
+                global $x = 2
             end
             """);
 
@@ -48,7 +48,7 @@ public class NameResolverTests
             """
             global let x = 1
             fn mutate()
-                global x = 2
+                global $x = 2
             end
             """);
 
@@ -96,7 +96,7 @@ public class NameResolverTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            y = 2
+            $y = 2
             """);
 
         var diagnostics = new DiagnosticBag();
@@ -239,7 +239,7 @@ public class NameResolverTests
             subshell into const status
                 echo "hi"
             end
-            status = 1
+            $status = 1
             """);
 
         var diagnostics = new DiagnosticBag();

@@ -98,6 +98,22 @@ public class BashGeneratorTests
     }
 
     [Fact]
+    public void BashGenerator_EmitsLocalReadonlyAssociativeConstInsideFunction()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            fn demo()
+                const settings = []
+                let value = $settings["name"]
+            end
+            """);
+
+        var bash = new BashGenerator().Generate(program);
+        Assert.Contains("local -rA settings=()", bash);
+        Assert.DoesNotContain("readonly settings", bash);
+    }
+
+    [Fact]
     public void BashGenerator_EmitsArrayLengthWithHashUnary()
     {
         var program = TestCompiler.ParseOrThrow(
@@ -276,7 +292,7 @@ public class BashGeneratorTests
             """
             global let counter = 0
             fn bump()
-                global counter = 1
+                global $counter = 1
             end
             """);
 
@@ -686,7 +702,7 @@ public class BashGeneratorTests
         var program = TestCompiler.ParseOrThrow(
             """
             let items = ["a"]
-            items += ["b", "c"]
+            $items += ["b", "c"]
             """);
 
         var bash = new BashGenerator().Generate(program);

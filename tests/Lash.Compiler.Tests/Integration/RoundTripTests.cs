@@ -33,7 +33,7 @@ public class RoundTripTests
             """
             global let counter = 0
             fn bump()
-                global counter = $counter + 1
+                global $counter = $counter + 1
             end
             bump()
             bump()
@@ -55,7 +55,7 @@ public class RoundTripTests
             """
             global let sum = 0
             for i in 1 .. 3
-                global sum = $sum + $i
+                global $sum = $sum + $i
             end
             echo "$sum"
             """);
@@ -326,7 +326,7 @@ public class RoundTripTests
             """
             let i = 0
             while $i < 5
-                i = $i + 1
+                $i = $i + 1
                 if $i == 2
                     continue
                 end
@@ -352,7 +352,7 @@ public class RoundTripTests
             """
             let i = 0
             until $i >= 3
-                i = $i + 1
+                $i = $i + 1
             end
             echo "$i"
             """);

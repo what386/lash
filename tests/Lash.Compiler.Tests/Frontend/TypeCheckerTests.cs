@@ -76,7 +76,7 @@ public class TypeCheckerTests
         var program = TestCompiler.ParseOrThrow(
             """
             let values = [1]
-            values += [2, 3]
+            $values += [2, 3]
             """);
 
         var diagnostics = new DiagnosticBag();
@@ -91,7 +91,7 @@ public class TypeCheckerTests
         var program = TestCompiler.ParseOrThrow(
             """
             let values = [1]
-            values += 2
+            $values += 2
             """);
 
         var diagnostics = new DiagnosticBag();

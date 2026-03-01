@@ -236,9 +236,9 @@ public class AdditionalAnalyzerTests
             """
             let out = ""
             if $flag
-                out = "same"
+                $out = "same"
             else
-                out = "same"
+                $out = "same"
             end
             """);
 
@@ -325,7 +325,7 @@ public class AdditionalAnalyzerTests
         var program = TestCompiler.ParseOrThrow(
             """
             let count = 0
-            count = $count + 1
+            $count = $count + 1
             echo $count
             """);
 

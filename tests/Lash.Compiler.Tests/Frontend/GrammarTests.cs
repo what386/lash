@@ -41,7 +41,7 @@ public class GrammarTests
             """
             global let counter = 0
             fn bump()
-                global counter = $counter + 1
+                global $counter = $counter + 1
             end
             """);
 
@@ -380,7 +380,7 @@ public class GrammarTests
                 sh $"echo {size}"
                 test "-n \"${size}\""
                 let items = []
-                items += ["x"]
+                $items += ["x"]
             end
             """);
 

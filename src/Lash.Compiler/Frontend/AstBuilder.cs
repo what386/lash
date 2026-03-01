@@ -66,20 +66,9 @@ public class AstBuilder : LashBaseVisitor<AstNode>
     public override AstNode VisitAssignment(LashParser.AssignmentContext context)
     {
         var hasGlobal = context.GetChild(0).GetText() == "global";
-        Expression target;
-        if (context.IDENTIFIER() != null)
-        {
-            target = new IdentifierExpression
-            {
-                Name = context.IDENTIFIER().GetText(),
-                Line = context.Start.Line,
-                Column = context.Start.Column
-            };
-        }
-        else
-        {
-            target = Visit(context.indexAccess()) as Expression ?? new NullLiteral();
-        }
+        Expression target = context.variableReference() != null
+            ? Visit(context.variableReference()) as Expression ?? new NullLiteral()
+            : Visit(context.indexAccess()) as Expression ?? new NullLiteral();
 
         return new Assignment
         {
