@@ -78,7 +78,23 @@
         "required": true,
         "types": [
           {
+            "type": "%=",
+            "named": false
+          },
+          {
+            "type": "*=",
+            "named": false
+          },
+          {
             "type": "+=",
+            "named": false
+          },
+          {
+            "type": "-=",
+            "named": false
+          },
+          {
+            "type": "/=",
             "named": false
           },
           {
@@ -153,6 +169,10 @@
         "types": [
           {
             "type": "expression",
+            "named": true
+          },
+          {
+            "type": "wildcard_pattern",
             "named": true
           }
         ]
@@ -1084,6 +1104,10 @@
           "named": true
         },
         {
+          "type": "process_substitution_expression",
+          "named": true
+        },
+        {
           "type": "shell_capture_expression",
           "named": true
         },
@@ -1096,6 +1120,36 @@
           "named": true
         }
       ]
+    }
+  },
+  {
+    "type": "process_substitution_expression",
+    "named": true,
+    "fields": {
+      "operator": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "<",
+            "named": false
+          },
+          {
+            "type": ">",
+            "named": false
+          }
+        ]
+      },
+      "payload": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "capture_payload",
+            "named": true
+          }
+        ]
+      }
     }
   },
   {
@@ -1441,6 +1495,10 @@
           "named": true
         },
         {
+          "type": "update_statement",
+          "named": true
+        },
+        {
           "type": "variable_declaration",
           "named": true
         },
@@ -1640,6 +1698,36 @@
     }
   },
   {
+    "type": "update_statement",
+    "named": true,
+    "fields": {
+      "operator": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "++",
+            "named": false
+          },
+          {
+            "type": "--",
+            "named": false
+          }
+        ]
+      },
+      "target": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "var_ref",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "var_ref",
     "named": true,
     "fields": {
@@ -1758,6 +1846,10 @@
     "named": false
   },
   {
+    "type": "%=",
+    "named": false
+  },
+  {
     "type": "&",
     "named": false
   },
@@ -1786,7 +1878,15 @@
     "named": false
   },
   {
+    "type": "*=",
+    "named": false
+  },
+  {
     "type": "+",
+    "named": false
+  },
+  {
+    "type": "++",
     "named": false
   },
   {
@@ -1802,11 +1902,23 @@
     "named": false
   },
   {
+    "type": "--",
+    "named": false
+  },
+  {
+    "type": "-=",
+    "named": false
+  },
+  {
     "type": "..",
     "named": false
   },
   {
     "type": "/",
+    "named": false
+  },
+  {
+    "type": "/=",
     "named": false
   },
   {
@@ -2094,6 +2206,10 @@
   {
     "type": "while",
     "named": false
+  },
+  {
+    "type": "wildcard_pattern",
+    "named": true
   },
   {
     "type": "|",
