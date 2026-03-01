@@ -198,5 +198,19 @@
       "patch": 0,
       "is_prerelease": false
     }
+  },
+  {
+    "change": {
+      "description": "Add @allow directive for next-statement warning suppression (Wxxx only)",
+      "priority": "High",
+      "tags": [
+        "feature",
+        "language",
+        "compiler"
+      ],
+      "commit": null,
+      "completed_at": "2026-03-01T01:13:20.007306732Z"
+    },
+    "version": null
   }
 ]
