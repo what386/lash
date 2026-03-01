@@ -26,13 +26,7 @@ public sealed class WarningAnalyzer {
   }
 
   public void Analyze(ProgramNode program) {
-    PushScope();
-    PushTrackedJobs(0);
-    PushConstScope();
-    AnalyzeBlock(program.Statements, inLoop: false);
-    PopConstScope();
-    PopTrackedJobs();
-    PopScope();
+    ExecuteScoped(0, () => { AnalyzeBlock(program.Statements, inLoop: false); });
   }
 
   private bool AnalyzeBlock(IEnumerable<Statement> statements, bool inLoop) {
@@ -55,12 +49,10 @@ public sealed class WarningAnalyzer {
     switch (statement) {
     case VariableDeclaration variable:
       AnalyzeExpression(variable.Value);
-      WarnIfShadowing(variable.Name, variable.Line, variable.Column);
-      DeclareSymbol(
-          variable.Name, SymbolKind.Variable, variable.Line, variable.Column,
-          ignoreUnused: ShouldIgnoreUnusedSymbol(variable.Name) ||
-              variable.IsPublic,
-          suggestConst: variable.Kind == VariableDeclaration.VarKind.Let);
+      DeclareVariableSymbol(variable.Name, variable.Line, variable.Column,
+                            ignoreUnused: variable.IsPublic,
+                            suggestConst: variable.Kind ==
+                                VariableDeclaration.VarKind.Let);
 
       if (variable.Kind == VariableDeclaration.VarKind.Const &&
           TryEvaluateConstValue(variable.Value, out var constValue)) {
@@ -74,49 +66,37 @@ public sealed class WarningAnalyzer {
       AnalyzeExpression(assignment.Value);
 
       if (assignment.Target is IdentifierExpression identifier) {
-        MarkVariableReassigned(identifier.Name);
-        InvalidateConst(identifier.Name);
+        ApplyVariableWrite(identifier.Name, markReassigned: true);
       } else if (assignment.Target is IndexAccessExpression indexTarget) {
         AnalyzeExpression(indexTarget.Array);
         AnalyzeExpression(indexTarget.Index);
         if (indexTarget.Array is IdentifierExpression arrayIdentifier) {
-          MarkVariableReassigned(arrayIdentifier.Name);
-          InvalidateConst(arrayIdentifier.Name);
+          ApplyVariableWrite(arrayIdentifier.Name, markReassigned: true);
         }
       }
 
       return false;
     case UpdateStatement updateStatement:
       AnalyzeExpression(updateStatement.Target);
-      MarkVariableReassigned(updateStatement.Target.Name);
-      InvalidateConst(updateStatement.Target.Name);
+      ApplyVariableWrite(updateStatement.Target.Name, markReassigned: true);
       return false;
 
     case FunctionDeclaration function:
-      WarnIfShadowing(function.Name, function.Line, function.Column);
-      DeclareSymbol(function.Name, SymbolKind.Function, function.Line,
-                    function.Column,
-                    ignoreUnused: ShouldIgnoreUnusedSymbol(function.Name) ||
-                        function.IsPublic);
+      DeclareFunctionSymbol(function.Name, function.Line, function.Column,
+                            ignoreUnused: function.IsPublic);
 
-      PushScope();
-      PushTrackedJobs(0);
-      PushConstScope();
-      foreach (var parameter in function.Parameters) {
-        if (parameter.DefaultValue != null)
-          AnalyzeExpression(parameter.DefaultValue);
+      ExecuteScoped(0, () => {
+        foreach (var parameter in function.Parameters) {
+          if (parameter.DefaultValue != null)
+            AnalyzeExpression(parameter.DefaultValue);
 
-        WarnIfShadowing(parameter.Name, parameter.Line, parameter.Column);
-        DeclareSymbol(parameter.Name, SymbolKind.Parameter, parameter.Line,
-                      parameter.Column,
-                      ignoreUnused: ShouldIgnoreUnusedSymbol(parameter.Name));
-        InvalidateConst(parameter.Name);
-      }
+          DeclareParameterSymbol(parameter.Name, parameter.Line,
+                                 parameter.Column);
+          InvalidateConst(parameter.Name);
+        }
 
-      AnalyzeBlock(function.Body, inLoop: false);
-      PopConstScope();
-      PopTrackedJobs();
-      PopScope();
+        AnalyzeBlock(function.Body, inLoop: false);
+      });
       return false;
 
     case IfStatement ifStatement:
@@ -133,37 +113,23 @@ public sealed class WarningAnalyzer {
       if (forLoop.Step != null)
         AnalyzeExpression(forLoop.Step);
 
-      PushScope();
-      PushTrackedJobs(CurrentTrackedJobs());
-      PushConstScope();
-      WarnIfShadowing(forLoop.Variable, forLoop.Line, forLoop.Column);
-      DeclareSymbol(forLoop.Variable, SymbolKind.Variable, forLoop.Line,
-                    forLoop.Column,
-                    ignoreUnused: ShouldIgnoreUnusedSymbol(forLoop.Variable));
-      InvalidateConst(forLoop.Variable);
-      AnalyzeBlock(forLoop.Body, inLoop: true);
-      PopConstScope();
-      PopTrackedJobs();
-      PopScope();
+      ExecuteScoped(CurrentTrackedJobs(), () => {
+        DeclareVariableSymbol(forLoop.Variable, forLoop.Line, forLoop.Column);
+        InvalidateConst(forLoop.Variable);
+        AnalyzeBlock(forLoop.Body, inLoop: true);
+      });
       return false;
 
     case SelectLoop selectLoop:
       if (selectLoop.Options != null)
         AnalyzeExpression(selectLoop.Options);
 
-      PushScope();
-      PushTrackedJobs(CurrentTrackedJobs());
-      PushConstScope();
-      WarnIfShadowing(selectLoop.Variable, selectLoop.Line, selectLoop.Column);
-      DeclareSymbol(
-          selectLoop.Variable, SymbolKind.Variable, selectLoop.Line,
-          selectLoop.Column,
-          ignoreUnused: ShouldIgnoreUnusedSymbol(selectLoop.Variable));
-      InvalidateConst(selectLoop.Variable);
-      AnalyzeBlock(selectLoop.Body, inLoop: true);
-      PopConstScope();
-      PopTrackedJobs();
-      PopScope();
+      ExecuteScoped(CurrentTrackedJobs(), () => {
+        DeclareVariableSymbol(selectLoop.Variable, selectLoop.Line,
+                              selectLoop.Column);
+        InvalidateConst(selectLoop.Variable);
+        AnalyzeBlock(selectLoop.Body, inLoop: true);
+      });
       return false;
 
     case WhileLoop whileLoop:
@@ -176,13 +142,7 @@ public sealed class WarningAnalyzer {
         return false;
       }
 
-      PushScope();
-      PushTrackedJobs(CurrentTrackedJobs());
-      PushConstScope();
-      AnalyzeBlock(whileLoop.Body, inLoop: true);
-      PopConstScope();
-      PopTrackedJobs();
-      PopScope();
+      AnalyzeBranch(whileLoop.Body, inLoop: true, CurrentTrackedJobs());
       return false;
 
     case UntilLoop untilLoop:
@@ -194,13 +154,7 @@ public sealed class WarningAnalyzer {
         return false;
       }
 
-      PushScope();
-      PushTrackedJobs(CurrentTrackedJobs());
-      PushConstScope();
-      AnalyzeBlock(untilLoop.Body, inLoop: true);
-      PopConstScope();
-      PopTrackedJobs();
-      PopScope();
+      AnalyzeBranch(untilLoop.Body, inLoop: true, CurrentTrackedJobs());
       return false;
 
     case ReturnStatement returnStatement:
@@ -215,56 +169,20 @@ public sealed class WarningAnalyzer {
       return inLoop;
 
     case SubshellStatement subshellStatement:
-      PushScope();
-      PushTrackedJobs(0);
-      PushConstScope();
-      AnalyzeBlock(subshellStatement.Body, inLoop: false);
-      PopConstScope();
-      PopTrackedJobs();
-      PopScope();
-
-      if (!string.IsNullOrEmpty(subshellStatement.IntoVariable)) {
-        if (subshellStatement.IntoCreatesVariable) {
-          WarnIfShadowing(subshellStatement.IntoVariable!,
-                          subshellStatement.Line, subshellStatement.Column);
-          DeclareSymbol(subshellStatement.IntoVariable!, SymbolKind.Variable,
-                        subshellStatement.Line, subshellStatement.Column,
-                        ignoreUnused: ShouldIgnoreUnusedSymbol(
-                            subshellStatement.IntoVariable!));
-        }
-
-        InvalidateConst(subshellStatement.IntoVariable!);
-        if (!subshellStatement.IntoCreatesVariable)
-          MarkVariableReassigned(subshellStatement.IntoVariable!);
-      }
+      AnalyzeBranch(subshellStatement.Body, inLoop: false, baseTrackedJobs: 0);
+      ApplyIntoWrite(subshellStatement.IntoVariable,
+                     subshellStatement.IntoCreatesVariable,
+                     subshellStatement.Line, subshellStatement.Column);
 
       if (subshellStatement.RunInBackground)
         SetCurrentTrackedJobs(CurrentTrackedJobs() + 1);
       return false;
 
     case CoprocStatement coprocStatement:
-      PushScope();
-      PushTrackedJobs(0);
-      PushConstScope();
-      AnalyzeBlock(coprocStatement.Body, inLoop: false);
-      PopConstScope();
-      PopTrackedJobs();
-      PopScope();
-
-      if (!string.IsNullOrEmpty(coprocStatement.IntoVariable)) {
-        if (coprocStatement.IntoCreatesVariable) {
-          WarnIfShadowing(coprocStatement.IntoVariable!, coprocStatement.Line,
-                          coprocStatement.Column);
-          DeclareSymbol(coprocStatement.IntoVariable!, SymbolKind.Variable,
-                        coprocStatement.Line, coprocStatement.Column,
-                        ignoreUnused: ShouldIgnoreUnusedSymbol(
-                            coprocStatement.IntoVariable!));
-        }
-
-        InvalidateConst(coprocStatement.IntoVariable!);
-        if (!coprocStatement.IntoCreatesVariable)
-          MarkVariableReassigned(coprocStatement.IntoVariable!);
-      }
+      AnalyzeBranch(coprocStatement.Body, inLoop: false, baseTrackedJobs: 0);
+      ApplyIntoWrite(coprocStatement.IntoVariable,
+                     coprocStatement.IntoCreatesVariable,
+                     coprocStatement.Line, coprocStatement.Column);
 
       SetCurrentTrackedJobs(CurrentTrackedJobs() + 1);
       return false;
@@ -276,21 +194,8 @@ public sealed class WarningAnalyzer {
                    waitStatement.Line, waitStatement.Column,
                    DiagnosticCodes.WaitJobsWithoutTrackedJobs);
       }
-
-      if (!string.IsNullOrEmpty(waitStatement.IntoVariable)) {
-        if (waitStatement.IntoCreatesVariable) {
-          WarnIfShadowing(waitStatement.IntoVariable!, waitStatement.Line,
-                          waitStatement.Column);
-          DeclareSymbol(waitStatement.IntoVariable!, SymbolKind.Variable,
-                        waitStatement.Line, waitStatement.Column,
-                        ignoreUnused: ShouldIgnoreUnusedSymbol(
-                            waitStatement.IntoVariable!));
-        }
-
-        InvalidateConst(waitStatement.IntoVariable!);
-        if (!waitStatement.IntoCreatesVariable)
-          MarkVariableReassigned(waitStatement.IntoVariable!);
-      }
+      ApplyIntoWrite(waitStatement.IntoVariable, waitStatement.IntoCreatesVariable,
+                     waitStatement.Line, waitStatement.Column);
 
       SetCurrentTrackedJobs(0);
       return false;
@@ -299,21 +204,8 @@ public sealed class WarningAnalyzer {
       if (waitStatement.TargetKind == WaitTargetKind.Target &&
           waitStatement.Target != null)
         AnalyzeExpression(waitStatement.Target);
-
-      if (!string.IsNullOrEmpty(waitStatement.IntoVariable)) {
-        if (waitStatement.IntoCreatesVariable) {
-          WarnIfShadowing(waitStatement.IntoVariable!, waitStatement.Line,
-                          waitStatement.Column);
-          DeclareSymbol(waitStatement.IntoVariable!, SymbolKind.Variable,
-                        waitStatement.Line, waitStatement.Column,
-                        ignoreUnused: ShouldIgnoreUnusedSymbol(
-                            waitStatement.IntoVariable!));
-        }
-
-        InvalidateConst(waitStatement.IntoVariable!);
-        if (!waitStatement.IntoCreatesVariable)
-          MarkVariableReassigned(waitStatement.IntoVariable!);
-      }
+      ApplyIntoWrite(waitStatement.IntoVariable, waitStatement.IntoCreatesVariable,
+                     waitStatement.Line, waitStatement.Column);
 
       return false;
 
@@ -557,15 +449,27 @@ public sealed class WarningAnalyzer {
 
   private BranchResult AnalyzeBranch(List<Statement> body, bool inLoop,
                                      int baseTrackedJobs) {
+    var terminated = false;
+    var jobs = baseTrackedJobs;
+    ExecuteScoped(baseTrackedJobs, () => {
+      terminated = AnalyzeBlock(body, inLoop);
+      jobs = CurrentTrackedJobs();
+    });
+
+    return new BranchResult(terminated, jobs);
+  }
+
+  private void ExecuteScoped(int baseTrackedJobs, Action action) {
     PushScope();
     PushTrackedJobs(baseTrackedJobs);
     PushConstScope();
-    var terminated = AnalyzeBlock(body, inLoop);
-    var jobs = CurrentTrackedJobs();
-    PopConstScope();
-    PopTrackedJobs();
-    PopScope();
-    return new BranchResult(terminated, jobs);
+    try {
+      action();
+    } finally {
+      PopConstScope();
+      PopTrackedJobs();
+      PopScope();
+    }
   }
 
   private void WarnEquivalentIfBranches(IfStatement ifStatement) {
@@ -1259,6 +1163,48 @@ public sealed class WarningAnalyzer {
                  column, DiagnosticCodes.ShadowedVariable);
       return;
     }
+  }
+
+  private void DeclareVariableSymbol(string name, int line, int column,
+                                     bool ignoreUnused = false,
+                                     bool suggestConst = false) {
+    WarnIfShadowing(name, line, column);
+    DeclareSymbol(name, SymbolKind.Variable, line, column,
+                  ignoreUnused: ignoreUnused || ShouldIgnoreUnusedSymbol(name),
+                  suggestConst: suggestConst);
+  }
+
+  private void DeclareFunctionSymbol(string name, int line, int column,
+                                     bool ignoreUnused = false) {
+    WarnIfShadowing(name, line, column);
+    DeclareSymbol(name, SymbolKind.Function, line, column,
+                  ignoreUnused: ignoreUnused || ShouldIgnoreUnusedSymbol(name));
+  }
+
+  private void DeclareParameterSymbol(string name, int line, int column) {
+    WarnIfShadowing(name, line, column);
+    DeclareSymbol(name, SymbolKind.Parameter, line, column,
+                  ignoreUnused: ShouldIgnoreUnusedSymbol(name));
+  }
+
+  private void ApplyVariableWrite(string name, bool markReassigned) {
+    InvalidateConst(name);
+    if (markReassigned)
+      MarkVariableReassigned(name);
+  }
+
+  private void ApplyIntoWrite(string? variableName, bool createsVariable,
+                              int line, int column) {
+    if (string.IsNullOrEmpty(variableName))
+      return;
+
+    if (createsVariable) {
+      DeclareVariableSymbol(variableName, line, column);
+      ApplyVariableWrite(variableName, markReassigned: false);
+      return;
+    }
+
+    ApplyVariableWrite(variableName, markReassigned: true);
   }
 
   private void PushScope() { scopes.Push(new ScopeFrame()); }
