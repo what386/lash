@@ -22,12 +22,14 @@ lash run hello.lash
 ```lash
 let name = "Lash"
 const version = "0.1"
+readonly channel = "stable"
 
-echo $"{name} {version}"
+echo $"{name} {version} {channel}"
 ```
 
 - `let` is mutable.
-- `const` is immutable.
+- `const` is compile-time immutable (no runtime `readonly` is emitted).
+- `readonly` is runtime shell-immutable and must include an initializer.
 
 ## 3. Arithmetic
 
@@ -112,6 +114,8 @@ switch mode
         echo "debug settings"
     case Mode::Release:
         echo "optimized settings"
+    case _:
+        echo "fallback settings"
 end
 ```
 
@@ -122,6 +126,9 @@ Run shell commands directly as statements:
 ```lash
 pwd
 ls -1
+set -euo pipefail
+declare release_channel=stable
+unset OLD_ENV
 ```
 
 Capture shell output into a Lash value:
@@ -136,6 +143,11 @@ end
 
 feed() << [[line1
 line2]]
+
+fn show(path)
+    cat($path)
+end
+show(<(printf "ok\n"))
 ```
 
 ## 9. Subshells and Wait
