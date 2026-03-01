@@ -24,6 +24,7 @@ internal sealed partial class ExpressionGenerator
             FunctionCallExpression call => GenerateFunctionCall(call),
             ShellCaptureExpression shellCapture => GenerateShellCaptureExpression(shellCapture),
             TestCaptureExpression testCapture => GenerateTestCaptureExpression(testCapture),
+            ProcessSubstitutionExpression processSubstitution => GenerateProcessSubstitutionExpression(processSubstitution),
             EnumAccessExpression enumAccess => $"\"{owner.EscapeString(enumAccess.EnumName + enumAccess.MemberName)}\"",
             IndexAccessExpression index => GenerateIndexAccess(index),
             ArrayLiteral array => GenerateArrayLiteral(array),

@@ -188,11 +188,20 @@ public class AstBuilder : LashBaseVisitor<AstNode>
 
         foreach (var clause in context.switchCaseClause())
         {
+            var isWildcard = string.Equals(clause.GetChild(1).GetText(), "_", StringComparison.Ordinal);
             var caseClause = new SwitchCaseClause
             {
                 Line = clause.Start.Line,
                 Column = clause.Start.Column,
-                Pattern = Visit(clause.expression()) as Expression ?? new NullLiteral()
+                IsWildcard = isWildcard,
+                Pattern = isWildcard
+                    ? new NullLiteral
+                    {
+                        Line = clause.Start.Line,
+                        Column = clause.Start.Column,
+                        Type = ExpressionTypes.Unknown
+                    }
+                    : Visit(clause.expression()) as Expression ?? new NullLiteral()
             };
 
             foreach (var stmt in clause.statement())
@@ -491,6 +500,9 @@ public class AstBuilder : LashBaseVisitor<AstNode>
 
     public override AstNode VisitFunctionCall(LashParser.FunctionCallContext context)
     {
+        if (TryBuildProcessSubstitutionExpression(context, out var processSubstitutionExpression))
+            return processSubstitutionExpression;
+
         if (TryBuildRawCaptureExpression(context, out var captureExpression))
             return captureExpression;
 
@@ -511,6 +523,61 @@ public class AstBuilder : LashBaseVisitor<AstNode>
         }
 
         return call;
+    }
+
+    private bool TryBuildProcessSubstitutionExpression(
+        LashParser.FunctionCallContext context,
+        out AstNode expression)
+    {
+        expression = null!;
+
+        var helperName = context.IDENTIFIER().GetText();
+        ProcessSubstitutionKind kind;
+        if (string.Equals(helperName, RawProcessSubstitutionEncoding.InputHelperName, StringComparison.Ordinal))
+        {
+            kind = ProcessSubstitutionKind.Input;
+        }
+        else if (string.Equals(helperName, RawProcessSubstitutionEncoding.OutputHelperName, StringComparison.Ordinal))
+        {
+            kind = ProcessSubstitutionKind.Output;
+        }
+        else
+        {
+            return false;
+        }
+
+        var args = context.argumentList()?.expression();
+        if (args == null || args.Length != 1)
+            return false;
+
+        if (Visit(args[0]) is not LiteralExpression
+            {
+                LiteralType: PrimitiveType { PrimitiveKind: PrimitiveType.Kind.String },
+                Value: string encoded
+            })
+        {
+            return false;
+        }
+
+        if (!RawProcessSubstitutionEncoding.TryDecodePayload(encoded, out var payload))
+            return false;
+
+        expression = new ProcessSubstitutionExpression
+        {
+            Line = context.Start.Line,
+            Column = context.Start.Column,
+            Kind = kind,
+            Payload = new LiteralExpression
+            {
+                Line = context.Start.Line,
+                Column = context.Start.Column,
+                Value = RewriteInlineInterpolatedSegments(payload),
+                LiteralType = new PrimitiveType { PrimitiveKind = PrimitiveType.Kind.String },
+                Type = ExpressionTypes.String
+            },
+            Type = ExpressionTypes.Unknown
+        };
+        return true;
     }
 
     public override AstNode VisitIndexAccessExpr(LashParser.IndexAccessExprContext context)

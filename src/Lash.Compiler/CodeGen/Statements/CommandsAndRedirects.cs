@@ -182,6 +182,9 @@ internal sealed partial class StatementGenerator
             return $"\"${{{arrayIdentifier.Name}[@]}}\"";
         }
 
+        if (expression is ProcessSubstitutionExpression)
+            return owner.GenerateExpression(expression);
+
         var rendered = owner.GenerateExpression(expression);
         if (IsAlreadyQuotedArg(rendered))
             return rendered;

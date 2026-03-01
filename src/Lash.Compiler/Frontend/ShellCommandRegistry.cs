@@ -42,6 +42,15 @@ internal static class ShellCommandRegistry
             case ".":
                 kind = ShellCommandKind.Source;
                 return true;
+            case "unset":
+                kind = ShellCommandKind.Unset;
+                return true;
+            case "declare":
+                kind = ShellCommandKind.Declare;
+                return true;
+            case "local":
+                kind = ShellCommandKind.Local;
+                return true;
             default:
                 kind = default;
                 return false;

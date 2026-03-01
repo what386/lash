@@ -383,6 +383,9 @@ internal sealed class ConstantFolder
             case ShellCaptureExpression shellCapture:
                 shellCapture.Command = FoldExpression(shellCapture.Command, pureDepth);
                 return shellCapture;
+            case ProcessSubstitutionExpression processSubstitution:
+                processSubstitution.Payload = FoldExpression(processSubstitution.Payload, pureDepth);
+                return processSubstitution;
 
             case LiteralExpression literal when literal.IsInterpolated:
                 return TryFoldInterpolatedString(literal) ?? literal;
@@ -1018,6 +1021,14 @@ internal sealed class ConstantFolder
                 Column = capture.Column,
                 Command = CloneExpression(capture.Command),
                 Type = capture.Type
+            },
+            ProcessSubstitutionExpression processSubstitution => new ProcessSubstitutionExpression
+            {
+                Line = processSubstitution.Line,
+                Column = processSubstitution.Column,
+                Kind = processSubstitution.Kind,
+                Payload = CloneExpression(processSubstitution.Payload),
+                Type = processSubstitution.Type
             },
             RangeExpression range => new RangeExpression
             {

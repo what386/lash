@@ -69,7 +69,8 @@ public sealed class CodegenFeasibilityAnalyzer
                 ValidateValueExpression(switchStatement.Value, ValueContext.GeneralValue);
                 foreach (var clause in switchStatement.Cases)
                 {
-                    ValidateValueExpression(clause.Pattern, ValueContext.GeneralValue);
+                    if (!clause.IsWildcard)
+                        ValidateValueExpression(clause.Pattern, ValueContext.GeneralValue);
                     foreach (var nested in clause.Body)
                         CheckStatement(nested);
                 }
@@ -283,6 +284,9 @@ public sealed class CodegenFeasibilityAnalyzer
                 return;
             case TestCaptureExpression testCapture:
                 ValidateShellPayload(testCapture.Condition, testCapture.Line, testCapture.Column);
+                return;
+            case ProcessSubstitutionExpression processSubstitution:
+                ValidateShellPayload(processSubstitution.Payload, processSubstitution.Line, processSubstitution.Column);
                 return;
 
             case RangeExpression:

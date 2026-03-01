@@ -115,7 +115,8 @@ public sealed class TypeChecker
                 InferType(switchStatement.Value);
                 foreach (var clause in switchStatement.Cases)
                 {
-                    InferType(clause.Pattern);
+                    if (!clause.IsWildcard)
+                        InferType(clause.Pattern);
                     PushScope();
                     foreach (var nested in clause.Body)
                         CheckStatement(nested);
@@ -321,6 +322,7 @@ public sealed class TypeChecker
             FunctionCallExpression functionCall => InferFunctionCallType(functionCall),
             ShellCaptureExpression shellCapture => InferShellCaptureType(shellCapture),
             TestCaptureExpression testCapture => InferTestCaptureType(testCapture),
+            ProcessSubstitutionExpression processSubstitution => InferProcessSubstitutionType(processSubstitution),
             UnaryExpression unary => InferUnaryType(unary),
             BinaryExpression binary => InferBinaryType(binary),
             PipeExpression pipe => InferPipeType(pipe),
@@ -383,6 +385,12 @@ public sealed class TypeChecker
     {
         ValidateShellPayload(testCapture.Condition, testCapture, "Expression '$(test ...)'");
         return ExpressionTypes.Number;
+    }
+
+    private ExpressionType InferProcessSubstitutionType(ProcessSubstitutionExpression processSubstitution)
+    {
+        ValidateShellPayload(processSubstitution.Payload, processSubstitution, "Expression '<(...)' / '>(...)'");
+        return ExpressionTypes.String;
     }
 
     private ExpressionType InferUnaryType(UnaryExpression unary)

@@ -368,6 +368,9 @@ public class BashGenerator
             case TestCaptureExpression testCapture:
                 CollectAssociativeUsages(testCapture.Condition, functionName);
                 break;
+            case ProcessSubstitutionExpression processSubstitution:
+                CollectAssociativeUsages(processSubstitution.Payload, functionName);
+                break;
             case PipeExpression pipe:
                 CollectAssociativeUsages(pipe.Left, functionName);
                 CollectAssociativeUsages(pipe.Right, functionName);
@@ -727,6 +730,9 @@ public class BashGenerator
                 break;
             case TestCaptureExpression testCapture:
                 MarkArrayLikeParameterUsages(testCapture.Condition, parameterNames, arrayLikeNames);
+                break;
+            case ProcessSubstitutionExpression processSubstitution:
+                MarkArrayLikeParameterUsages(processSubstitution.Payload, parameterNames, arrayLikeNames);
                 break;
             case PipeExpression pipe:
                 MarkArrayLikeParameterUsages(pipe.Left, parameterNames, arrayLikeNames);

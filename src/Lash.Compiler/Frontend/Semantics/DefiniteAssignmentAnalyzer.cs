@@ -245,6 +245,9 @@ public sealed class DefiniteAssignmentAnalyzer
             case TestCaptureExpression testCapture:
                 CheckExpression(testCapture.Condition);
                 break;
+            case ProcessSubstitutionExpression processSubstitution:
+                CheckExpression(processSubstitution.Payload);
+                break;
 
             case PipeExpression pipe:
                 CheckExpression(pipe.Left);

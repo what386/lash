@@ -124,7 +124,7 @@ switchStatement
     ;
 
 switchCaseClause
-    : 'case' expression ':' statement*
+    : 'case' ('_' | expression) ':' statement*
     ;
 
 returnStatement

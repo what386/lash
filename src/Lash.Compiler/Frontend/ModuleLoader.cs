@@ -103,6 +103,7 @@ public static class ModuleLoader
             if (!inMultilineString && !ShouldRewriteAsBareCommand(trimmed))
             {
                 rawLine = RewriteInlineCaptureExpressions(rawLine);
+                rawLine = RewriteInlineProcessSubstitutionExpressions(rawLine);
                 trimmed = rawLine.Trim();
             }
 
@@ -525,6 +526,90 @@ public static class ModuleLoader
         }
 
         return false;
+    }
+
+    private static string RewriteInlineProcessSubstitutionExpressions(string line)
+    {
+        if (!line.Contains("<(", StringComparison.Ordinal) && !line.Contains(">(", StringComparison.Ordinal))
+            return line;
+
+        var builder = new System.Text.StringBuilder(line.Length + 16);
+        var inSingleQuote = false;
+        var inDoubleQuote = false;
+        var escaped = false;
+        var cursor = 0;
+
+        for (var i = 0; i < line.Length; i++)
+        {
+            var ch = line[i];
+
+            if (inDoubleQuote)
+            {
+                if (escaped)
+                {
+                    escaped = false;
+                    continue;
+                }
+
+                if (ch == '\\')
+                {
+                    escaped = true;
+                    continue;
+                }
+
+                if (ch == '"')
+                    inDoubleQuote = false;
+
+                continue;
+            }
+
+            if (inSingleQuote)
+            {
+                if (ch == '\'')
+                    inSingleQuote = false;
+                continue;
+            }
+
+            if (ch == '"' && !(i > 0 && line[i - 1] == '\\'))
+            {
+                inDoubleQuote = true;
+                continue;
+            }
+
+            if (ch == '\'' && !(i > 0 && line[i - 1] == '\\'))
+            {
+                inSingleQuote = true;
+                continue;
+            }
+
+            if (ch == '/' && i + 1 < line.Length && line[i + 1] == '/')
+                break;
+
+            if ((ch != '<' && ch != '>') || i + 1 >= line.Length || line[i + 1] != '(')
+                continue;
+
+            if (!TryFindCaptureClose(line, i + 2, out var closeIndex))
+                continue;
+
+            var payload = line[(i + 2)..closeIndex];
+            var encoded = RawProcessSubstitutionEncoding.EncodePayload(payload);
+            var helperName = ch == '<'
+                ? RawProcessSubstitutionEncoding.InputHelperName
+                : RawProcessSubstitutionEncoding.OutputHelperName;
+            var replacement = $"{helperName}(\"{encoded}\")";
+
+            builder.Append(line, cursor, i - cursor);
+            builder.Append(replacement);
+
+            i = closeIndex;
+            cursor = i + 1;
+        }
+
+        if (cursor == 0)
+            return line;
+
+        builder.Append(line, cursor, line.Length - cursor);
+        return builder.ToString();
     }
 
     private static bool TryExpandInlineCase(string line, string trimmed, out IReadOnlyList<string> expandedLines)

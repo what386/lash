@@ -46,6 +46,9 @@ public sealed class NameResolver {
   private static readonly HashSet<char> ValidExportShortFlags = ['f', 'n', 'p'];
 
   private static readonly HashSet<char> ValidAliasShortFlags = ['p'];
+  private static readonly HashSet<char> ValidUnsetShortFlags = ['f', 'n', 'v'];
+  private static readonly HashSet<char> ValidDeclareShortFlags = ['a', 'A', 'f', 'F', 'g', 'i', 'l', 'n', 'p', 'r', 't', 'u', 'x'];
+  private static readonly HashSet<char> ValidLocalShortFlags = ['a', 'A', 'i', 'l', 'n', 'p', 'r', 't', 'u', 'x'];
 
   private static readonly HashSet<string> ValidTrapSignals =
       new(StringComparer.Ordinal) {
@@ -203,7 +206,8 @@ public sealed class NameResolver {
     case SwitchStatement switchStatement:
       CheckExpression(switchStatement.Value);
       foreach (var clause in switchStatement.Cases) {
-        CheckExpression(clause.Pattern);
+        if (!clause.IsWildcard)
+          CheckExpression(clause.Pattern);
         PushScope();
         foreach (var nested in clause.Body)
           CheckStatement(nested);
@@ -417,6 +421,9 @@ public sealed class NameResolver {
     case TestCaptureExpression testCapture:
       CheckExpression(testCapture.Condition);
       break;
+    case ProcessSubstitutionExpression processSubstitution:
+      CheckExpression(processSubstitution.Payload);
+      break;
 
     case PipeExpression pipe:
       CheckExpression(pipe.Left);
@@ -597,6 +604,17 @@ public sealed class NameResolver {
     case ShellCommandKind.Source:
       ValidateSourceCommand(command);
       break;
+    case ShellCommandKind.Unset:
+      ValidateUnsetCommand(command);
+      break;
+    case ShellCommandKind.Declare:
+      ValidateDeclareLikeCommand(command, "declare", ValidDeclareShortFlags,
+                                 allowGlobalFlag: true);
+      break;
+    case ShellCommandKind.Local:
+      ValidateDeclareLikeCommand(command, "local", ValidLocalShortFlags,
+                                 allowGlobalFlag: false);
+      break;
     }
   }
 
@@ -663,6 +681,96 @@ public sealed class NameResolver {
     if (command.Arguments.Count == 0) {
       Report(command, "Command 'source' requires a path argument.",
              DiagnosticCodes.InvalidCommandUsage);
+    }
+  }
+
+  private void ValidateUnsetCommand(ShellCommandStatement command) {
+    var sawTarget = false;
+    var stopOptions = false;
+    foreach (var arg in command.Arguments) {
+      if (!stopOptions && arg == "--") {
+        stopOptions = true;
+        continue;
+      }
+
+      if (!stopOptions && TryParseOptionToken(arg, out var sign, out var optionBody)) {
+        if (sign != '-' || optionBody.Length == 0 || optionBody == "-") {
+          Report(command, $"Invalid unset option '{arg}'.",
+                 DiagnosticCodes.InvalidCommandUsage);
+          return;
+        }
+
+        foreach (var flag in optionBody) {
+          if (!ValidUnsetShortFlags.Contains(flag)) {
+            Report(command, $"Invalid unset flag '-{flag}'.",
+                   DiagnosticCodes.InvalidCommandUsage);
+            return;
+          }
+        }
+
+        continue;
+      }
+
+      sawTarget = true;
+      if (!IsIdentifier(arg)) {
+        Report(command, $"Invalid unset target '{arg}'.",
+               DiagnosticCodes.InvalidCommandUsage);
+        return;
+      }
+    }
+
+    if (!sawTarget) {
+      Report(command, "Command 'unset' requires at least one target.",
+             DiagnosticCodes.InvalidCommandUsage);
+    }
+  }
+
+  private void ValidateDeclareLikeCommand(
+      ShellCommandStatement command, string commandName,
+      HashSet<char> validFlags, bool allowGlobalFlag) {
+    if (string.Equals(commandName, "local", StringComparison.Ordinal) &&
+        functionDepth == 0) {
+      Report(command, "Command 'local' is only valid inside functions.",
+             DiagnosticCodes.InvalidCommandUsage);
+      return;
+    }
+
+    foreach (var arg in command.Arguments) {
+      if (arg == "--")
+        continue;
+
+      if (TryParseOptionToken(arg, out var sign, out var optionBody)) {
+        if (optionBody.Length == 0 || optionBody == "-") {
+          Report(command, $"Invalid {commandName} option '{arg}'.",
+                 DiagnosticCodes.InvalidCommandUsage);
+          return;
+        }
+
+        foreach (var flag in optionBody) {
+          if (!validFlags.Contains(flag) ||
+              (!allowGlobalFlag && flag == 'g')) {
+            Report(command, $"Invalid {commandName} flag '{sign}{flag}'.",
+                   DiagnosticCodes.InvalidCommandUsage);
+            return;
+          }
+        }
+
+        continue;
+      }
+
+      if (TrySplitAssignment(arg, out var name)) {
+        if (!IsIdentifier(name)) {
+          Report(command, $"Invalid {commandName} assignment target '{name}'.",
+                 DiagnosticCodes.InvalidCommandUsage);
+        }
+
+        continue;
+      }
+
+      if (!IsIdentifier(arg)) {
+        Report(command, $"Invalid {commandName} target '{arg}'.",
+               DiagnosticCodes.InvalidCommandUsage);
+      }
     }
   }
 

@@ -150,7 +150,7 @@ internal sealed partial class StatementGenerator
         foreach (var caseClause in switchStatement.Cases)
         {
             owner.EmitLine();
-            owner.Emit($"{GenerateSwitchPattern(caseClause.Pattern)})");
+            owner.Emit($"{(caseClause.IsWildcard ? "*" : GenerateSwitchPattern(caseClause.Pattern))})");
             owner.IndentLevel++;
 
             foreach (var statement in caseClause.Body)

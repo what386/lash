@@ -31,6 +31,15 @@ internal sealed partial class ExpressionGenerator
         return $"$(if [[ {payload} ]]; then echo 1; else echo 0; fi)";
     }
 
+    private string GenerateProcessSubstitutionExpression(ProcessSubstitutionExpression processSubstitution)
+    {
+        if (!TryGenerateShellPayload(processSubstitution.Payload, out var payload))
+            return HandleUnsupportedExpression(processSubstitution, "process substitution payload");
+
+        var op = processSubstitution.Kind == ProcessSubstitutionKind.Input ? "<" : ">";
+        return $"{op}({payload})";
+    }
+
     private string GenerateFunctionCallArg(string functionName, Expression expression, int argumentIndex)
     {
         if (expression is IdentifierExpression identifier &&
@@ -44,6 +53,9 @@ internal sealed partial class ExpressionGenerator
         {
             return $"\"${{{arrayIdentifier.Name}[@]}}\"";
         }
+
+        if (expression is ProcessSubstitutionExpression)
+            return GenerateExpression(expression);
 
         var rendered = GenerateExpression(expression);
         if (IsAlreadyQuoted(rendered))

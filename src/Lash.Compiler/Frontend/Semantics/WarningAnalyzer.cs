@@ -458,17 +458,33 @@ public sealed class WarningAnalyzer {
   private bool AnalyzeSwitchStatement(SwitchStatement switchStatement,
                                       bool inLoop) {
     WarnDuplicateSwitchCaseBodies(switchStatement);
+    WarnWildcardSwitchOrdering(switchStatement);
 
     if (!TryEvaluateConstValue(switchStatement.Value, out var switchValue)) {
       foreach (var clause in switchStatement.Cases)
-        AnalyzeExpression(clause.Pattern);
+        if (!clause.IsWildcard)
+          AnalyzeExpression(clause.Pattern);
       return AnalyzeSwitchPaths(switchStatement.Cases, inLoop,
                                 CurrentTrackedJobs());
     }
 
     for (int i = 0; i < switchStatement.Cases.Count; i++) {
       var clause = switchStatement.Cases[i];
-      AnalyzeExpression(clause.Pattern);
+      if (!clause.IsWildcard)
+        AnalyzeExpression(clause.Pattern);
+
+      if (clause.IsWildcard) {
+        var matchedWildcard =
+            AnalyzeBranch(clause.Body, inLoop, CurrentTrackedJobs());
+        foreach (var laterClause in switchStatement.Cases.Skip(i + 1)) {
+          WarnBlockUnreachable(laterClause.Body,
+                               "Unreachable case: an earlier wildcard case always matches.",
+                               laterClause.Line, laterClause.Column);
+        }
+
+        SetCurrentTrackedJobs(matchedWildcard.TrackedJobs);
+        return matchedWildcard.Terminated;
+      }
 
       if (!TryEvaluateConstValue(clause.Pattern, out var patternValue) ||
           !IsExactPattern(clause.Pattern)) {
@@ -497,6 +513,25 @@ public sealed class WarningAnalyzer {
     }
 
     return false;
+  }
+
+  private void WarnWildcardSwitchOrdering(SwitchStatement switchStatement) {
+    for (var i = 0; i < switchStatement.Cases.Count - 1; i++) {
+      if (!switchStatement.Cases[i].IsWildcard)
+        continue;
+
+      AddWarning("Wildcard case '_' should be the final case in a switch.",
+                 switchStatement.Cases[i].Line,
+                 switchStatement.Cases[i].Column,
+                 DiagnosticCodes.UnreachableStatement);
+
+      foreach (var later in switchStatement.Cases.Skip(i + 1)) {
+        WarnBlockUnreachable(
+            later.Body,
+            "Unreachable case: an earlier wildcard case always matches.",
+            later.Line, later.Column);
+      }
+    }
   }
 
   private bool AnalyzeSwitchPaths(IReadOnlyList<SwitchCaseClause> cases,
@@ -656,7 +691,8 @@ public sealed class WarningAnalyzer {
       return false;
 
     for (var i = 0; i < left.Count; i++) {
-      if (!AreEquivalentExpressions(left[i].Pattern, right[i].Pattern) ||
+      if (left[i].IsWildcard != right[i].IsWildcard ||
+          !AreEquivalentExpressions(left[i].Pattern, right[i].Pattern) ||
           !AreEquivalentBlocks(left[i].Body, right[i].Body)) {
         return false;
       }
@@ -712,6 +748,9 @@ public sealed class WarningAnalyzer {
           AreEquivalentExpressions(l.Command, r.Command),
       (TestCaptureExpression l, TestCaptureExpression r) =>
           AreEquivalentExpressions(l.Condition, r.Condition),
+      (ProcessSubstitutionExpression l, ProcessSubstitutionExpression r) =>
+          l.Kind == r.Kind &&
+          AreEquivalentExpressions(l.Payload, r.Payload),
       (NullLiteral, NullLiteral) => true,
       _ => false
     };
@@ -752,6 +791,9 @@ public sealed class WarningAnalyzer {
       break;
     case TestCaptureExpression testCapture:
       AnalyzeShellPayload(testCapture.Condition);
+      break;
+    case ProcessSubstitutionExpression processSubstitution:
+      AnalyzeShellPayload(processSubstitution.Payload);
       break;
 
     case PipeExpression pipe:

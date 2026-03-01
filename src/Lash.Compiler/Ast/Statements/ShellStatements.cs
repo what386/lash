@@ -26,7 +26,10 @@ public enum ShellCommandKind
     Export,
     Shopt,
     Alias,
-    Source
+    Source,
+    Unset,
+    Declare,
+    Local
 }
 
 public class ShellCommandStatement : CommandStatement

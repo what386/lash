@@ -53,6 +53,7 @@ public class SwitchStatement : Statement
 public class SwitchCaseClause : AstNode
 {
     public Expression Pattern { get; set; } = null!;
+    public bool IsWildcard { get; set; }
     public List<Statement> Body { get; set; } = new();
 }
 

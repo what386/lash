@@ -266,6 +266,9 @@ internal sealed class SymbolIndexBuilder
             case TestCaptureExpression testCapture:
                 VisitExpression(testCapture.Condition);
                 break;
+            case ProcessSubstitutionExpression processSubstitution:
+                VisitExpression(processSubstitution.Payload);
+                break;
             case IndexAccessExpression indexAccess:
                 VisitExpression(indexAccess.Array);
                 VisitExpression(indexAccess.Index);
