@@ -6,6 +6,7 @@ program
 
 statement
     : variableDeclaration
+    | readonlyDeclaration
     | enumDeclaration
     | assignment
     | functionDeclaration
@@ -52,6 +53,10 @@ commandStatement
 
 variableDeclaration
     : 'global'? ('let' | 'const') IDENTIFIER ('=' expression)?
+    ;
+
+readonlyDeclaration
+    : 'global'? 'readonly' IDENTIFIER '=' expression
     ;
 
 enumDeclaration

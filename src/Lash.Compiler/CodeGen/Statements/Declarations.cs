@@ -10,13 +10,14 @@ internal sealed partial class StatementGenerator
     {
         var isAssociative = owner.IsAssociativeVariable(varDecl.Name, varDecl.IsGlobal);
         var isFunctionLocal = owner.CurrentFunctionName != null && !varDecl.IsGlobal;
+        var isReadonly = varDecl.Kind == VariableDeclaration.VarKind.Readonly;
         var value = GenerateVariableDeclarationValue(varDecl.Value);
 
         if (isAssociative)
         {
             if (isFunctionLocal)
             {
-                if (varDecl.Kind == VariableDeclaration.VarKind.Const)
+                if (isReadonly)
                 {
                     owner.Emit($"local -rA {varDecl.Name}={value}");
                     return;
@@ -26,16 +27,13 @@ internal sealed partial class StatementGenerator
                 return;
             }
 
-            owner.Emit($"declare -A {varDecl.Name}={value}");
-            if (varDecl.Kind == VariableDeclaration.VarKind.Const)
-            {
-                owner.EmitLine();
-                owner.Emit($"readonly {varDecl.Name}");
-            }
+            owner.Emit(isReadonly
+                ? $"declare -rA {varDecl.Name}={value}"
+                : $"declare -A {varDecl.Name}={value}");
             return;
         }
 
-        if (varDecl.Kind == VariableDeclaration.VarKind.Const)
+        if (isReadonly)
         {
             if (isFunctionLocal)
             {

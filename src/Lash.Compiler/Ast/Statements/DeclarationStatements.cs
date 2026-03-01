@@ -2,7 +2,7 @@ namespace Lash.Compiler.Ast.Statements;
 
 public class VariableDeclaration : Statement
 {
-    public enum VarKind { Let, Const }
+    public enum VarKind { Let, Const, Readonly }
     public VarKind Kind { get; set; } = VarKind.Let;
     public bool IsGlobal { get; set; }
     public bool IsPublic { get; set; }

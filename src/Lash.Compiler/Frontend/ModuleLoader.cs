@@ -620,6 +620,7 @@ public static class ModuleLoader
                || line.StartsWith("case ", StringComparison.Ordinal)
                || line.StartsWith("let ", StringComparison.Ordinal)
                || line.StartsWith("const ", StringComparison.Ordinal)
+               || line.StartsWith("readonly ", StringComparison.Ordinal)
                || line.StartsWith("enum ", StringComparison.Ordinal)
                || line.StartsWith("global ", StringComparison.Ordinal)
                || line.StartsWith("return", StringComparison.Ordinal)

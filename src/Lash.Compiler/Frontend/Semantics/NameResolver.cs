@@ -153,7 +153,13 @@ public sealed class NameResolver {
         break;
       }
 
-      Declare(variable.Name, variable.Kind == VariableDeclaration.VarKind.Const,
+      if (variable.Kind == VariableDeclaration.VarKind.Readonly && loopDepth > 0) {
+        Report(variable,
+               $"Readonly declaration '{variable.Name}' is not allowed inside repeated contexts.",
+               DiagnosticCodes.InvalidReadonlyContext);
+      }
+
+      Declare(variable.Name, IsImmutableDeclaration(variable.Kind),
               variable, variable.IsGlobal);
       break;
 
@@ -500,7 +506,7 @@ public sealed class NameResolver {
 
       if (symbol.IsConst) {
         Report(identifier,
-               $"Cannot assign to const variable '{identifier.Name}'.",
+               $"Cannot assign to immutable variable '{identifier.Name}'.",
                DiagnosticCodes.InvalidAssignmentTarget);
       }
 
@@ -515,7 +521,7 @@ public sealed class NameResolver {
 
     if (resolved.IsConst) {
       Report(identifier,
-             $"Cannot assign to const variable '{identifier.Name}'.",
+             $"Cannot assign to immutable variable '{identifier.Name}'.",
              DiagnosticCodes.InvalidAssignmentTarget);
     }
   }
@@ -812,7 +818,7 @@ public sealed class NameResolver {
       }
 
       if (resolved.IsConst) {
-        Report(node, $"Cannot assign to const variable '{targetName}'.",
+        Report(node, $"Cannot assign to immutable variable '{targetName}'.",
                DiagnosticCodes.InvalidAssignmentTarget);
       }
 
@@ -882,7 +888,7 @@ public sealed class NameResolver {
       DiagnosticCodes.InvalidAssignmentTarget =>
           "Use 'let' for mutable variables, or remove this assignment.",
       DiagnosticCodes.UndeclaredVariable =>
-          "Declare the symbol before first use with 'let' or 'const'.",
+          "Declare the symbol before first use with 'let', 'const', or 'readonly'.",
       DiagnosticCodes.UnknownFunction =>
           "Declare the function before calling it, or fix the function name.",
       DiagnosticCodes.FunctionArityMismatch =>
@@ -897,6 +903,8 @@ public sealed class NameResolver {
           "scope.",
       DiagnosticCodes.InvalidCommandUsage =>
           "Use a valid form for this command, or use sh to emit it directly.",
+      DiagnosticCodes.InvalidReadonlyContext =>
+          "Use 'const' for compile-time immutability in loops, or hoist 'readonly' outside the repeated block.",
       _ => null
     };
 
@@ -911,6 +919,9 @@ public sealed class NameResolver {
 
   private static bool IsBuiltinIdentifier(string name) =>
       string.Equals(name, "argv", StringComparison.Ordinal);
+
+  private static bool IsImmutableDeclaration(VariableDeclaration.VarKind kind) =>
+      kind is VariableDeclaration.VarKind.Const or VariableDeclaration.VarKind.Readonly;
 
   private readonly record struct SymbolInfo(bool IsConst);
   private readonly record struct FunctionInfo(int ParameterCount,

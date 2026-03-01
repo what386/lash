@@ -7,7 +7,7 @@ internal static class IdentifierRules
         "if", "elif", "else", "end",
         "fn", "for", "in", "step", "while",
         "switch", "case",
-        "let", "const", "global",
+        "let", "const", "readonly", "global",
         "return", "break", "continue",
         "shift", "subshell", "wait", "into", "jobs",
         "sh", "test", "trap", "untrap", "enum",

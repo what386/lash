@@ -77,7 +77,7 @@ internal sealed class HoverHandler : HoverHandlerBase
     {
         var kind = symbol.Kind.ToString().ToLowerInvariant();
         var typeText = string.IsNullOrWhiteSpace(symbol.TypeText) ? string.Empty : $": `{symbol.TypeText}`";
-        var constText = symbol.IsConst ? " const" : string.Empty;
+        var immutableText = symbol.IsConst ? " immutable" : string.Empty;
         var usageHint = symbol.Kind switch
         {
             LashSymbolKind.Function => "Call with `name(args...)`.",
@@ -87,6 +87,6 @@ internal sealed class HoverHandler : HoverHandlerBase
             _ => "Lexical variable binding."
         };
 
-        return $"`{kind}{constText}` **{symbol.Name}**{typeText}\n\n{usageHint}";
+        return $"`{kind}{immutableText}` **{symbol.Name}**{typeText}\n\n{usageHint}";
     }
 }

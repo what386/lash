@@ -48,6 +48,21 @@ public class AstBuilder : LashBaseVisitor<AstNode>
         };
     }
 
+    public override AstNode VisitReadonlyDeclaration(LashParser.ReadonlyDeclarationContext context)
+    {
+        var hasGlobal = context.GetChild(0).GetText() == "global";
+        return new VariableDeclaration
+        {
+            Line = context.Start.Line,
+            Column = context.Start.Column,
+            Kind = VariableDeclaration.VarKind.Readonly,
+            IsGlobal = hasGlobal,
+            IsPublic = false,
+            Name = context.IDENTIFIER().GetText(),
+            Value = Visit(context.expression()) as Expression ?? new NullLiteral()
+        };
+    }
+
     public override AstNode VisitEnumDeclaration(LashParser.EnumDeclarationContext context)
     {
         var declaration = new EnumDeclaration

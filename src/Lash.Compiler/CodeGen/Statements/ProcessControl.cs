@@ -44,8 +44,7 @@ internal sealed partial class StatementGenerator
                 EmitIntoCaptureAssignment(
                     subshellStatement.IntoVariable!,
                     "$!",
-                    subshellStatement.IntoCreatesVariable,
-                    subshellStatement.IntoCreatesConst);
+                    subshellStatement.IntoCreatesVariable);
             }
 
             if (owner.NeedsTrackedJobs)
@@ -63,8 +62,7 @@ internal sealed partial class StatementGenerator
             EmitIntoCaptureAssignment(
                 subshellStatement.IntoVariable!,
                 "$?",
-                subshellStatement.IntoCreatesVariable,
-                subshellStatement.IntoCreatesConst);
+                subshellStatement.IntoCreatesVariable);
         }
     }
 
@@ -89,8 +87,7 @@ internal sealed partial class StatementGenerator
             EmitIntoCaptureAssignment(
                 coprocStatement.IntoVariable!,
                 "${COPROC_PID}",
-                coprocStatement.IntoCreatesVariable,
-                coprocStatement.IntoCreatesConst);
+                coprocStatement.IntoCreatesVariable);
         }
 
         if (owner.NeedsTrackedJobs)
@@ -131,8 +128,7 @@ internal sealed partial class StatementGenerator
             EmitIntoCaptureAssignment(
                 waitStatement.IntoVariable!,
                 "$?",
-                waitStatement.IntoCreatesVariable,
-                waitStatement.IntoCreatesConst);
+                waitStatement.IntoCreatesVariable);
         }
     }
 
@@ -143,8 +139,7 @@ internal sealed partial class StatementGenerator
             EmitIntoCaptureAssignment(
                 waitStatement.IntoVariable!,
                 "0",
-                waitStatement.IntoCreatesVariable,
-                waitStatement.IntoCreatesConst);
+                waitStatement.IntoCreatesVariable);
             owner.EmitLine();
         }
 
@@ -166,22 +161,10 @@ internal sealed partial class StatementGenerator
         owner.Emit($"{BashGenerator.TrackedJobsName}=()");
     }
 
-    private void EmitIntoCaptureAssignment(string name, string value, bool createsVariable, bool createsConst)
+    private void EmitIntoCaptureAssignment(string name, string value, bool createsVariable)
     {
         if (createsVariable)
         {
-            if (createsConst)
-            {
-                if (owner.CurrentFunctionName != null)
-                {
-                    owner.Emit($"local -r {name}={value}");
-                    return;
-                }
-
-                owner.Emit($"readonly {name}={value}");
-                return;
-            }
-
             if (owner.CurrentFunctionName != null)
             {
                 owner.Emit($"local {name}={value}");

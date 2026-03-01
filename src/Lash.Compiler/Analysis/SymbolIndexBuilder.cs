@@ -282,11 +282,12 @@ internal sealed class SymbolIndexBuilder
 
     private void DeclareVariable(VariableDeclaration variable)
     {
+        var isImmutable = variable.Kind is VariableDeclaration.VarKind.Const or VariableDeclaration.VarKind.Readonly;
         Declare(
             variable,
             variable.Name,
-            variable.Kind == VariableDeclaration.VarKind.Const ? LashSymbolKind.Constant : LashSymbolKind.Variable,
-            variable.Kind == VariableDeclaration.VarKind.Const,
+            isImmutable ? LashSymbolKind.Constant : LashSymbolKind.Variable,
+            isImmutable,
             typeText: variable.Value.Type.GetType().Name.Replace("Type", string.Empty, StringComparison.Ordinal));
     }
 
