@@ -8,6 +8,9 @@
 - [ ] Add shell-command registry for set/export/shopt/alias/source with AST-backed validation diagnostics (high) #feature #language #compiler
       @created 2026-03-01 00:31
 
+- [ ] Rename registered-command terminology to shell-command across AST, frontend registry, and tests #feature #compiler
+      @created 2026-03-01 00:31
+
 
 ## Completed
 
