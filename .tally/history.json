@@ -175,5 +175,18 @@
       "completed_at": "2026-03-01T00:32:39.808288763Z"
     },
     "version": null
+  },
+  {
+    "change": {
+      "description": "Rename registered-command terminology to shell-command across AST, frontend registry, and tests",
+      "priority": "Medium",
+      "tags": [
+        "feature",
+        "compiler"
+      ],
+      "commit": null,
+      "completed_at": "2026-03-01T00:32:39.818966329Z"
+    },
+    "version": null
   }
 ]
