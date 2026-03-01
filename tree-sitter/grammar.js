@@ -145,7 +145,7 @@ module.exports = grammar({
 
     assignment: $ => seq(
       optional("global"),
-      field("target", choice($.identifier, $.index_access)),
+      field("target", choice($.var_ref, $.index_access)),
       field("operator", choice("=", "+=")),
       field("value", $.expression),
     ),

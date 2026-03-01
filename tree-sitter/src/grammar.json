@@ -536,7 +536,7 @@
             "members": [
               {
                 "type": "SYMBOL",
-                "name": "identifier"
+                "name": "var_ref"
               },
               {
                 "type": "SYMBOL",

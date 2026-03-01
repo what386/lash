@@ -163,7 +163,8 @@
 ; Assignments
 ; ============================================================
 (assignment
-  target: (identifier) @variable)
+  target: (var_ref
+    name: (identifier) @variable))
 
 
 ; ============================================================
