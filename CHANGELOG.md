@@ -1,6 +1,29 @@
 # Changelog — lash-lang
 
-*Generated on 2026-02-27*
+*Generated on 2026-03-01*
+
+## 0.9.0 — 2026-03-01
+
+### High Priority
+
+- Add shell-command registry for set/export/shopt/alias/source with AST-backed validation diagnostics `feature`, `language`, `compiler`
+
+### Changes
+
+- Rename registered-command terminology to shell-command across AST, frontend registry, and tests `feature`, `compiler`
+
+
+## 0.8.0 — 2026-02-28
+
+### High Priority
+
+- Make into bindings explicit: 'into ' assigns existing vars, 'into let/const name' creates vars `feature`, `language`
+
+### Changes
+
+- Add heredoc redirection and until loops to Lash with direct Bash lowering `feature`, `language`
+- Use captured test expressions for file/dir checks in scripts/build/build.lash `bug`, `tooling`
+
 
 ## 0.7.0 — 2026-02-27
 
