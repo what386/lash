@@ -4,7 +4,6 @@ module.exports = grammar({
   word: $ => $.identifier,
 
   conflicts: $ => [
-    [$.command_statement, $.primary_expression],
     [$.command_statement],
   ],
 

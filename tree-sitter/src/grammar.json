@@ -2383,10 +2383,6 @@
   ],
   "conflicts": [
     [
-      "command_statement",
-      "primary_expression"
-    ],
-    [
       "command_statement"
     ]
   ],
