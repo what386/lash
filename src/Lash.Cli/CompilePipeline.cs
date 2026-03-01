@@ -36,16 +36,15 @@ internal static class CompilePipeline
 
     public static int Run(string inputPath, bool keepTemp, IReadOnlyList<string> args, bool verbose = false)
     {
+        var fullInputPath = Path.GetFullPath(inputPath);
         var tempPath = Path.Combine(Path.GetTempPath(), $"lash-run-{Guid.NewGuid():N}.sh");
-        var compileExitCode = EmitBash(inputPath, tempPath, verbose, suppressCompilerStdout: true);
+        var compileExitCode = EmitBash(fullInputPath, tempPath, verbose, suppressCompilerStdout: true);
         if (compileExitCode != 0)
             return compileExitCode;
 
-        var runtimeWorkingDirectory = ResolveRuntimeWorkingDirectory(inputPath);
-
         try
         {
-            var exitCode = RunProcess("bash", [tempPath, .. args], runtimeWorkingDirectory);
+            var exitCode = RunProcess("bash", [tempPath, .. args], Environment.CurrentDirectory);
             return exitCode;
         }
         finally
@@ -204,16 +203,6 @@ internal static class CompilePipeline
             Console.Error.WriteLine($"Failed to execute '{fileName}': {ex.Message}");
             return 1;
         }
-    }
-
-    private static string ResolveRuntimeWorkingDirectory(string inputPath)
-    {
-        var fullInputPath = Path.GetFullPath(inputPath);
-        var directory = Path.GetDirectoryName(fullInputPath);
-        if (!string.IsNullOrWhiteSpace(directory) && Directory.Exists(directory))
-            return directory;
-
-        return Environment.CurrentDirectory;
     }
 
     private static void TryMarkExecutable(string path)

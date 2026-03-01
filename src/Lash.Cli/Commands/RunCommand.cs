@@ -37,7 +37,7 @@ static class RunCommand
             }
         });
 
-        var command = new Command("run", "Compile a .lash file to /tmp and run it with bash")
+        var command = new Command("run", "Compile a .lash file to a temporary script and run it with bash")
         {
             fileArgument,
             keepTempOption,

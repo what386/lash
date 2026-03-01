@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-declare -a __lash_argv=("$@")
 declare -a __lash_jobs=()
 set -euo pipefail
 PROJECT_NAME="Lash"
@@ -16,7 +15,6 @@ YELLOW="\\033[1;33m"
 BLUE="\\033[0;34m"
 NC="\\033[0m"
 show_help() {
-    local -a __lash_argv=("$@")
     echo "Usage: $0 [OPTIONS] <platform1> [platform2] ..."
     echo ""
     echo "Options:"
@@ -43,7 +41,6 @@ show_help() {
     exit 0
 }
 is_known_tool() {
-    local -a __lash_argv=("$@")
     local tool_name="$1"
 
     for entry in "${PROJECTS[@]}"; do
@@ -57,7 +54,6 @@ is_known_tool() {
     return 0
 }
 list_to_csv() {
-    local -a __lash_argv=("$@")
     local -a values=("${@:1}")
 
     if [[ ${#values[@]} == 0 ]]; then
@@ -78,7 +74,6 @@ list_to_csv() {
     return 0
 }
 should_trim_tool() {
-    local -a __lash_argv=("$@")
     local tool_name="$1"
 
     if ! (( ENABLE_TRIMMING != 0 )); then
@@ -95,7 +90,6 @@ should_trim_tool() {
     return 0
 }
 is_windows_rid() {
-    local -a __lash_argv=("$@")
     local rid="$1"
 
     case ${rid} in
@@ -108,21 +102,18 @@ is_windows_rid() {
     return 0
 }
 file_exists() {
-    local -a __lash_argv=("$@")
     local path="$1"
 
     echo $(( $(if [[ -f "${path}" ]]; then echo 1; else echo 0; fi) == 1 ))
     return 0
 }
 dir_exists() {
-    local -a __lash_argv=("$@")
     local path="$1"
 
     echo $(( $(if [[ -d "${path}" ]]; then echo 1; else echo 0; fi) == 1 ))
     return 0
 }
 get_output_dirname() {
-    local -a __lash_argv=("$@")
     local rid="$1"
 
     local platform=""
@@ -174,7 +165,6 @@ get_output_dirname() {
     return 0
 }
 find_published_executable() {
-    local -a __lash_argv=("$@")
     local temp_dir="$1"
     local rid="$2"
     local project_stem="$3"
@@ -200,7 +190,6 @@ find_published_executable() {
     return 0
 }
 build_tool_for_platform() {
-    local -a __lash_argv=("$@")
     local tool_name="$1"
     local project_path="$2"
     local rid="$3"
@@ -240,7 +229,6 @@ build_tool_for_platform() {
     echo -e "${GREEN}✓ Built ${tool_name} (${size}) -> ${dest_file}${NC}"
 }
 build_platform() {
-    local -a __lash_argv=("$@")
     local rid="$1"
     local description="$2"
 
@@ -276,7 +264,6 @@ build_platform() {
     ls -lah "$bundle_dir"
 }
 get_platform_description() {
-    local -a __lash_argv=("$@")
     local rid="$1"
 
     case ${rid} in
@@ -317,34 +304,46 @@ get_platform_description() {
     return 0
 }
 BUILD_PLATFORMS=()
-while (( ${#__lash_argv[@]} > 0 )); do
-    arg=${__lash_argv[0]}
+while (( $# > 0 )); do
+    arg=${@:1:1}
     if [[ ${arg} == "-h" ]] || [[ ${arg} == "--help" ]]; then
         show_help
     elif [[ ${arg} == "--no-trim" ]]; then
-        if (( ${#__lash_argv[@]} > 1 )) && [ $(is_known_tool "${__lash_argv[1]}") -ne 0 ]; then
-            NO_TRIM_TOOLS+=(${__lash_argv[1]})
+        if (( $# > 1 )) && [ $(is_known_tool "${@:2:1}") -ne 0 ]; then
+            NO_TRIM_TOOLS+=(${@:2:1})
             __lash_shift_n=$(( 1 ))
-            if (( __lash_shift_n > 0 )); then __lash_argv=("${__lash_argv[@]:__lash_shift_n}"); fi
+            if (( __lash_shift_n > 0 )); then
+            if (( __lash_shift_n >= $# )); then set --; else shift "${__lash_shift_n}"; fi
+            fi
             __lash_shift_n=$(( 1 ))
-            if (( __lash_shift_n > 0 )); then __lash_argv=("${__lash_argv[@]:__lash_shift_n}"); fi
+            if (( __lash_shift_n > 0 )); then
+            if (( __lash_shift_n >= $# )); then set --; else shift "${__lash_shift_n}"; fi
+            fi
         else
             ENABLE_TRIMMING=0
             __lash_shift_n=$(( 1 ))
-            if (( __lash_shift_n > 0 )); then __lash_argv=("${__lash_argv[@]:__lash_shift_n}"); fi
+            if (( __lash_shift_n > 0 )); then
+            if (( __lash_shift_n >= $# )); then set --; else shift "${__lash_shift_n}"; fi
+            fi
         fi
     elif [[ ${arg} == "--no-single-file" ]]; then
         ENABLE_SINGLE_FILE=0
         __lash_shift_n=$(( 1 ))
-        if (( __lash_shift_n > 0 )); then __lash_argv=("${__lash_argv[@]:__lash_shift_n}"); fi
+        if (( __lash_shift_n > 0 )); then
+        if (( __lash_shift_n >= $# )); then set --; else shift "${__lash_shift_n}"; fi
+        fi
     elif [[ ${arg} == "--no-ready2run" ]]; then
         ENABLE_READY_TO_RUN=0
         __lash_shift_n=$(( 1 ))
-        if (( __lash_shift_n > 0 )); then __lash_argv=("${__lash_argv[@]:__lash_shift_n}"); fi
+        if (( __lash_shift_n > 0 )); then
+        if (( __lash_shift_n >= $# )); then set --; else shift "${__lash_shift_n}"; fi
+        fi
     else
         BUILD_PLATFORMS+=(${arg})
         __lash_shift_n=$(( 1 ))
-        if (( __lash_shift_n > 0 )); then __lash_argv=("${__lash_argv[@]:__lash_shift_n}"); fi
+        if (( __lash_shift_n > 0 )); then
+        if (( __lash_shift_n >= $# )); then set --; else shift "${__lash_shift_n}"; fi
+        fi
     fi
 done
 if [[ ${#BUILD_PLATFORMS[@]} == 0 ]]; then
