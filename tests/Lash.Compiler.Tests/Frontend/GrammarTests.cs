@@ -404,7 +404,7 @@ public class GrammarTests
     }
 
     [Fact]
-    public void ModuleLoader_ParsesShiftShellCaptureShTestAndAppendAssignment()
+    public void ModuleLoader_ParsesShiftShellCaptureShTestAndUpdateAssignments()
     {
         var program = TestCompiler.ParseOrThrow(
             """
@@ -416,6 +416,9 @@ public class GrammarTests
                 test "-n \"${size}\""
                 let items = []
                 $items += ["x"]
+                let i = 0
+                $i++
+                $i -= 1
             end
             """);
 
@@ -431,6 +434,12 @@ public class GrammarTests
 
         var append = Assert.IsType<Assignment>(fn.Body[6]);
         Assert.Equal("+=", append.Operator);
+        Assert.IsType<IdentifierExpression>(append.Target);
+        Assert.IsType<VariableDeclaration>(fn.Body[7]);
+        var increment = Assert.IsType<UpdateStatement>(fn.Body[8]);
+        Assert.Equal("++", increment.Operator);
+        var decrementAssign = Assert.IsType<Assignment>(fn.Body[9]);
+        Assert.Equal("-=", decrementAssign.Operator);
     }
 
     [Fact]

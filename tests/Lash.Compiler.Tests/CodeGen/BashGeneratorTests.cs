@@ -762,6 +762,31 @@ public class BashGeneratorTests
     }
 
     [Fact]
+    public void BashGenerator_EmitsArithmeticUpdatesForCompoundAndPostfixOperators()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            let n = 10
+            $n += 2
+            $n -= 3
+            $n *= 4
+            $n /= 5
+            $n %= 6
+            $n++
+            $n--
+            """);
+
+        var bash = new BashGenerator().Generate(program);
+        Assert.Contains("(( n += 2 ))", bash);
+        Assert.Contains("(( n -= 3 ))", bash);
+        Assert.Contains("(( n *= 4 ))", bash);
+        Assert.Contains("(( n /= 5 ))", bash);
+        Assert.Contains("(( n %= 6 ))", bash);
+        Assert.Contains("(( n++ ))", bash);
+        Assert.Contains("(( n-- ))", bash);
+    }
+
+    [Fact]
     public void BashGenerator_EmitsSubshellAndWaitSyntax()
     {
         var program = TestCompiler.ParseOrThrow(

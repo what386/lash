@@ -97,7 +97,44 @@ public class TypeCheckerTests
         var diagnostics = new DiagnosticBag();
         new TypeChecker(diagnostics).Analyze(program);
 
-        Assert.Contains(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.TypeMismatch && e.Message.Contains("expects an array value", StringComparison.Ordinal));
+        Assert.Contains(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.TypeMismatch && e.Message.Contains("cannot combine", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void TypeChecker_AllowsArithmeticCompoundAssignmentsAndPostfixUpdates()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            let count = 10
+            $count += 2
+            $count -= 1
+            $count *= 3
+            $count /= 2
+            $count %= 4
+            $count++
+            $count--
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new TypeChecker(diagnostics).Analyze(program);
+
+        Assert.DoesNotContain(diagnostics.GetErrors(), e => e.Code is DiagnosticCodes.TypeMismatch or DiagnosticCodes.AmbiguousCompoundAssignment);
+    }
+
+    [Fact]
+    public void TypeChecker_RejectsAmbiguousPlusEqualsWhenTypesAreUnknown()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            let a
+            let b
+            $a += $b
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new TypeChecker(diagnostics).Analyze(program);
+
+        Assert.Contains(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.AmbiguousCompoundAssignment);
     }
 
     [Fact]

@@ -635,4 +635,27 @@ public class RoundTripTests
         Assert.Equal(0, run.ExitCode);
         Assert.Equal("0\n", run.StdOut);
     }
+
+    [Fact]
+    public void RoundTrip_ArithmeticCompoundAndPostfixUpdatesWork()
+    {
+        var result = CompilerPipeline.Compile(
+            """
+            let n = 10
+            $n += 2
+            $n -= 3
+            $n *= 4
+            $n /= 3
+            $n %= 4
+            $n++
+            $n--
+            echo "$n"
+            """);
+
+        Assert.False(result.Diagnostics.HasErrors, string.Join(Environment.NewLine, result.Diagnostics.GetErrors()));
+        var bash = Assert.IsType<string>(result.Bash);
+        var run = CompilerPipeline.RunBash(bash);
+        Assert.Equal(0, run.ExitCode);
+        Assert.Equal("0\n", run.StdOut);
+    }
 }
