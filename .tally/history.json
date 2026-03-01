@@ -212,5 +212,19 @@
       "completed_at": "2026-03-01T01:13:20.007306732Z"
     },
     "version": null
+  },
+  {
+    "change": {
+      "description": "Emit unused @allow warning (W509) when no targeted warning is matched",
+      "priority": "Medium",
+      "tags": [
+        "feature",
+        "compiler",
+        "diagnostics"
+      ],
+      "commit": null,
+      "completed_at": "2026-03-01T01:13:26.005445682Z"
+    },
+    "version": null
   }
 ]

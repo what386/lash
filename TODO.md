@@ -5,9 +5,6 @@
 
 ## Tasks
 
-- [ ] Emit unused @allow warning (W509) when no targeted warning is matched #feature #compiler #diagnostics
-      @created 2026-03-01 01:11
-
 - [ ] Skip internal @allow compiler marker commands during Bash codegen #bug #compiler #codegen
       @created 2026-03-01 01:11
 
@@ -75,6 +72,10 @@
       @completed_version 0.9.0
 
 - [x] Add @allow directive for next-statement warning suppression (Wxxx only) (high) #feature #language #compiler
+      @created 2026-03-01 01:11
+      @completed 2026-03-01 01:13
+
+- [x] Emit unused @allow warning (W509) when no targeted warning is matched #feature #compiler #diagnostics
       @created 2026-03-01 01:11
       @completed 2026-03-01 01:13
 
