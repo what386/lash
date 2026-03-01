@@ -1259,7 +1259,7 @@ public sealed class WarningAnalyzer {
       if (symbol.Kind == SymbolKind.Variable && symbol.SuggestConst &&
           symbol.IsUsed && !symbol.IsReassigned) {
         AddWarning(
-            $"Variable '{symbol.Name}' is declared with 'let' but never reassigned; use 'const'.",
+            $"Variable '{symbol.Name}' is declared mutably but never reassigned.",
             symbol.Line, symbol.Column, DiagnosticCodes.LetNeverReassigned);
       }
 
