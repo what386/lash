@@ -19,6 +19,7 @@ public class GrammarTests
 
             let items = ["a", "b"]
             const first = $items[0]
+            readonly stable = 42
             let count = 2 + 3
 
             switch $first
@@ -30,6 +31,7 @@ public class GrammarTests
         Assert.Contains(program.Statements, s => s is FunctionDeclaration { Name: "greet" });
         Assert.Contains(program.Statements, s => s is VariableDeclaration { Name: "items", Value: ArrayLiteral });
         Assert.Contains(program.Statements, s => s is VariableDeclaration { Name: "first", Kind: VariableDeclaration.VarKind.Const });
+        Assert.Contains(program.Statements, s => s is VariableDeclaration { Name: "stable", Kind: VariableDeclaration.VarKind.Readonly });
         Assert.Contains(program.Statements, s => s is VariableDeclaration { Name: "count", Value: BinaryExpression { Operator: "+" } });
         Assert.Contains(program.Statements, s => s is SwitchStatement { Cases.Count: 1 });
     }
@@ -180,6 +182,22 @@ public class GrammarTests
     }
 
     [Fact]
+    public void ModuleLoader_ParsesWildcardSwitchCase()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            switch $x
+                case _:
+                    echo "default"
+            end
+            """);
+
+        var switchStatement = Assert.IsType<SwitchStatement>(Assert.Single(program.Statements));
+        var clause = Assert.Single(switchStatement.Cases);
+        Assert.True(clause.IsWildcard);
+    }
+
+    [Fact]
     public void ModuleLoader_ParsesLoopsAndIndexAssignment()
     {
         var program = TestCompiler.ParseOrThrow(
@@ -221,6 +239,23 @@ public class GrammarTests
         Assert.Equal("./*.txt", loop.GlobPattern);
         Assert.Null(loop.Step);
         Assert.Single(loop.Body);
+    }
+
+    [Fact]
+    public void ModuleLoader_ParsesProcessSubstitutionInExpressions()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            fn diff_files(left, right)
+                diff($left, $right)
+            end
+
+            diff_files(<(sort "a.txt"), <(sort "b.txt"))
+            """);
+
+        var statement = Assert.IsType<ExpressionStatement>(program.Statements[1]);
+        var call = Assert.IsType<FunctionCallExpression>(statement.Expression);
+        Assert.All(call.Arguments, arg => Assert.IsType<ProcessSubstitutionExpression>(arg));
     }
 
     [Fact]
@@ -503,5 +538,17 @@ public class GrammarTests
 
         Assert.True(result.Success);
         Assert.NotNull(result.Program);
+    }
+
+    [Fact]
+    public void ModuleLoader_RejectsReadonlyDeclarationWithoutInitializer()
+    {
+        var result = TestCompiler.LoadProgram(
+            """
+            readonly value
+            """);
+
+        Assert.False(result.Success);
+        Assert.Contains(result.Diagnostics.GetErrors(), d => d.Code == DiagnosticCodes.ParseSyntaxError);
     }
 }

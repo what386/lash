@@ -52,7 +52,7 @@ public class BashGeneratorTests
     }
 
     [Fact]
-    public void BashGenerator_EmitsReadonlyForConstDeclarations()
+    public void BashGenerator_DoesNotEmitReadonlyForConstDeclarations()
     {
         var program = TestCompiler.ParseOrThrow(
             """
@@ -60,7 +60,8 @@ public class BashGeneratorTests
             """);
 
         var bash = new BashGenerator().Generate(program);
-        Assert.Contains("readonly name=\"lash\"", bash);
+        Assert.Contains("name=\"lash\"", bash);
+        Assert.DoesNotContain("readonly name=", bash);
     }
 
     [Fact]
@@ -76,7 +77,8 @@ public class BashGeneratorTests
 
         var bash = new BashGenerator().Generate(program);
         Assert.Contains("local x=1", bash);
-        Assert.Contains("local -r y=2", bash);
+        Assert.Contains("local y=2", bash);
+        Assert.DoesNotContain("local -r y=2", bash);
     }
 
     [Fact]
@@ -93,17 +95,18 @@ public class BashGeneratorTests
         var bash = new BashGenerator().Generate(program);
         Assert.DoesNotContain("local x=1", bash);
         Assert.Contains("x=1", bash);
-        Assert.DoesNotContain("local -r y=2", bash);
-        Assert.Contains("readonly y=2", bash);
+        Assert.DoesNotContain("local y=2", bash);
+        Assert.DoesNotContain("readonly y=2", bash);
+        Assert.Contains("y=2", bash);
     }
 
     [Fact]
-    public void BashGenerator_EmitsLocalReadonlyAssociativeConstInsideFunction()
+    public void BashGenerator_EmitsLocalReadonlyAssociativeDeclarationInsideFunction()
     {
         var program = TestCompiler.ParseOrThrow(
             """
             fn demo()
-                const settings = []
+                readonly settings = []
                 let value = $settings["name"]
             end
             """);
@@ -111,6 +114,24 @@ public class BashGeneratorTests
         var bash = new BashGenerator().Generate(program);
         Assert.Contains("local -rA settings=()", bash);
         Assert.DoesNotContain("readonly settings", bash);
+    }
+
+    [Fact]
+    public void BashGenerator_EmitsReadonlyForReadonlyDeclarations()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            readonly name = "lash"
+            fn demo()
+                readonly local_name = "inner"
+                global readonly shared = "outer"
+            end
+            """);
+
+        var bash = new BashGenerator().Generate(program);
+        Assert.Contains("readonly name=\"lash\"", bash);
+        Assert.Contains("local -r local_name=\"inner\"", bash);
+        Assert.Contains("readonly shared=\"outer\"", bash);
     }
 
     [Fact]
@@ -147,6 +168,21 @@ public class BashGeneratorTests
         Assert.Contains("echo A", bash);
         Assert.Contains("echo B", bash);
         Assert.Contains("esac", bash);
+    }
+
+    [Fact]
+    public void BashGenerator_EmitsWildcardSwitchCaseAsDefault()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            switch $value
+                case _:
+                    echo "default"
+            end
+            """);
+
+        var bash = new BashGenerator().Generate(program);
+        Assert.Contains("*)", bash);
     }
 
     [Fact]
@@ -390,6 +426,22 @@ public class BashGeneratorTests
         Assert.Contains("line2", bash);
         Assert.Contains("feed 3>&1", bash);
         Assert.Contains("feed 1>&-", bash);
+    }
+
+    [Fact]
+    public void BashGenerator_EmitsProcessSubstitutionWithoutQuoting()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            fn diff_files(left, right)
+                diff($left, $right)
+            end
+
+            diff_files(<(sort "a.txt"), >(cat))
+            """);
+
+        var bash = new BashGenerator().Generate(program);
+        Assert.Contains("diff_files <(sort \"a.txt\") >(cat)", bash);
     }
 
     [Fact]

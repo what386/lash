@@ -31,7 +31,22 @@ public class SemanticPipelineTests
             """);
 
         Assert.True(result.Diagnostics.HasErrors);
-        Assert.Contains(result.Diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.InvalidAssignmentTarget && e.Message.Contains("Cannot assign to const variable 'x'", StringComparison.Ordinal));
+        Assert.Contains(result.Diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.InvalidAssignmentTarget && e.Message.Contains("Cannot assign to immutable variable 'x'", StringComparison.Ordinal));
+        Assert.Null(result.Bash);
+    }
+
+    [Fact]
+    public void SemanticPipeline_RejectsReadonlyInsideLoop()
+    {
+        var result = CompilerPipeline.Compile(
+            """
+            for item in [1, 2]
+                readonly x = 1
+            end
+            """);
+
+        Assert.True(result.Diagnostics.HasErrors);
+        Assert.Contains(result.Diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.InvalidReadonlyContext);
         Assert.Null(result.Bash);
     }
 

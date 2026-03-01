@@ -20,7 +20,7 @@ public class NameResolverTests
         var diagnostics = new DiagnosticBag();
         new NameResolver(diagnostics).Analyze(program);
 
-        Assert.Contains(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.InvalidAssignmentTarget && e.Message.Contains("Cannot assign to const variable 'x'", StringComparison.Ordinal));
+        Assert.Contains(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.InvalidAssignmentTarget && e.Message.Contains("Cannot assign to immutable variable 'x'", StringComparison.Ordinal));
         Assert.DoesNotContain(diagnostics.GetErrors(), e => e.Message.Contains("Type error:", StringComparison.Ordinal));
     }
 
@@ -38,7 +38,7 @@ public class NameResolverTests
         var diagnostics = new DiagnosticBag();
         new NameResolver(diagnostics).Analyze(program);
 
-        Assert.Contains(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.InvalidAssignmentTarget && e.Message.Contains("Cannot assign to const variable 'x'", StringComparison.Ordinal));
+        Assert.Contains(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.InvalidAssignmentTarget && e.Message.Contains("Cannot assign to immutable variable 'x'", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -56,6 +56,37 @@ public class NameResolverTests
         new NameResolver(diagnostics).Analyze(program);
 
         Assert.DoesNotContain(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.InvalidAssignmentTarget);
+    }
+
+    [Fact]
+    public void NameResolver_RejectsAssignmentToReadonly()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            readonly x = 1
+            $x = 2
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new NameResolver(diagnostics).Analyze(program);
+
+        Assert.Contains(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.InvalidAssignmentTarget && e.Message.Contains("Cannot assign to immutable variable 'x'", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void NameResolver_RejectsReadonlyDeclarationInsideLoop()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            for item in [1, 2]
+                readonly x = 1
+            end
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new NameResolver(diagnostics).Analyze(program);
+
+        Assert.Contains(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.InvalidReadonlyContext && e.Message.Contains("Readonly declaration 'x' is not allowed inside repeated contexts.", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -245,7 +276,7 @@ public class NameResolverTests
         var diagnostics = new DiagnosticBag();
         new NameResolver(diagnostics).Analyze(program);
 
-        Assert.Contains(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.InvalidAssignmentTarget && e.Message.Contains("Cannot assign to const variable 'status'", StringComparison.Ordinal));
+        Assert.Contains(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.InvalidAssignmentTarget && e.Message.Contains("Cannot assign to immutable variable 'status'", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -260,7 +291,7 @@ public class NameResolverTests
         var diagnostics = new DiagnosticBag();
         new NameResolver(diagnostics).Analyze(program);
 
-        Assert.Contains(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.InvalidAssignmentTarget && e.Message.Contains("Cannot assign to const variable 'status'", StringComparison.Ordinal));
+        Assert.Contains(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.InvalidAssignmentTarget && e.Message.Contains("Cannot assign to immutable variable 'status'", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -423,5 +454,56 @@ public class NameResolverTests
         new NameResolver(diagnostics).Analyze(program);
 
         Assert.DoesNotContain(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.InvalidCommandUsage);
+    }
+
+    [Fact]
+    public void NameResolver_RejectsLocalOutsideFunction()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            local value=1
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new NameResolver(diagnostics).Analyze(program);
+
+        Assert.Contains(
+            diagnostics.GetErrors(),
+            e => e.Code == DiagnosticCodes.InvalidCommandUsage
+                 && e.Message.Contains("only valid inside functions", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void NameResolver_RejectsInvalidUnsetFlag()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            unset -z bad
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new NameResolver(diagnostics).Analyze(program);
+
+        Assert.Contains(
+            diagnostics.GetErrors(),
+            e => e.Code == DiagnosticCodes.InvalidCommandUsage
+                 && e.Message.Contains("Invalid unset flag", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void NameResolver_RejectsInvalidDeclareTarget()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            declare 1BAD=value
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new NameResolver(diagnostics).Analyze(program);
+
+        Assert.Contains(
+            diagnostics.GetErrors(),
+            e => e.Code == DiagnosticCodes.InvalidCommandUsage
+                 && e.Message.Contains("Invalid declare assignment target", StringComparison.Ordinal));
     }
 }

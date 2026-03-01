@@ -549,6 +549,48 @@ public class RoundTripTests
     }
 
     [Fact]
+    public void RoundTrip_SwitchWildcardCaseActsAsDefault()
+    {
+        var result = CompilerPipeline.Compile(
+            """
+            let os = "unknown"
+            switch $os
+                case "linux-*":
+                    echo linux
+                case _:
+                    echo fallback
+            end
+            """);
+
+        Assert.False(result.Diagnostics.HasErrors, string.Join(Environment.NewLine, result.Diagnostics.GetErrors()));
+        var bash = Assert.IsType<string>(result.Bash);
+
+        var run = CompilerPipeline.RunBash(bash);
+        Assert.Equal(0, run.ExitCode);
+        Assert.Equal("fallback\n", run.StdOut);
+    }
+
+    [Fact]
+    public void RoundTrip_ProcessSubstitutionInExpressionContextWorks()
+    {
+        var result = CompilerPipeline.Compile(
+            """
+            fn show(path)
+                cat $path
+            end
+
+            show(<(printf "ok\n"))
+            """);
+
+        Assert.False(result.Diagnostics.HasErrors, string.Join(Environment.NewLine, result.Diagnostics.GetErrors()));
+        var bash = Assert.IsType<string>(result.Bash);
+
+        var run = CompilerPipeline.RunBash(bash);
+        Assert.Equal(0, run.ExitCode);
+        Assert.Equal("ok\n", run.StdOut);
+    }
+
+    [Fact]
     public void RoundTrip_BackgroundSubshellWaitByPidCapturesStatus()
     {
         var result = CompilerPipeline.Compile(

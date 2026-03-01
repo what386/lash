@@ -274,6 +274,27 @@ public class AdditionalAnalyzerTests
     }
 
     [Fact]
+    public void WarningAnalyzer_EmitsWarningsForNonFinalWildcardCase()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            switch $mode
+                case _:
+                    echo "default"
+                case "a":
+                    echo "a"
+            end
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new WarningAnalyzer(diagnostics).Analyze(program);
+
+        var warnings = diagnostics.GetWarnings().Where(w => w.Code == DiagnosticCodes.UnreachableStatement).ToList();
+        Assert.Contains(warnings, w => w.Message.Contains("Wildcard case '_'", StringComparison.Ordinal));
+        Assert.Contains(warnings, w => w.Message.Contains("earlier wildcard case always matches", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void WarningAnalyzer_EmitsUnusedSymbolWarnings()
     {
         var program = TestCompiler.ParseOrThrow(
