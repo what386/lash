@@ -49,6 +49,7 @@
 "end"      @keyword
 "let"      @keyword
 "const"    @keyword
+"readonly" @keyword
 "global"   @keyword
 
 "if"       @keyword.conditional
@@ -73,7 +74,6 @@
 "trap"     @keyword
 "untrap"   @keyword
 "enum"     @keyword
-"sh"       @keyword
 
 (break_statement)    @keyword
 (continue_statement) @keyword
@@ -107,6 +107,12 @@
 ; ============================================================
 (shell_capture_expression
   "$"                           @operator
+  "("                           @punctuation.bracket
+  payload: (capture_payload)    @string.special
+  ")"                           @punctuation.bracket)
+
+(process_substitution_expression
+  operator: _                   @operator
   "("                           @punctuation.bracket
   payload: (capture_payload)    @string.special
   ")"                           @punctuation.bracket)
@@ -159,6 +165,9 @@
 (variable_declaration
   name: (identifier) @variable)
 
+(readonly_declaration
+  name: (identifier) @variable)
+
 ; ============================================================
 ; Assignments
 ; ============================================================
@@ -209,6 +218,8 @@
 (enum_access
   enum:   (identifier) @type
   member: (identifier) @constant)
+
+(wildcard_pattern) @constant.builtin
 
 ; ============================================================
 ; Operators

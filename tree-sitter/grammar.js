@@ -33,6 +33,7 @@ module.exports = grammar({
     statement: $ => choice(
       $.preprocessor_directive,
       $.variable_declaration,
+      $.readonly_declaration,
       $.enum_declaration,
       $.assignment,
       $.function_declaration,
@@ -143,6 +144,14 @@ module.exports = grammar({
       optional(seq("=", field("value", $.expression))),
     ),
 
+    readonly_declaration: $ => seq(
+      optional("global"),
+      "readonly",
+      field("name", $.identifier),
+      "=",
+      field("value", $.expression),
+    ),
+
     assignment: $ => seq(
       optional("global"),
       field("target", choice($.var_ref, $.index_access)),
@@ -204,10 +213,12 @@ module.exports = grammar({
     // Body runs until the next 'case' or the switch's 'end' — no per-case end needed
     case_clause: $ => seq(
       "case",
-      field("pattern", $.expression),
+      field("pattern", choice($.wildcard_pattern, $.expression)),
       ":",
       field("body", repeat($.statement)),
     ),
+
+    wildcard_pattern: _ => "_",
 
     for_loop: $ => seq(
       "for",
@@ -405,6 +416,7 @@ module.exports = grammar({
 
     primary_expression: $ => choice(
       $.shell_capture_expression,
+      $.process_substitution_expression,
       $.var_ref,
       $.boolean,
       $.number,
@@ -419,6 +431,13 @@ module.exports = grammar({
 
     shell_capture_expression: $ => prec.right(11, seq(
       "$",
+      "(",
+      field("payload", $.capture_payload),
+      ")",
+    )),
+
+    process_substitution_expression: $ => prec.right(11, seq(
+      field("operator", choice("<", ">")),
       "(",
       field("payload", $.capture_payload),
       ")",

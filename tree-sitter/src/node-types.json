@@ -1125,6 +1125,32 @@
     }
   },
   {
+    "type": "readonly_declaration",
+    "named": true,
+    "fields": {
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          }
+        ]
+      },
+      "value": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "expression",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "redirect_expression",
     "named": true,
     "fields": {
@@ -1368,6 +1394,10 @@
         },
         {
           "type": "preprocessor_directive",
+          "named": true
+        },
+        {
+          "type": "readonly_declaration",
           "named": true
         },
         {
@@ -1996,6 +2026,10 @@
   {
     "type": "preprocessor_raw_directive",
     "named": true
+  },
+  {
+    "type": "readonly",
+    "named": false
   },
   {
     "type": "return",
