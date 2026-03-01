@@ -5,6 +5,9 @@
 
 ## Tasks
 
+- [ ] Add @allow directive for next-statement warning suppression (Wxxx only) (high) #feature #language #compiler
+      @created 2026-03-01 01:11
+
 
 ## Completed
 
