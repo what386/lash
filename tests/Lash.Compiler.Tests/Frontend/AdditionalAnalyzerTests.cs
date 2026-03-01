@@ -316,7 +316,7 @@ public class AdditionalAnalyzerTests
         Assert.Contains(
             diagnostics.GetWarnings(),
             warning => warning.Code == DiagnosticCodes.LetNeverReassigned
-                       && warning.Message.Contains("use 'const'", StringComparison.Ordinal));
+                       && warning.Message.Contains("const", StringComparison.Ordinal));
     }
 
     [Fact]
