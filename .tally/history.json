@@ -226,5 +226,19 @@
       "completed_at": "2026-03-01T01:13:26.005445682Z"
     },
     "version": null
+  },
+  {
+    "change": {
+      "description": "Skip internal @allow compiler marker commands during Bash codegen",
+      "priority": "Medium",
+      "tags": [
+        "bug",
+        "compiler",
+        "codegen"
+      ],
+      "commit": null,
+      "completed_at": "2026-03-01T01:13:27.887433708Z"
+    },
+    "version": null
   }
 ]

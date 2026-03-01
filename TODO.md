@@ -5,9 +5,6 @@
 
 ## Tasks
 
-- [ ] Skip internal @allow compiler marker commands during Bash codegen #bug #compiler #codegen
-      @created 2026-03-01 01:11
-
 
 ## Completed
 
@@ -76,6 +73,10 @@
       @completed 2026-03-01 01:13
 
 - [x] Emit unused @allow warning (W509) when no targeted warning is matched #feature #compiler #diagnostics
+      @created 2026-03-01 01:11
+      @completed 2026-03-01 01:13
+
+- [x] Skip internal @allow compiler marker commands during Bash codegen #bug #compiler #codegen
       @created 2026-03-01 01:11
       @completed 2026-03-01 01:13
 
