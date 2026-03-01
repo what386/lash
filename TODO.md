@@ -1,9 +1,12 @@
 # TODO — lash-lang v0.8.0
 
 @created: 2026-02-24
-@modified: 2026-02-28
+@modified: 2026-03-01
 
 ## Tasks
+
+- [ ] Add shell-command registry for set/export/shopt/alias/source with AST-backed validation diagnostics (high) #feature #language #compiler
+      @created 2026-03-01 00:31
 
 
 ## Completed
