@@ -36,6 +36,7 @@ module.exports = grammar({
       $.readonly_declaration,
       $.enum_declaration,
       $.assignment,
+      $.update_statement,
       $.function_declaration,
       $.if_statement,
       $.switch_statement,
@@ -155,8 +156,14 @@ module.exports = grammar({
     assignment: $ => seq(
       optional("global"),
       field("target", choice($.var_ref, $.index_access)),
-      field("operator", choice("=", "+=")),
+      field("operator", choice("=", "+=", "-=", "*=", "/=", "%=")),
       field("value", $.expression),
+    ),
+
+    update_statement: $ => seq(
+      optional("global"),
+      field("target", $.var_ref),
+      field("operator", choice("++", "--")),
     ),
 
     function_declaration: $ => seq(

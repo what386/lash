@@ -249,6 +249,7 @@
 (logical_expression       "||"       @operator)
 (unary_expression         operator: _ @operator)
 (assignment               operator: _ @operator)
+(update_statement         operator: _ @operator)
 (variable_declaration     "="        @operator)
 
 ; ============================================================
