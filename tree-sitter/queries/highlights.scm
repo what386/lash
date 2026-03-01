@@ -54,11 +54,13 @@
 "switch" @keyword.conditional
 "case" @keyword.conditional
 "for" @keyword.repeat
+"select" @keyword.repeat
 "in" @keyword.repeat
 "step" @keyword.repeat
 "while" @keyword.repeat
 "until" @keyword.repeat
 "subshell" @keyword.repeat
+"coproc" @keyword.repeat
 "wait" @keyword.repeat
 "into" @keyword
 "jobs" @keyword
@@ -125,11 +127,21 @@
 (for_loop
   variable: (identifier) @variable)
 
+(select_loop
+  variable: (identifier) @variable)
+
 (for_loop
+  glob: (glob_pattern) @string.special)
+
+(select_loop
   glob: (glob_pattern) @string.special)
 
 (into_binding
   name: (identifier) @variable)
+
+(into_binding
+  target: (var_ref
+    name: (identifier) @variable))
 
 ; Enum declarations
 (enum_declaration

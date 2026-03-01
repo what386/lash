@@ -273,6 +273,32 @@
     }
   },
   {
+    "type": "coproc_statement",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "statement",
+            "named": true
+          }
+        ]
+      },
+      "into": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "into_binding",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "elif_clause",
     "named": true,
     "fields": {
@@ -687,10 +713,20 @@
       },
       "name": {
         "multiple": false,
-        "required": true,
+        "required": false,
         "types": [
           {
             "type": "identifier",
+            "named": true
+          }
+        ]
+      },
+      "target": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "var_ref",
             "named": true
           }
         ]
@@ -1036,10 +1072,6 @@
           "named": true
         },
         {
-          "type": "identifier",
-          "named": true
-        },
-        {
           "type": "interpolated_string",
           "named": true
         },
@@ -1127,6 +1159,10 @@
             "named": false
           },
           {
+            "type": "<<",
+            "named": false
+          },
+          {
             "type": "<<<",
             "named": false
           },
@@ -1169,6 +1205,52 @@
     }
   },
   {
+    "type": "select_loop",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "block",
+            "named": true
+          }
+        ]
+      },
+      "glob": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "glob_pattern",
+            "named": true
+          }
+        ]
+      },
+      "options": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "expression",
+            "named": true
+          }
+        ]
+      },
+      "variable": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "sh_statement",
     "named": true,
     "fields": {
@@ -1188,12 +1270,12 @@
     "type": "shell_capture_expression",
     "named": true,
     "fields": {
-      "command": {
+      "payload": {
         "multiple": false,
         "required": true,
         "types": [
           {
-            "type": "expression",
+            "type": "capture_payload",
             "named": true
           }
         ]
@@ -1261,6 +1343,10 @@
           "named": true
         },
         {
+          "type": "coproc_statement",
+          "named": true
+        },
+        {
           "type": "enum_declaration",
           "named": true
         },
@@ -1289,6 +1375,10 @@
           "named": true
         },
         {
+          "type": "select_loop",
+          "named": true
+        },
+        {
           "type": "sh_statement",
           "named": true
         },
@@ -1302,6 +1392,22 @@
         },
         {
           "type": "switch_statement",
+          "named": true
+        },
+        {
+          "type": "test_statement",
+          "named": true
+        },
+        {
+          "type": "trap_statement",
+          "named": true
+        },
+        {
+          "type": "until_loop",
+          "named": true
+        },
+        {
+          "type": "untrap_statement",
           "named": true
         },
         {
@@ -1372,6 +1478,58 @@
     }
   },
   {
+    "type": "test_statement",
+    "named": true,
+    "fields": {
+      "condition": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "expression",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "trap_statement",
+    "named": true,
+    "fields": {
+      "command": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "expression",
+            "named": true
+          }
+        ]
+      },
+      "handler": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "function_call",
+            "named": true
+          }
+        ]
+      },
+      "signal": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "unary_expression",
     "named": true,
     "fields": {
@@ -1404,6 +1562,48 @@
           {
             "type": "-",
             "named": false
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "until_loop",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "block",
+            "named": true
+          }
+        ]
+      },
+      "condition": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "expression",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "untrap_statement",
+    "named": true,
+    "fields": {
+      "signal": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
           }
         ]
       }
@@ -1600,6 +1800,10 @@
     "named": false
   },
   {
+    "type": "<<",
+    "named": false
+  },
+  {
     "type": "<<<",
     "named": false
   },
@@ -1677,6 +1881,10 @@
     "named": true
   },
   {
+    "type": "capture_payload",
+    "named": true
+  },
+  {
     "type": "case",
     "named": false
   },
@@ -1687,6 +1895,10 @@
   {
     "type": "continue_statement",
     "named": true
+  },
+  {
+    "type": "coproc",
+    "named": false
   },
   {
     "type": "elif",
@@ -1790,6 +2002,10 @@
     "named": false
   },
   {
+    "type": "select",
+    "named": false
+  },
+  {
     "type": "sh",
     "named": false
   },
@@ -1818,7 +2034,23 @@
     "named": false
   },
   {
+    "type": "test",
+    "named": false
+  },
+  {
+    "type": "trap",
+    "named": false
+  },
+  {
     "type": "true",
+    "named": false
+  },
+  {
+    "type": "until",
+    "named": false
+  },
+  {
+    "type": "untrap",
     "named": false
   },
   {

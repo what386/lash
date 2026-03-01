@@ -40,9 +40,11 @@ module.exports = grammar({
       $.if_statement,
       $.switch_statement,
       $.for_loop,
+      $.select_loop,
       $.while_loop,
       $.until_loop,
       $.subshell_statement,
+      $.coproc_statement,
       $.wait_statement,
       $.sh_statement,
       $.test_statement,
@@ -228,6 +230,17 @@ module.exports = grammar({
       field("body", $.block),
     ),
 
+    select_loop: $ => seq(
+      "select",
+      field("variable", $.identifier),
+      "in",
+      choice(
+        field("options", $.expression),
+        field("glob", $.glob_pattern),
+      ),
+      field("body", $.block),
+    ),
+
     until_loop: $ => seq(
       "until",
       field("condition", $.expression),
@@ -242,16 +255,29 @@ module.exports = grammar({
       optional("&"),
     ),
 
+    coproc_statement: $ => seq(
+      "coproc",
+      optional(field("into", $.into_binding)),
+      field("body", repeat($.statement)),
+      "end",
+    ),
+
     wait_statement: $ => prec.right(seq(
       "wait",
       optional(field("target", choice("jobs", $.expression))),
       optional(field("into", $.into_binding)),
     )),
 
-    into_binding: $ => seq(
-      "into",
-      optional(field("mode", choice("let", "const"))),
-      field("name", $.identifier),
+    into_binding: $ => choice(
+      seq(
+        "into",
+        field("target", $.var_ref),
+      ),
+      seq(
+        "into",
+        field("mode", choice("let", "const")),
+        field("name", $.identifier),
+      ),
     ),
 
     return_statement: $ => prec.right(seq(

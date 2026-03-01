@@ -80,11 +80,23 @@
         },
         {
           "type": "SYMBOL",
+          "name": "select_loop"
+        },
+        {
+          "type": "SYMBOL",
           "name": "while_loop"
         },
         {
           "type": "SYMBOL",
+          "name": "until_loop"
+        },
+        {
+          "type": "SYMBOL",
           "name": "subshell_statement"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "coproc_statement"
         },
         {
           "type": "SYMBOL",
@@ -93,6 +105,18 @@
         {
           "type": "SYMBOL",
           "name": "sh_statement"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "test_statement"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "trap_statement"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "untrap_statement"
         },
         {
           "type": "SYMBOL",
@@ -133,6 +157,87 @@
           "content": {
             "type": "SYMBOL",
             "name": "expression"
+          }
+        }
+      ]
+    },
+    "test_statement": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "test"
+        },
+        {
+          "type": "FIELD",
+          "name": "condition",
+          "content": {
+            "type": "SYMBOL",
+            "name": "expression"
+          }
+        }
+      ]
+    },
+    "trap_statement": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "trap"
+        },
+        {
+          "type": "FIELD",
+          "name": "signal",
+          "content": {
+            "type": "SYMBOL",
+            "name": "identifier"
+          }
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "SEQ",
+              "members": [
+                {
+                  "type": "STRING",
+                  "value": "into"
+                },
+                {
+                  "type": "FIELD",
+                  "name": "handler",
+                  "content": {
+                    "type": "SYMBOL",
+                    "name": "function_call"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "FIELD",
+              "name": "command",
+              "content": {
+                "type": "SYMBOL",
+                "name": "expression"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "untrap_statement": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "untrap"
+        },
+        {
+          "type": "FIELD",
+          "name": "signal",
+          "content": {
+            "type": "SYMBOL",
+            "name": "identifier"
           }
         }
       ]
@@ -863,6 +968,81 @@
         }
       ]
     },
+    "select_loop": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "select"
+        },
+        {
+          "type": "FIELD",
+          "name": "variable",
+          "content": {
+            "type": "SYMBOL",
+            "name": "identifier"
+          }
+        },
+        {
+          "type": "STRING",
+          "value": "in"
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "FIELD",
+              "name": "options",
+              "content": {
+                "type": "SYMBOL",
+                "name": "expression"
+              }
+            },
+            {
+              "type": "FIELD",
+              "name": "glob",
+              "content": {
+                "type": "SYMBOL",
+                "name": "glob_pattern"
+              }
+            }
+          ]
+        },
+        {
+          "type": "FIELD",
+          "name": "body",
+          "content": {
+            "type": "SYMBOL",
+            "name": "block"
+          }
+        }
+      ]
+    },
+    "until_loop": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "until"
+        },
+        {
+          "type": "FIELD",
+          "name": "condition",
+          "content": {
+            "type": "SYMBOL",
+            "name": "expression"
+          }
+        },
+        {
+          "type": "FIELD",
+          "name": "body",
+          "content": {
+            "type": "SYMBOL",
+            "name": "block"
+          }
+        }
+      ]
+    },
     "subshell_statement": {
       "type": "SEQ",
       "members": [
@@ -912,6 +1092,46 @@
               "type": "BLANK"
             }
           ]
+        }
+      ]
+    },
+    "coproc_statement": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "coproc"
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "FIELD",
+              "name": "into",
+              "content": {
+                "type": "SYMBOL",
+                "name": "into_binding"
+              }
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        },
+        {
+          "type": "FIELD",
+          "name": "body",
+          "content": {
+            "type": "REPEAT",
+            "content": {
+              "type": "SYMBOL",
+              "name": "statement"
+            }
+          }
+        },
+        {
+          "type": "STRING",
+          "value": "end"
         }
       ]
     },
@@ -970,15 +1190,32 @@
       }
     },
     "into_binding": {
-      "type": "SEQ",
+      "type": "CHOICE",
       "members": [
         {
-          "type": "STRING",
-          "value": "into"
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "STRING",
+              "value": "into"
+            },
+            {
+              "type": "FIELD",
+              "name": "target",
+              "content": {
+                "type": "SYMBOL",
+                "name": "var_ref"
+              }
+            }
+          ]
         },
         {
-          "type": "CHOICE",
+          "type": "SEQ",
           "members": [
+            {
+              "type": "STRING",
+              "value": "into"
+            },
             {
               "type": "FIELD",
               "name": "mode",
@@ -997,17 +1234,14 @@
               }
             },
             {
-              "type": "BLANK"
+              "type": "FIELD",
+              "name": "name",
+              "content": {
+                "type": "SYMBOL",
+                "name": "identifier"
+              }
             }
           ]
-        },
-        {
-          "type": "FIELD",
-          "name": "name",
-          "content": {
-            "type": "SYMBOL",
-            "name": "identifier"
-          }
         }
       ]
     },
@@ -1303,6 +1537,10 @@
                 {
                   "type": "STRING",
                   "value": "<<<"
+                },
+                {
+                  "type": "STRING",
+                  "value": "<<"
                 },
                 {
                   "type": "STRING",
@@ -1687,10 +1925,6 @@
           "name": "function_call"
         },
         {
-          "type": "SYMBOL",
-          "name": "identifier"
-        },
-        {
           "type": "SEQ",
           "members": [
             {
@@ -1721,17 +1955,32 @@
           },
           {
             "type": "STRING",
-            "value": "sh"
+            "value": "("
           },
           {
             "type": "FIELD",
-            "name": "command",
+            "name": "payload",
             "content": {
               "type": "SYMBOL",
-              "name": "expression"
+              "name": "capture_payload"
             }
+          },
+          {
+            "type": "STRING",
+            "value": ")"
           }
         ]
+      }
+    },
+    "capture_payload": {
+      "type": "TOKEN",
+      "content": {
+        "type": "PREC",
+        "value": 1,
+        "content": {
+          "type": "PATTERN",
+          "value": "[^)\\r\\n]+"
+        }
       }
     },
     "var_ref": {
