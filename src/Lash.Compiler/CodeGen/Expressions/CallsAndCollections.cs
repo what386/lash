@@ -9,7 +9,9 @@ internal sealed partial class ExpressionGenerator
 {
     private string GenerateFunctionCall(FunctionCallExpression call)
     {
-        var args = string.Join(" ", call.Arguments.Select(GenerateFunctionCallArg));
+        var args = string.Join(
+            " ",
+            call.Arguments.Select((arg, index) => GenerateFunctionCallArg(call.FunctionName, arg, index)));
         return args.Length > 0 ? $"$({call.FunctionName} {args})" : $"$({call.FunctionName})";
     }
 
@@ -29,12 +31,18 @@ internal sealed partial class ExpressionGenerator
         return $"$(if [[ {payload} ]]; then echo 1; else echo 0; fi)";
     }
 
-    private string GenerateFunctionCallArg(Expression expression)
+    private string GenerateFunctionCallArg(string functionName, Expression expression, int argumentIndex)
     {
         if (expression is IdentifierExpression identifier &&
             string.Equals(identifier.Name, "argv", StringComparison.Ordinal))
         {
-            return $"\"${{{BashGenerator.ArgvName}[@]}}\"";
+            return "\"$@\"";
+        }
+
+        if (expression is IdentifierExpression arrayIdentifier &&
+            owner.IsArrayParameter(functionName, argumentIndex))
+        {
+            return $"\"${{{arrayIdentifier.Name}[@]}}\"";
         }
 
         var rendered = GenerateExpression(expression);
@@ -67,7 +75,7 @@ internal sealed partial class ExpressionGenerator
     private string GenerateFunctionPipeInvocation(string pipedInput, FunctionCallExpression call)
     {
         var args = new List<string> { QuoteRenderedArg(pipedInput) };
-        args.AddRange(call.Arguments.Select(GenerateFunctionCallArg));
+        args.AddRange(call.Arguments.Select((arg, index) => GenerateFunctionCallArg(call.FunctionName, arg, index)));
         return $"$({call.FunctionName} {string.Join(" ", args)})";
     }
 
@@ -84,8 +92,8 @@ internal sealed partial class ExpressionGenerator
         {
             if (string.Equals(ident.Name, "argv", StringComparison.Ordinal))
             {
-                var argvKey = GenerateNumericArrayIndex(index.Index);
-                return $"${{{BashGenerator.ArgvName}[{argvKey}]}}";
+                var argvOffset = GeneratePositionalOffset(index.Index);
+                return $"${{@:{argvOffset}:1}}";
             }
 
             var key = GenerateCollectionIndex(index.Index, owner.IsCurrentScopeAssociative(ident.Name));
@@ -101,5 +109,16 @@ internal sealed partial class ExpressionGenerator
             return Convert.ToString(literal.Value, CultureInfo.InvariantCulture) ?? "0";
 
         return $"$(( {GenerateArithmeticExpression(index)} ))";
+    }
+
+    private string GeneratePositionalOffset(Expression index)
+    {
+        if (index is LiteralExpression { LiteralType: PrimitiveType { PrimitiveKind: PrimitiveType.Kind.Int }, Value: not null } literal
+            && literal.Value is int intValue)
+        {
+            return (intValue + 1).ToString(CultureInfo.InvariantCulture);
+        }
+
+        return $"$(( {GenerateArithmeticExpression(index)} + 1 ))";
     }
 }

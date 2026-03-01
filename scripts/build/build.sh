@@ -2,7 +2,6 @@
 declare -a __lash_argv=("$@")
 declare -a __lash_jobs=()
 set -euo pipefail
-cd ../..
 PROJECT_NAME="Lash"
 OUTPUT_DIR="./target/release"
 PROJECTS=("lash:./src/Lash.Cli/Lash.Cli.csproj" "lashc:./src/Lash.Compiler/Lash.Compiler.csproj" "lashfmt:./src/Lash.Formatter/Lash.Formatter.csproj" "lashlsp:./src/Lash.Lsp/Lash.Lsp.csproj")
@@ -59,7 +58,7 @@ is_known_tool() {
 }
 list_to_csv() {
     local -a __lash_argv=("$@")
-    local values="$1"
+    local -a values=("${@:1}")
 
     if [[ ${#values[@]} == 0 ]]; then
         echo ""
@@ -359,7 +358,7 @@ if (( ENABLE_TRIMMING != 0 )); then
     if [[ ${#NO_TRIM_TOOLS[@]} == 0 ]]; then
         echo -e "  Trimming:     ${GREEN}Enabled${NC}"
     else
-        disabled=$(list_to_csv "${NO_TRIM_TOOLS}")
+        disabled=$(list_to_csv "${NO_TRIM_TOOLS[@]}")
         echo -e "  Trimming:     ${YELLOW}Enabled (except: ${disabled})${NC}"
     fi
 else

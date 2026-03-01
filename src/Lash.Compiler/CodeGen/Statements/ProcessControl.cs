@@ -12,7 +12,11 @@ internal sealed partial class StatementGenerator
 
         owner.Emit("__lash_shift_n=$(( " + amount + " ))");
         owner.EmitLine();
-        owner.Emit($"if (( __lash_shift_n > 0 )); then {BashGenerator.ArgvName}=(\"${{{BashGenerator.ArgvName}[@]:__lash_shift_n}}\"); fi");
+        owner.Emit("if (( __lash_shift_n > 0 )); then");
+        owner.EmitLine();
+        owner.Emit("if (( __lash_shift_n >= $# )); then set --; else shift \"${__lash_shift_n}\"; fi");
+        owner.EmitLine();
+        owner.Emit("fi");
     }
 
     private void GenerateSubshellStatement(SubshellStatement subshellStatement)
@@ -107,7 +111,7 @@ internal sealed partial class StatementGenerator
             case WaitTargetKind.Target:
                 if (waitStatement.Target != null)
                 {
-                    var target = GenerateSingleShellArg(waitStatement.Target);
+                    var target = GenerateSingleShellArg(string.Empty, waitStatement.Target, -1);
                     owner.Emit($"wait {target}");
                 }
                 else

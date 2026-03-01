@@ -95,7 +95,7 @@ internal sealed partial class ExpressionGenerator
         if (operand is IdentifierExpression ident)
         {
             if (string.Equals(ident.Name, "argv", StringComparison.Ordinal))
-                return $"${{#{BashGenerator.ArgvName}[@]}}";
+                return "$#";
 
             return $"${{#{ident.Name}[@]}}";
         }
@@ -105,8 +105,11 @@ internal sealed partial class ExpressionGenerator
         {
             if (string.Equals(arrayIdent.Name, "argv", StringComparison.Ordinal))
             {
-                var argvKey = GenerateNumericArrayIndex(index.Index);
-                return $"${{#{BashGenerator.ArgvName}[{argvKey}]}}";
+                var argvOffset = index.Index is LiteralExpression { LiteralType: PrimitiveType { PrimitiveKind: PrimitiveType.Kind.Int }, Value: not null } indexLiteral
+                    && indexLiteral.Value is int intValue
+                    ? (intValue + 1).ToString(CultureInfo.InvariantCulture)
+                    : $"$(( {GenerateArithmeticExpression(index.Index)} + 1 ))";
+                return $"$(printf '%s' \"${{@:{argvOffset}:1}}\" | wc -c)";
             }
 
             var key = GenerateCollectionIndex(index.Index, owner.IsCurrentScopeAssociative(arrayIdent.Name));

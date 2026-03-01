@@ -175,6 +175,27 @@ public class BashGeneratorTests
     }
 
     [Fact]
+    public void BashGenerator_PassesArrayArgumentsToArrayLikeFunctionParameters()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            let items = ["a", "b"]
+
+            fn join(values)
+                for value in $values
+                    echo $value
+                end
+            end
+
+            join($items)
+            """);
+
+        var bash = new BashGenerator().Generate(program);
+        Assert.Contains("local -a values=(\"${@:1}\")", bash);
+        Assert.Contains("join \"${items[@]}\"", bash);
+    }
+
+    [Fact]
     public void BashGenerator_DoesNotAutoInvokeMainWhenDeclared()
     {
         var program = TestCompiler.ParseOrThrow(
@@ -450,7 +471,7 @@ public class BashGeneratorTests
     }
 
     [Fact]
-    public void BashGenerator_EmitsArgvRuntimeFrameAndIndexAccess()
+    public void BashGenerator_UsesPositionalParametersForArgvAccess()
     {
         var program = TestCompiler.ParseOrThrow(
             """
@@ -459,13 +480,13 @@ public class BashGeneratorTests
             """);
 
         var bash = new BashGenerator().Generate(program);
-        Assert.Contains("declare -a __lash_argv=(\"$@\")", bash);
-        Assert.Contains("first=${__lash_argv[0]}", bash);
-        Assert.Contains("count=${#__lash_argv[@]}", bash);
+        Assert.DoesNotContain("__lash_argv", bash);
+        Assert.Contains("first=${@:1:1}", bash);
+        Assert.Contains("count=$#", bash);
     }
 
     [Fact]
-    public void BashGenerator_EmitsShiftAsArgvSliceMutation()
+    public void BashGenerator_EmitsShiftAsPositionalParameterMutation()
     {
         var program = TestCompiler.ParseOrThrow(
             """
@@ -476,7 +497,7 @@ public class BashGeneratorTests
 
         var bash = new BashGenerator().Generate(program);
         Assert.Contains("__lash_shift_n=$(( 2 ))", bash);
-        Assert.Contains("__lash_argv=(\"${__lash_argv[@]:__lash_shift_n}\")", bash);
+        Assert.Contains("if (( __lash_shift_n >= $# )); then set --; else shift \"${__lash_shift_n}\"; fi", bash);
     }
 
     [Fact]

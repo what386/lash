@@ -162,16 +162,24 @@ internal sealed partial class StatementGenerator
 
     private string GenerateFunctionCallStatement(FunctionCallExpression call)
     {
-        var args = string.Join(" ", call.Arguments.Select(GenerateSingleShellArg));
+        var args = string.Join(
+            " ",
+            call.Arguments.Select((arg, index) => GenerateSingleShellArg(call.FunctionName, arg, index)));
         return args.Length > 0 ? $"{call.FunctionName} {args}" : call.FunctionName;
     }
 
-    private string GenerateSingleShellArg(Expression expression)
+    private string GenerateSingleShellArg(string functionName, Expression expression, int argumentIndex)
     {
         if (expression is IdentifierExpression identifier &&
             string.Equals(identifier.Name, "argv", StringComparison.Ordinal))
         {
-            return $"\"${{{BashGenerator.ArgvName}[@]}}\"";
+            return "\"$@\"";
+        }
+
+        if (expression is IdentifierExpression arrayIdentifier &&
+            owner.IsArrayParameter(functionName, argumentIndex))
+        {
+            return $"\"${{{arrayIdentifier.Name}[@]}}\"";
         }
 
         var rendered = owner.GenerateExpression(expression);
@@ -209,17 +217,17 @@ internal sealed partial class StatementGenerator
             {
                 FunctionCallExpression call => $"{GenerateFunctionCallStatement(call)} {op}",
                 PipeExpression pipe => $"{GeneratePipeStatement(pipe)} {op}",
-                _ => $"echo {GenerateSingleShellArg(redirect.Left)} {op}"
+                _ => $"echo {GenerateSingleShellArg(string.Empty, redirect.Left, -1)} {op}"
             };
         }
 
-        var fileTarget = GenerateSingleShellArg(redirect.Right);
+        var fileTarget = GenerateSingleShellArg(string.Empty, redirect.Right, -1);
 
         return redirect.Left switch
         {
             FunctionCallExpression call => $"{GenerateFunctionCallStatement(call)} {op} {fileTarget}",
             PipeExpression pipe => $"{GeneratePipeStatement(pipe)} {op} {fileTarget}",
-            _ => $"echo {GenerateSingleShellArg(redirect.Left)} {op} {fileTarget}"
+            _ => $"echo {GenerateSingleShellArg(string.Empty, redirect.Left, -1)} {op} {fileTarget}"
         };
     }
 
@@ -236,7 +244,7 @@ internal sealed partial class StatementGenerator
         {
             FunctionCallExpression call => GenerateFunctionCallStatement(call),
             PipeExpression pipe => GeneratePipeStatement(pipe),
-            _ => $"echo {GenerateSingleShellArg(redirect.Left)}"
+            _ => $"echo {GenerateSingleShellArg(string.Empty, redirect.Left, -1)}"
         };
 
         var delimiter = ChooseHeredocDelimiter(payload);

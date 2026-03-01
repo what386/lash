@@ -85,7 +85,7 @@ internal sealed partial class StatementGenerator
 
             rangeExpr = forLoop.Range is IdentifierExpression ident
                 ? string.Equals(ident.Name, "argv", StringComparison.Ordinal)
-                    ? $"\"${{{BashGenerator.ArgvName}[@]}}\""
+                    ? "\"$@\""
                     : $"\"${{{ident.Name}[@]}}\""
                 : owner.GenerateExpression(forLoop.Range);
         }
@@ -121,7 +121,7 @@ internal sealed partial class StatementGenerator
                 RangeExpression range =>
                     $"$(seq {owner.GenerateExpression(range.Start)} {owner.GenerateExpression(range.End)})",
                 IdentifierExpression ident => string.Equals(ident.Name, "argv", StringComparison.Ordinal)
-                    ? $"\"${{{BashGenerator.ArgvName}[@]}}\""
+                    ? "\"$@\""
                     : $"\"${{{ident.Name}[@]}}\"",
                 _ => owner.GenerateExpression(selectLoop.Options)
             };
@@ -268,7 +268,7 @@ internal sealed partial class StatementGenerator
         if (condition is IdentifierExpression identifier)
         {
             if (string.Equals(identifier.Name, "argv", StringComparison.Ordinal))
-                return $"(( ${{#{BashGenerator.ArgvName}[@]}} != 0 ))";
+                return "(( $# != 0 ))";
 
             return $"(( {identifier.Name} != 0 ))";
         }

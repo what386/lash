@@ -13,12 +13,12 @@ public class BashGenerator
     private readonly List<string> warnings = new();
     private readonly HashSet<string> associativeVariables = new(StringComparer.Ordinal);
     private readonly Dictionary<string, HashSet<string>> functionLocalSymbols = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, bool[]> functionArrayParameters = new(StringComparer.Ordinal);
     private readonly ExpressionGenerator expressions;
     private readonly StatementGenerator statements;
     private int indentLevel = 0;
     private const string IndentString = "    ";
     private const string GlobalScope = "<global>";
-    private const string ArgvRuntimeName = "__lash_argv";
     private const string TrackedJobsRuntimeName = "__lash_jobs";
     private const string WaitPidRuntimeName = "__lash_wait_pid";
     private string currentContext = "<unknown>";
@@ -33,7 +33,6 @@ public class BashGenerator
 
     public IReadOnlyList<string> Warnings => warnings;
 
-    internal static string ArgvName => ArgvRuntimeName;
     internal static string TrackedJobsName => TrackedJobsRuntimeName;
     internal static string WaitPidName => WaitPidRuntimeName;
     internal string? CurrentFunctionName
@@ -62,15 +61,16 @@ public class BashGenerator
         warnings.Clear();
         associativeVariables.Clear();
         functionLocalSymbols.Clear();
+        functionArrayParameters.Clear();
         indentLevel = 0;
         needsTrackedJobs = false;
 
         new ComptimePipeline().Run(program);
         AnalyzeAssociativeVariables(program);
+        AnalyzeFunctionArrayParameters(program.Statements);
         needsTrackedJobs = RequiresTrackedJobs(program.Statements);
 
         EmitLine("#!/usr/bin/env bash");
-        EmitLine($"declare -a {ArgvRuntimeName}=(\"$@\")");
         if (needsTrackedJobs)
             EmitLine($"declare -a {TrackedJobsRuntimeName}=()");
 
@@ -438,6 +438,14 @@ public class BashGenerator
         return associativeVariables.Contains(ScopedVariableKey(scope, name));
     }
 
+    internal bool IsArrayParameter(string functionName, int parameterIndex)
+    {
+        return functionArrayParameters.TryGetValue(functionName, out var flags)
+               && parameterIndex >= 0
+               && parameterIndex < flags.Length
+               && flags[parameterIndex];
+    }
+
     private static bool RequiresTrackedJobs(IEnumerable<Statement> statements)
     {
         foreach (var statement in statements)
@@ -504,5 +512,238 @@ public class BashGenerator
         }
 
         return false;
+    }
+
+    private void AnalyzeFunctionArrayParameters(IEnumerable<Statement> statements)
+    {
+        foreach (var function in EnumerateFunctionDeclarations(statements))
+        {
+            if (function.Parameters.Count == 0)
+                continue;
+
+            var parameterNames = function.Parameters
+                .Select(static p => p.Name)
+                .ToHashSet(StringComparer.Ordinal);
+            if (parameterNames.Count == 0)
+                continue;
+
+            var arrayLikeNames = new HashSet<string>(StringComparer.Ordinal);
+            MarkArrayLikeParameterUsages(function.Body, parameterNames, arrayLikeNames);
+            if (arrayLikeNames.Count == 0)
+                continue;
+
+            var flags = new bool[function.Parameters.Count];
+            for (var i = 0; i < function.Parameters.Count; i++)
+                flags[i] = arrayLikeNames.Contains(function.Parameters[i].Name);
+
+            functionArrayParameters[function.Name] = flags;
+        }
+    }
+
+    private static IEnumerable<FunctionDeclaration> EnumerateFunctionDeclarations(IEnumerable<Statement> statements)
+    {
+        foreach (var statement in statements)
+        {
+            switch (statement)
+            {
+                case FunctionDeclaration function:
+                    yield return function;
+                    foreach (var nested in EnumerateFunctionDeclarations(function.Body))
+                        yield return nested;
+                    break;
+                case IfStatement ifStatement:
+                    foreach (var nested in EnumerateFunctionDeclarations(ifStatement.ThenBlock))
+                        yield return nested;
+                    foreach (var clause in ifStatement.ElifClauses)
+                    {
+                        foreach (var nested in EnumerateFunctionDeclarations(clause.Body))
+                            yield return nested;
+                    }
+                    foreach (var nested in EnumerateFunctionDeclarations(ifStatement.ElseBlock))
+                        yield return nested;
+                    break;
+                case SwitchStatement switchStatement:
+                    foreach (var clause in switchStatement.Cases)
+                    {
+                        foreach (var nested in EnumerateFunctionDeclarations(clause.Body))
+                            yield return nested;
+                    }
+                    break;
+                case ForLoop forLoop:
+                    foreach (var nested in EnumerateFunctionDeclarations(forLoop.Body))
+                        yield return nested;
+                    break;
+                case SelectLoop selectLoop:
+                    foreach (var nested in EnumerateFunctionDeclarations(selectLoop.Body))
+                        yield return nested;
+                    break;
+                case WhileLoop whileLoop:
+                    foreach (var nested in EnumerateFunctionDeclarations(whileLoop.Body))
+                        yield return nested;
+                    break;
+                case UntilLoop untilLoop:
+                    foreach (var nested in EnumerateFunctionDeclarations(untilLoop.Body))
+                        yield return nested;
+                    break;
+                case SubshellStatement subshellStatement:
+                    foreach (var nested in EnumerateFunctionDeclarations(subshellStatement.Body))
+                        yield return nested;
+                    break;
+                case CoprocStatement coprocStatement:
+                    foreach (var nested in EnumerateFunctionDeclarations(coprocStatement.Body))
+                        yield return nested;
+                    break;
+            }
+        }
+    }
+
+    private static void MarkArrayLikeParameterUsages(
+        IEnumerable<Statement> statements,
+        HashSet<string> parameterNames,
+        HashSet<string> arrayLikeNames)
+    {
+        foreach (var statement in statements)
+        {
+            switch (statement)
+            {
+                case FunctionDeclaration:
+                    break;
+                case VariableDeclaration variable:
+                    MarkArrayLikeParameterUsages(variable.Value, parameterNames, arrayLikeNames);
+                    break;
+                case Assignment assignment:
+                    MarkArrayLikeParameterUsages(assignment.Target, parameterNames, arrayLikeNames);
+                    MarkArrayLikeParameterUsages(assignment.Value, parameterNames, arrayLikeNames);
+                    break;
+                case IfStatement ifStatement:
+                    MarkArrayLikeParameterUsages(ifStatement.Condition, parameterNames, arrayLikeNames);
+                    MarkArrayLikeParameterUsages(ifStatement.ThenBlock, parameterNames, arrayLikeNames);
+                    foreach (var clause in ifStatement.ElifClauses)
+                    {
+                        MarkArrayLikeParameterUsages(clause.Condition, parameterNames, arrayLikeNames);
+                        MarkArrayLikeParameterUsages(clause.Body, parameterNames, arrayLikeNames);
+                    }
+                    MarkArrayLikeParameterUsages(ifStatement.ElseBlock, parameterNames, arrayLikeNames);
+                    break;
+                case SwitchStatement switchStatement:
+                    MarkArrayLikeParameterUsages(switchStatement.Value, parameterNames, arrayLikeNames);
+                    foreach (var clause in switchStatement.Cases)
+                    {
+                        MarkArrayLikeParameterUsages(clause.Pattern, parameterNames, arrayLikeNames);
+                        MarkArrayLikeParameterUsages(clause.Body, parameterNames, arrayLikeNames);
+                    }
+                    break;
+                case ForLoop forLoop:
+                    if (forLoop.Range is IdentifierExpression ident && parameterNames.Contains(ident.Name))
+                        arrayLikeNames.Add(ident.Name);
+                    if (forLoop.Range != null)
+                        MarkArrayLikeParameterUsages(forLoop.Range, parameterNames, arrayLikeNames);
+                    if (forLoop.Step != null)
+                        MarkArrayLikeParameterUsages(forLoop.Step, parameterNames, arrayLikeNames);
+                    MarkArrayLikeParameterUsages(forLoop.Body, parameterNames, arrayLikeNames);
+                    break;
+                case SelectLoop selectLoop:
+                    if (selectLoop.Options is IdentifierExpression optionsIdent && parameterNames.Contains(optionsIdent.Name))
+                        arrayLikeNames.Add(optionsIdent.Name);
+                    if (selectLoop.Options != null)
+                        MarkArrayLikeParameterUsages(selectLoop.Options, parameterNames, arrayLikeNames);
+                    MarkArrayLikeParameterUsages(selectLoop.Body, parameterNames, arrayLikeNames);
+                    break;
+                case WhileLoop whileLoop:
+                    MarkArrayLikeParameterUsages(whileLoop.Condition, parameterNames, arrayLikeNames);
+                    MarkArrayLikeParameterUsages(whileLoop.Body, parameterNames, arrayLikeNames);
+                    break;
+                case UntilLoop untilLoop:
+                    MarkArrayLikeParameterUsages(untilLoop.Condition, parameterNames, arrayLikeNames);
+                    MarkArrayLikeParameterUsages(untilLoop.Body, parameterNames, arrayLikeNames);
+                    break;
+                case SubshellStatement subshellStatement:
+                    MarkArrayLikeParameterUsages(subshellStatement.Body, parameterNames, arrayLikeNames);
+                    break;
+                case CoprocStatement coprocStatement:
+                    MarkArrayLikeParameterUsages(coprocStatement.Body, parameterNames, arrayLikeNames);
+                    break;
+                case WaitStatement waitStatement when waitStatement.Target != null:
+                    MarkArrayLikeParameterUsages(waitStatement.Target, parameterNames, arrayLikeNames);
+                    break;
+                case ReturnStatement returnStatement when returnStatement.Value != null:
+                    MarkArrayLikeParameterUsages(returnStatement.Value, parameterNames, arrayLikeNames);
+                    break;
+                case ShiftStatement shiftStatement when shiftStatement.Amount != null:
+                    MarkArrayLikeParameterUsages(shiftStatement.Amount, parameterNames, arrayLikeNames);
+                    break;
+                case ShellStatement shellStatement:
+                    MarkArrayLikeParameterUsages(shellStatement.Command, parameterNames, arrayLikeNames);
+                    break;
+                case TestStatement testStatement:
+                    MarkArrayLikeParameterUsages(testStatement.Condition, parameterNames, arrayLikeNames);
+                    break;
+                case TrapStatement trapStatement:
+                    if (trapStatement.Handler is not null)
+                    {
+                        foreach (var arg in trapStatement.Handler.Arguments)
+                            MarkArrayLikeParameterUsages(arg, parameterNames, arrayLikeNames);
+                    }
+                    else if (trapStatement.Command is not null)
+                    {
+                        MarkArrayLikeParameterUsages(trapStatement.Command, parameterNames, arrayLikeNames);
+                    }
+                    break;
+                case ExpressionStatement expressionStatement:
+                    MarkArrayLikeParameterUsages(expressionStatement.Expression, parameterNames, arrayLikeNames);
+                    break;
+            }
+        }
+    }
+
+    private static void MarkArrayLikeParameterUsages(
+        Expression expression,
+        HashSet<string> parameterNames,
+        HashSet<string> arrayLikeNames)
+    {
+        switch (expression)
+        {
+            case UnaryExpression { Operator: "#" } unary when unary.Operand is IdentifierExpression ident && parameterNames.Contains(ident.Name):
+                arrayLikeNames.Add(ident.Name);
+                MarkArrayLikeParameterUsages(unary.Operand, parameterNames, arrayLikeNames);
+                break;
+            case IndexAccessExpression indexAccess when indexAccess.Array is IdentifierExpression arrayIdent && parameterNames.Contains(arrayIdent.Name):
+                arrayLikeNames.Add(arrayIdent.Name);
+                MarkArrayLikeParameterUsages(indexAccess.Index, parameterNames, arrayLikeNames);
+                break;
+            case BinaryExpression binary:
+                MarkArrayLikeParameterUsages(binary.Left, parameterNames, arrayLikeNames);
+                MarkArrayLikeParameterUsages(binary.Right, parameterNames, arrayLikeNames);
+                break;
+            case UnaryExpression unary:
+                MarkArrayLikeParameterUsages(unary.Operand, parameterNames, arrayLikeNames);
+                break;
+            case FunctionCallExpression call:
+                foreach (var argument in call.Arguments)
+                    MarkArrayLikeParameterUsages(argument, parameterNames, arrayLikeNames);
+                break;
+            case ShellCaptureExpression shellCapture:
+                MarkArrayLikeParameterUsages(shellCapture.Command, parameterNames, arrayLikeNames);
+                break;
+            case TestCaptureExpression testCapture:
+                MarkArrayLikeParameterUsages(testCapture.Condition, parameterNames, arrayLikeNames);
+                break;
+            case PipeExpression pipe:
+                MarkArrayLikeParameterUsages(pipe.Left, parameterNames, arrayLikeNames);
+                MarkArrayLikeParameterUsages(pipe.Right, parameterNames, arrayLikeNames);
+                break;
+            case RedirectExpression redirect:
+                MarkArrayLikeParameterUsages(redirect.Left, parameterNames, arrayLikeNames);
+                MarkArrayLikeParameterUsages(redirect.Right, parameterNames, arrayLikeNames);
+                break;
+            case ArrayLiteral arrayLiteral:
+                foreach (var element in arrayLiteral.Elements)
+                    MarkArrayLikeParameterUsages(element, parameterNames, arrayLikeNames);
+                break;
+            case RangeExpression range:
+                MarkArrayLikeParameterUsages(range.Start, parameterNames, arrayLikeNames);
+                MarkArrayLikeParameterUsages(range.End, parameterNames, arrayLikeNames);
+                break;
+        }
     }
 }

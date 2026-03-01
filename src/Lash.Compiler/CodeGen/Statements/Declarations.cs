@@ -97,11 +97,20 @@ internal sealed partial class StatementGenerator
 
         owner.EmitLine($"{func.Name}() {{");
         owner.IndentLevel++;
-        owner.EmitLine($"local -a {BashGenerator.ArgvName}=(\"$@\")");
 
         for (int i = 0; i < func.Parameters.Count; i++)
         {
             var param = func.Parameters[i];
+            var isArrayParam = owner.IsArrayParameter(func.Name, i);
+            if (isArrayParam)
+            {
+                if (i == func.Parameters.Count - 1)
+                    owner.EmitLine($"local -a {param.Name}=(\"${{@:{i + 1}}}\")");
+                else
+                    owner.EmitLine($"local -a {param.Name}=(\"${i + 1}\")");
+                continue;
+            }
+
             if (param.DefaultValue == null)
             {
                 owner.EmitLine($"local {param.Name}=\"${i + 1}\"");
@@ -136,7 +145,7 @@ internal sealed partial class StatementGenerator
         if (value is IdentifierExpression identifier &&
             string.Equals(identifier.Name, "argv", StringComparison.Ordinal))
         {
-            return $"(\"${{{BashGenerator.ArgvName}[@]}}\")";
+            return "(\"$@\")";
         }
 
         return owner.GenerateExpression(value);
@@ -147,7 +156,7 @@ internal sealed partial class StatementGenerator
         if (value is IdentifierExpression identifier &&
             string.Equals(identifier.Name, "argv", StringComparison.Ordinal))
         {
-            return $"(\"${{{BashGenerator.ArgvName}[@]}}\")";
+            return "(\"$@\")";
         }
 
         return owner.GenerateExpression(value);
@@ -166,7 +175,7 @@ internal sealed partial class StatementGenerator
         {
             ArrayLiteral array => owner.GenerateArrayLiteral(array),
             IdentifierExpression rhsIdentifier when string.Equals(rhsIdentifier.Name, "argv", StringComparison.Ordinal) =>
-                $"(\"${{{BashGenerator.ArgvName}[@]}}\")",
+                "(\"$@\")",
             IdentifierExpression rhsIdentifier => $"(\"${{{rhsIdentifier.Name}[@]}}\")",
             _ => HandleUnsupportedExpression(assignment.Value, "array append value")
         };
