@@ -1314,23 +1314,21 @@ public sealed class WarningAnalyzer {
 
   private void AddWarning(string message, int line, int column, string code) {
     var tip = code switch {
-      DiagnosticCodes.UnreachableStatement => "Remove dead code.",
-      DiagnosticCodes.ShadowedVariable =>
-          "Rename the inner variable if shadowing was not intentional.",
+      DiagnosticCodes.UnreachableStatement =>
+          "Make this path reachable or remove the statement.",
+      DiagnosticCodes.ShadowedVariable => "Rename the inner variable.",
       DiagnosticCodes.WaitJobsWithoutTrackedJobs =>
-          "Start a background process first, or remove this wait call.",
-      DiagnosticCodes.UnusedVariable =>
-          "Remove it, or prefix with '_' to mark as unused.",
-      DiagnosticCodes.UnusedParameter =>
-          "Remove it, or prefix with '_' to mark as unused.",
+          "Start a background job before 'wait jobs'.",
+      DiagnosticCodes.UnusedVariable => "Prefix with '_' to mark as unused.",
+      DiagnosticCodes.UnusedParameter => "Prefix with '_' to mark as unused.",
       DiagnosticCodes.UnusedFunction =>
-          "Remove it, or mark as public if it is an external entrypoint.",
-      DiagnosticCodes.EquivalentIfBranches => "Remove the condition.",
-      DiagnosticCodes.DuplicateSwitchCaseBody =>
-          "Merge equivalent case bodies.",
+          "Prefix with '_' if intentionally unused.",
+      DiagnosticCodes.EquivalentIfBranches =>
+          "Keep one branch; both are equivalent.",
+      DiagnosticCodes.DuplicateSwitchCaseBody => "Merge duplicate case bodies.",
       DiagnosticCodes.EquivalentBranchAssignment =>
-          "Move this assignment outside the conditional.",
-      DiagnosticCodes.LetNeverReassigned => "Change 'let' to 'const'.",
+          "Move assignment outside the conditional.",
+      DiagnosticCodes.LetNeverReassigned => "Use 'const' instead of 'let'.",
       _ => null
     };
 
