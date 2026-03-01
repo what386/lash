@@ -56,9 +56,9 @@ fn show_help()
 end
 
 fn is_known_tool(tool_name)
-    for entry in PROJECTS
-        let known = $(printf '%s' "$entry" | cut -d: -f1)
-        if known == tool_name
+    for entry in $PROJECTS
+        let known = $(printf '%s' $entry | cut -d: -f1)
+        if $known == $tool_name
             return true
         end
     end
@@ -66,31 +66,31 @@ fn is_known_tool(tool_name)
 end
 
 fn list_to_csv(values)
-    if #values == 0
+    if #$values == 0
         return ""
     end
 
     let result = ""
     let is_first = true
-    for value in values
-        if is_first
-            result = value
+    for value in $values
+        if $is_first
+            result = $value
             is_first = false
         else
-            result = result + "," + value
+            result = $"{$result},{$value}"
         end
     end
 
-    return result
+    return $result
 end
 
 fn should_trim_tool(tool_name)
-    if !ENABLE_TRIMMING
+    if !$ENABLE_TRIMMING
         return false
     end
 
-    for disabled in NO_TRIM_TOOLS
-        if disabled == tool_name
+    for disabled in $NO_TRIM_TOOLS
+        if $disabled == $tool_name
             return false
         end
     end
@@ -99,7 +99,7 @@ fn should_trim_tool(tool_name)
 end
 
 fn is_windows_rid(rid)
-    switch rid
+    switch $rid
         case "win-*":
             return true
     end
@@ -119,7 +119,7 @@ fn get_output_dirname(rid)
     let arch = ""
     let bits = ""
 
-    switch rid
+    switch $rid
         case "win-x64":
             platform = "win"
             arch = "x86"
@@ -154,54 +154,54 @@ fn get_output_dirname(rid)
             bits = "64"
     end
 
-    return PROJECT_NAME + "-" + platform + "_" + arch + "-" + bits
+    return $PROJECT_NAME + "-" + $platform + "_" + $arch + "-" + $bits
 end
 
 fn find_published_executable(temp_dir, rid, project_stem)
     let src_file = ""
 
-    if is_windows_rid(rid)
-        let expected = temp_dir + "/" + project_stem + ".exe"
-        if file_exists(expected)
-            src_file = expected
+    if is_windows_rid($rid)
+        let expected = $temp_dir + "/" + $project_stem + ".exe"
+        if file_exists($expected)
+            src_file = $expected
         else
             src_file = $(find "$temp_dir" -maxdepth 1 -type f -name '*.exe' ! -name 'createdump.exe' -print -quit)
         end
-        return src_file
+        return $src_file
     end
 
-    let expected = temp_dir + "/" + project_stem
-    if file_exists(expected)
-        src_file = expected
+    let expected = $temp_dir + "/" + $project_stem
+    if file_exists($expected)
+        src_file = $expected
     else
         src_file = $(find "$temp_dir" -maxdepth 1 -type f -perm -u+x -print -quit)
     end
-    return src_file
+    return $src_file
 end
 
 fn build_tool_for_platform(tool_name, project_path, rid, bundle_dir)
-    let temp_dir = OUTPUT_DIR + "/temp_" + tool_name + "_" + rid
+    let temp_dir = $OUTPUT_DIR + "/temp_" + $tool_name + "_" + $rid
     let publish_args = [
-    project_path,
+    $project_path,
     "-c",
-    CONFIGURATION,
+    $CONFIGURATION,
     "-r",
-    rid,
+    $rid,
     "--self-contained",
     "-p:UseAppHost=true",
     "-o",
-    temp_dir
+    $temp_dir
     ]
 
-    if ENABLE_SINGLE_FILE
+    if $ENABLE_SINGLE_FILE
         publish_args += ["-p:PublishSingleFile=True"]
     end
 
-    if ENABLE_READY_TO_RUN
+    if $ENABLE_READY_TO_RUN
         publish_args += ["-p:PublishReadyToRun=True"]
     end
 
-    if should_trim_tool(tool_name)
+    if should_trim_tool($tool_name)
         publish_args += [
         "-p:PublishTrimmed=True",
         "-p:TrimMode=CopyUsed",
@@ -213,24 +213,24 @@ fn build_tool_for_platform(tool_name, project_path, rid, bundle_dir)
     dotnet publish "${publish_args[@]}"
 
     let project_stem = $(basename "$project_path" .csproj)
-    let src_file = find_published_executable(temp_dir, rid, project_stem)
+    let src_file = find_published_executable($temp_dir, $rid, $project_stem)
 
-    if src_file == "" || !file_exists(src_file)
+    if $src_file == "" || !file_exists($src_file)
         echo -e "${RED}✗ Build completed but executable not found for ${tool_name}${NC}"
         rm -rf "$temp_dir"
         return 1
     end
 
     let extension = ""
-    if is_windows_rid(rid)
+    if is_windows_rid($rid)
         extension = ".exe"
     end
 
-    let dest_file = bundle_dir + "/" + tool_name + extension
+    let dest_file = $bundle_dir + "/" + $tool_name + $extension
     mv "$src_file" "$dest_file"
     rm -rf "$temp_dir"
 
-    if !is_windows_rid(rid)
+    if !is_windows_rid($rid)
         chmod +x "$dest_file"
     end
 
@@ -239,7 +239,7 @@ fn build_tool_for_platform(tool_name, project_path, rid, bundle_dir)
 end
 
 fn build_platform(rid, description)
-    let bundle_dir = OUTPUT_DIR + "/" + get_output_dirname(rid)
+    let bundle_dir = $OUTPUT_DIR + "/" + get_output_dirname($rid)
     let publish_jobs = []
 
     echo ""
@@ -248,24 +248,24 @@ fn build_platform(rid, description)
     rm -rf "$bundle_dir"
     mkdir -p "$bundle_dir"
 
-    for entry in PROJECTS
-        let tool_name = $(printf '%s' "$entry" | cut -d: -f1)
-        let project_path = $(printf '%s' "$entry" | cut -d: -f2-)
+    for entry in $PROJECTS
+        let tool_name = $(printf '%s' $entry | cut -d: -f1)
+        let project_path = $(printf '%s' $entry | cut -d: -f2-)
         subshell into let publish_pid
-            build_tool_for_platform(tool_name, project_path, rid, bundle_dir)
+            build_tool_for_platform($tool_name, $project_path, $rid, $bundle_dir)
         end &
 
-        publish_jobs += [publish_pid + ":" + tool_name]
+        publish_jobs += [$publish_pid + ":" + $tool_name]
     end
 
-    for job in publish_jobs
-        let pid = $(printf '%s' "$job" | cut -d: -f1)
-        let tool_name = $(printf '%s' "$job" | cut -d: -f2-)
+    for job in $publish_jobs
+        let pid = $(printf '%s' $job | cut -d: -f1)
+        let tool_name = $(printf '%s' $job | cut -d: -f2-)
 
         wait $pid into let wait_status
-        if wait_status != 0
+        if $wait_status != 0
             echo -e "${RED}✗ Build failed for ${tool_name} (${rid})${NC}"
-            return wait_status
+            return $wait_status
         end
     end
 
@@ -275,7 +275,7 @@ fn build_platform(rid, description)
 end
 
 fn get_platform_description(rid)
-    switch rid
+    switch $rid
         case "win-x64":
             return "Windows (64-bit)"
         case "win-x86":
@@ -294,38 +294,38 @@ fn get_platform_description(rid)
             return "macOS Apple Silicon"
     end
 
-    return rid
+    return $rid
 end
 
 // Parse options
 let BUILD_PLATFORMS = []
-while #argv > 0
-    let arg = argv[0]
+while #$argv > 0
+    let arg = $argv[0]
 
-    if arg == "-h" || arg == "--help"
+    if $arg == "-h" || $arg == "--help"
         show_help()
-    elif arg == "--no-trim"
-        if #argv > 1 && is_known_tool(argv[1])
-            NO_TRIM_TOOLS += [argv[1]]
+    elif $arg == "--no-trim"
+        if #$argv > 1 && is_known_tool($argv[1])
+            NO_TRIM_TOOLS += [$argv[1]]
             shift
             shift
         else
             ENABLE_TRIMMING = false
             shift
         end
-    elif arg == "--no-single-file"
+    elif $arg == "--no-single-file"
         ENABLE_SINGLE_FILE = false
         shift
-    elif arg == "--no-ready2run"
+    elif $arg == "--no-ready2run"
         ENABLE_READY_TO_RUN = false
         shift
     else
-        BUILD_PLATFORMS += [arg]
+        BUILD_PLATFORMS += [$arg]
         shift
     end
 end
 
-if #BUILD_PLATFORMS == 0
+if #$BUILD_PLATFORMS == 0
     echo -e "${RED}Error: No platforms specified${NC}"
     echo ""
     show_help()
@@ -333,37 +333,37 @@ end
 
 echo -e "${GREEN}  Building ${PROJECT_NAME}${NC}"
 echo -e "${BLUE}Configuration:${NC}"
-if ENABLE_TRIMMING
-    if #NO_TRIM_TOOLS == 0
+if $ENABLE_TRIMMING
+    if #$NO_TRIM_TOOLS == 0
         echo -e "  Trimming:     ${GREEN}Enabled${NC}"
     else
-        let disabled = list_to_csv(NO_TRIM_TOOLS)
+        let disabled = list_to_csv($NO_TRIM_TOOLS)
         echo -e "  Trimming:     ${YELLOW}Enabled (except: ${disabled})${NC}"
     end
 else
     echo -e "  Trimming:     ${YELLOW}Disabled${NC}"
 end
-if ENABLE_SINGLE_FILE
+if $ENABLE_SINGLE_FILE
     echo -e "  Single File:  ${GREEN}Enabled${NC}"
 else
     echo -e "  Single File:  ${YELLOW}Disabled${NC}"
 end
-if ENABLE_READY_TO_RUN
+if $ENABLE_READY_TO_RUN
     echo -e "  ReadyToRun:   ${GREEN}Enabled${NC}"
 else
     echo -e "  ReadyToRun:   ${YELLOW}Disabled${NC}"
 end
 
-if dir_exists(OUTPUT_DIR)
+if dir_exists($OUTPUT_DIR)
     echo -e "${YELLOW}Cleaning output directory...${NC}"
     rm -rf "$OUTPUT_DIR"
 end
 mkdir -p "$OUTPUT_DIR"
 
 echo -e "${BLUE}Building platforms: ${BUILD_PLATFORMS[*]}${NC}"
-for rid in BUILD_PLATFORMS
-    let description = get_platform_description(rid)
-    build_platform(rid, description)
+for rid in $BUILD_PLATFORMS
+    let description = get_platform_description($rid)
+    build_platform($rid, $description)
 end
 
 echo ""
