@@ -167,6 +167,7 @@ public sealed class WarningAnalyzer {
       return false;
 
     case WhileLoop whileLoop:
+      AnalyzeExpression(whileLoop.Condition);
       if (TryEvaluateBool(whileLoop.Condition, out var whileCondition) &&
           !whileCondition) {
         WarnBlockUnreachable(
@@ -185,6 +186,7 @@ public sealed class WarningAnalyzer {
       return false;
 
     case UntilLoop untilLoop:
+      AnalyzeExpression(untilLoop.Condition);
       if (TryEvaluateBool(untilLoop.Condition, out var untilCondition) &&
           untilCondition) {
         WarnBlockUnreachable(

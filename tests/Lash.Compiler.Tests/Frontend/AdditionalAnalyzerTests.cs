@@ -422,6 +422,30 @@ public class AdditionalAnalyzerTests
     }
 
     [Fact]
+    public void WarningAnalyzer_TreatsWhileAndUntilConditionsAsVariableReads()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            let limit = 20
+            let n = 1
+            while $n <= $limit
+                $n += 1
+            end
+            until $n > $limit
+                break
+            end
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new WarningAnalyzer(diagnostics).Analyze(program);
+
+        Assert.DoesNotContain(
+            diagnostics.GetWarnings(),
+            w => w.Code == DiagnosticCodes.UnusedVariable
+                 && w.Message.Contains("limit", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void WarningAnalyzer_DoesNotTreatSwitchWithoutDefaultAsAlwaysTerminating()
     {
         var program = TestCompiler.ParseOrThrow(
