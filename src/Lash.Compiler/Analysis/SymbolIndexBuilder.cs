@@ -68,6 +68,9 @@ internal sealed class SymbolIndexBuilder
                 VisitExpression(assignment.Target);
                 VisitExpression(assignment.Value);
                 break;
+            case UpdateStatement updateStatement:
+                VisitExpression(updateStatement.Target);
+                break;
             case FunctionDeclaration function:
                 VisitFunction(function);
                 break;
@@ -88,7 +91,8 @@ internal sealed class SymbolIndexBuilder
                 VisitExpression(switchStatement.Value);
                 foreach (var clause in switchStatement.Cases)
                 {
-                    VisitExpression(clause.Pattern);
+                    if (!clause.IsWildcard)
+                        VisitExpression(clause.Pattern);
                     VisitScopedBlock(clause.Body);
                 }
                 break;

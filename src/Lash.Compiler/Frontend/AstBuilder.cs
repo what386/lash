@@ -85,14 +85,41 @@ public class AstBuilder : LashBaseVisitor<AstNode>
             ? Visit(context.variableReference()) as Expression ?? new NullLiteral()
             : Visit(context.indexAccess()) as Expression ?? new NullLiteral();
 
+        var operatorChildIndex = hasGlobal ? 2 : 1;
+        var op = context.GetChild(operatorChildIndex).GetText();
+
         return new Assignment
         {
             Line = context.Start.Line,
             Column = context.Start.Column,
             IsGlobal = hasGlobal,
-            Operator = context.ADD_ASSIGN() != null ? "+=" : "=",
+            Operator = op,
+            Mode = op switch
+            {
+                "=" => Assignment.AssignmentMode.Simple,
+                "+=" => Assignment.AssignmentMode.Unresolved,
+                "-=" or "*=" or "/=" or "%=" => Assignment.AssignmentMode.Arithmetic,
+                _ => Assignment.AssignmentMode.Unresolved
+            },
             Target = target,
             Value = Visit(context.expression()) as Expression ?? new NullLiteral()
+        };
+    }
+
+    public override AstNode VisitUpdateStatement(LashParser.UpdateStatementContext context)
+    {
+        var hasGlobal = context.GetChild(0).GetText() == "global";
+        var target = Visit(context.variableReference()) as IdentifierExpression
+            ?? new IdentifierExpression();
+        var op = context.GetChild(hasGlobal ? 2 : 1).GetText();
+
+        return new UpdateStatement
+        {
+            Line = context.Start.Line,
+            Column = context.Start.Column,
+            IsGlobal = hasGlobal,
+            Operator = op,
+            Target = target
         };
     }
 

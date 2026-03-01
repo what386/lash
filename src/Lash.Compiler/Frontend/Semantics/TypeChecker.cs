@@ -55,36 +55,14 @@ public sealed class TypeChecker
                 }
             case Assignment assignment:
                 {
-                    if (assignment.Operator == "+=")
-                    {
-                        CheckAppendAssignment(assignment);
-                        break;
-                    }
-
-                    var valueType = InferType(assignment.Value);
-                    if (assignment.Target is IdentifierExpression ident)
-                    {
-                        Assign(ident, valueType, assignment.IsGlobal);
-
-                        if (IsArray(valueType))
-                        {
-                            var mode = InferContainerKindFromExpression(assignment.Value);
-                            if (mode != ContainerKeyKind.Unknown)
-                                SetContainerMode(ident.Name, mode, assignment.IsGlobal);
-                        }
-                    }
-                    else if (assignment.Target is IndexAccessExpression indexTarget)
-                    {
-                        InferType(indexTarget);
-                        if (indexTarget.Array is IdentifierExpression arrayIdent)
-                        {
-                            Assign(arrayIdent, ExpressionTypes.Array, assignment.IsGlobal);
-                            var keyType = InferType(indexTarget.Index);
-                            var keyKind = InferKeyKind(indexTarget.Index, keyType);
-                            ValidateAndTrackContainerKeyKind(arrayIdent, keyKind, indexTarget, assignment.IsGlobal);
-                        }
-                    }
-
+                    CheckAssignment(assignment);
+                    break;
+                }
+            case UpdateStatement updateStatement:
+                {
+                    var targetType = Resolve(updateStatement.Target.Name);
+                    _ = ValidateNumberOperand(updateStatement.Operator, updateStatement.Target, targetType);
+                    Assign(updateStatement.Target, ExpressionTypes.Number, updateStatement.IsGlobal);
                     break;
                 }
             case FunctionDeclaration function:
@@ -266,7 +244,55 @@ public sealed class TypeChecker
         return binaryExpression.Operator is ">" or "<";
     }
 
-    private void CheckAppendAssignment(Assignment assignment)
+    private void CheckAssignment(Assignment assignment)
+    {
+        if (assignment.Operator != "=" && assignment.Target is not IdentifierExpression)
+        {
+            Report(assignment, $"Operator '{assignment.Operator}' only supports variable targets.", DiagnosticCodes.TypeMismatch);
+            return;
+        }
+
+        if (assignment.Operator == "+=")
+        {
+            CheckPlusEqualsAssignment(assignment);
+            return;
+        }
+
+        if (assignment.Operator is "-=" or "*=" or "/=" or "%=")
+        {
+            CheckArithmeticCompoundAssignment(assignment);
+            return;
+        }
+
+        var valueType = InferType(assignment.Value);
+        assignment.Mode = Assignment.AssignmentMode.Simple;
+        if (assignment.Target is IdentifierExpression ident)
+        {
+            Assign(ident, valueType, assignment.IsGlobal);
+
+            if (IsArray(valueType))
+            {
+                var mode = InferContainerKindFromExpression(assignment.Value);
+                if (mode != ContainerKeyKind.Unknown)
+                    SetContainerMode(ident.Name, mode, assignment.IsGlobal);
+            }
+            return;
+        }
+
+        if (assignment.Target is IndexAccessExpression indexTarget)
+        {
+            InferType(indexTarget);
+            if (indexTarget.Array is IdentifierExpression arrayIdent)
+            {
+                Assign(arrayIdent, ExpressionTypes.Array, assignment.IsGlobal);
+                var keyType = InferType(indexTarget.Index);
+                var keyKind = InferKeyKind(indexTarget.Index, keyType);
+                ValidateAndTrackContainerKeyKind(arrayIdent, keyKind, indexTarget, assignment.IsGlobal);
+            }
+        }
+    }
+
+    private void CheckPlusEqualsAssignment(Assignment assignment)
     {
         if (assignment.Target is not IdentifierExpression identifier)
         {
@@ -277,17 +303,60 @@ public sealed class TypeChecker
         var leftType = Resolve(identifier.Name);
         var rightType = InferType(assignment.Value);
 
-        if (IsKnown(leftType) && !IsArray(leftType))
-            Report(identifier, $"Operator '+=' expects an array target, got {FormatType(leftType)}.", DiagnosticCodes.TypeMismatch);
+        var canBeArray = (!IsKnown(leftType) || IsArray(leftType))
+                         && (!IsKnown(rightType) || IsArray(rightType));
+        var canBeNumeric = (!IsKnown(leftType) || IsNumber(leftType))
+                           && (!IsKnown(rightType) || IsNumber(rightType));
 
-        if (IsKnown(rightType) && !IsArray(rightType))
-            Report(assignment.Value, $"Operator '+=' expects an array value, got {FormatType(rightType)}.", DiagnosticCodes.TypeMismatch);
+        if (canBeArray && !canBeNumeric)
+        {
+            assignment.Mode = Assignment.AssignmentMode.ArrayAppend;
+            Assign(identifier, ExpressionTypes.Array, assignment.IsGlobal);
 
-        Assign(identifier, ExpressionTypes.Array, assignment.IsGlobal);
+            var rhsMode = InferContainerKindFromExpression(assignment.Value);
+            if (rhsMode != ContainerKeyKind.Unknown)
+                ValidateAndTrackContainerKeyKind(identifier, rhsMode, assignment, assignment.IsGlobal);
+            return;
+        }
 
-        var rhsMode = InferContainerKindFromExpression(assignment.Value);
-        if (rhsMode != ContainerKeyKind.Unknown)
-            ValidateAndTrackContainerKeyKind(identifier, rhsMode, assignment, assignment.IsGlobal);
+        if (canBeNumeric && !canBeArray)
+        {
+            assignment.Mode = Assignment.AssignmentMode.Arithmetic;
+            Assign(identifier, ExpressionTypes.Number, assignment.IsGlobal);
+            return;
+        }
+
+        if (canBeArray && canBeNumeric)
+        {
+            assignment.Mode = Assignment.AssignmentMode.Unresolved;
+            Report(
+                assignment,
+                "Operator '+=' is ambiguous for unknown target/value types.",
+                DiagnosticCodes.AmbiguousCompoundAssignment);
+            return;
+        }
+
+        assignment.Mode = Assignment.AssignmentMode.Unresolved;
+        Report(
+            assignment,
+            $"Operator '+=' cannot combine {FormatType(leftType)} and {FormatType(rightType)}.",
+            DiagnosticCodes.TypeMismatch);
+    }
+
+    private void CheckArithmeticCompoundAssignment(Assignment assignment)
+    {
+        if (assignment.Target is not IdentifierExpression identifier)
+        {
+            Report(assignment, $"Operator '{assignment.Operator}' only supports variable targets.", DiagnosticCodes.TypeMismatch);
+            return;
+        }
+
+        var leftType = Resolve(identifier.Name);
+        var rightType = InferType(assignment.Value);
+        _ = ValidateNumberOperand(assignment.Operator, identifier, leftType);
+        _ = ValidateNumberOperand(assignment.Operator, assignment.Value, rightType);
+        assignment.Mode = Assignment.AssignmentMode.Arithmetic;
+        Assign(identifier, ExpressionTypes.Number, assignment.IsGlobal);
     }
 
     private void CheckFunction(FunctionDeclaration function)
@@ -683,6 +752,7 @@ public sealed class TypeChecker
         var tip = code switch
         {
             DiagnosticCodes.TypeMismatch => "Check operand/value types and convert values before combining them.",
+            DiagnosticCodes.AmbiguousCompoundAssignment => "Disambiguate '+=' by using clear numeric operands or array append operands.",
             DiagnosticCodes.InvalidShellPayload => "Use a string literal or interpolated string for shell command payloads.",
             DiagnosticCodes.InvalidIndexOrContainerUsage => "Use array values for index access and keep key kinds consistent.",
             _ => null

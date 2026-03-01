@@ -9,6 +9,7 @@ statement
     | readonlyDeclaration
     | enumDeclaration
     | assignment
+    | updateStatement
     | functionDeclaration
     | ifStatement
     | switchStatement
@@ -68,7 +69,11 @@ enumMember
     ;
 
 assignment
-    : 'global'? (variableReference | indexAccess) ('=' | ADD_ASSIGN) expression
+    : 'global'? (variableReference | indexAccess) ('=' | ADD_ASSIGN | SUB_ASSIGN | MUL_ASSIGN | DIV_ASSIGN | MOD_ASSIGN) expression
+    ;
+
+updateStatement
+    : 'global'? variableReference (INC | DEC)
     ;
 
 functionDeclaration
@@ -240,6 +245,30 @@ BOTH_APPEND
 
 ADD_ASSIGN
     : '+='
+    ;
+
+SUB_ASSIGN
+    : '-='
+    ;
+
+MUL_ASSIGN
+    : '*='
+    ;
+
+DIV_ASSIGN
+    : '/='
+    ;
+
+MOD_ASSIGN
+    : '%='
+    ;
+
+INC
+    : '++'
+    ;
+
+DEC
+    : '--'
     ;
 
 ERR_APPEND

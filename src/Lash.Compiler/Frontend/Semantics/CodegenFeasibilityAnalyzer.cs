@@ -31,7 +31,7 @@ public sealed class CodegenFeasibilityAnalyzer
 
             case Assignment assignment:
                 ValidateAssignmentTarget(assignment);
-                if (assignment.Operator == "+=")
+                if (assignment.Mode == Assignment.AssignmentMode.ArrayAppend)
                 {
                     ValidateAppendValueExpression(assignment.Value);
                 }
@@ -39,6 +39,10 @@ public sealed class CodegenFeasibilityAnalyzer
                 {
                     ValidateValueExpression(assignment.Value, ValueContext.AssignmentRhs);
                 }
+                break;
+
+            case UpdateStatement updateStatement:
+                ValidateValueExpression(updateStatement.Target, ValueContext.AssignmentRhs);
                 break;
 
             case FunctionDeclaration function:
@@ -226,7 +230,16 @@ public sealed class CodegenFeasibilityAnalyzer
                 break;
 
             case IdentifierExpression:
+                break;
+
             case IndexAccessExpression:
+                if (assignment.Operator != "=")
+                {
+                    Report(
+                        assignment.Target,
+                        $"Operator '{assignment.Operator}' only supports variable targets.",
+                        DiagnosticCodes.UnsupportedStatementForCodegen);
+                }
                 break;
 
             default:

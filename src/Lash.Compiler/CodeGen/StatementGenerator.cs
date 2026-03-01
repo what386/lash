@@ -26,6 +26,10 @@ internal sealed partial class StatementGenerator
                 GenerateAssignment(assignment);
                 break;
 
+            case UpdateStatement updateStatement:
+                GenerateUpdateStatement(updateStatement);
+                break;
+
             case FunctionDeclaration funcDecl:
                 GenerateFunctionDeclaration(funcDecl);
                 break;

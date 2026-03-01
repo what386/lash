@@ -86,6 +86,11 @@ public sealed class WarningAnalyzer {
       }
 
       return false;
+    case UpdateStatement updateStatement:
+      AnalyzeExpression(updateStatement.Target);
+      MarkVariableReassigned(updateStatement.Target.Name);
+      InvalidateConst(updateStatement.Target.Name);
+      return false;
 
     case FunctionDeclaration function:
       WarnIfShadowing(function.Name, function.Line, function.Column);
@@ -613,6 +618,7 @@ public sealed class WarningAnalyzer {
   private static bool AreEquivalentAssignments(Assignment left,
                                                Assignment right) {
     return left.IsGlobal == right.IsGlobal &&
+           left.Mode == right.Mode &&
            string.Equals(left.Operator, right.Operator,
                          StringComparison.Ordinal) &&
            AreEquivalentExpressions(left.Target, right.Target) &&
@@ -644,6 +650,10 @@ public sealed class WarningAnalyzer {
           string.Equals(l.Name, r.Name, StringComparison.Ordinal) &&
           AreEquivalentExpressions(l.Value, r.Value),
       (Assignment l, Assignment r) => AreEquivalentAssignments(l, r),
+      (UpdateStatement l, UpdateStatement r) =>
+          l.IsGlobal == r.IsGlobal &&
+          string.Equals(l.Operator, r.Operator, StringComparison.Ordinal) &&
+          AreEquivalentExpressions(l.Target, r.Target),
       (ExpressionStatement l, ExpressionStatement r) =>
           AreEquivalentExpressions(l.Expression, r.Expression),
       (ShellStatement l, ShellStatement r) =>

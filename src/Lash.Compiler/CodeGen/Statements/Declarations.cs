@@ -56,9 +56,37 @@ internal sealed partial class StatementGenerator
 
     private void GenerateAssignment(Assignment assignment)
     {
-        if (assignment.Operator == "+=")
+        if (assignment.Mode == Assignment.AssignmentMode.ArrayAppend)
         {
             GenerateAppendAssignment(assignment);
+            return;
+        }
+
+        if (assignment.Mode == Assignment.AssignmentMode.Arithmetic)
+        {
+            GenerateArithmeticAssignment(assignment);
+            return;
+        }
+
+        if (assignment.Operator == "+=")
+        {
+            if (LooksLikeArrayAppendBySyntax(assignment.Value))
+            {
+                GenerateAppendAssignment(assignment);
+                return;
+            }
+
+            if (LooksLikeArithmeticBySyntax(assignment.Value))
+            {
+                GenerateArithmeticAssignment(assignment);
+                return;
+            }
+        }
+
+        if (assignment.Operator != "=")
+        {
+            owner.EmitComment($"Unsupported unresolved assignment mode for '{assignment.Operator}'.");
+            owner.ReportUnsupported($"assignment mode for '{assignment.Operator}'");
             return;
         }
 
@@ -180,5 +208,46 @@ internal sealed partial class StatementGenerator
         };
 
         owner.Emit($"{identifier.Name}+={appendValue}");
+    }
+
+    private void GenerateArithmeticAssignment(Assignment assignment)
+    {
+        if (assignment.Target is not IdentifierExpression identifier)
+        {
+            owner.EmitComment($"Unsupported assignment target for '{assignment.Operator}'.");
+            owner.ReportUnsupported($"assignment target for '{assignment.Operator}'");
+            return;
+        }
+
+        var op = assignment.Operator[..^1];
+        var rhs = owner.GenerateArithmeticExpression(assignment.Value);
+        owner.Emit($"(( {identifier.Name} {op}= {rhs} ))");
+    }
+
+    private void GenerateUpdateStatement(UpdateStatement updateStatement)
+    {
+        var op = updateStatement.Operator;
+        owner.Emit($"(( {updateStatement.Target.Name}{op} ))");
+    }
+
+    private static bool LooksLikeArrayAppendBySyntax(Expression value)
+    {
+        return value switch
+        {
+            ArrayLiteral => true,
+            IdentifierExpression => true,
+            _ => false
+        };
+    }
+
+    private static bool LooksLikeArithmeticBySyntax(Expression value)
+    {
+        return value switch
+        {
+            LiteralExpression => true,
+            UnaryExpression unary when unary.Operator is "+" or "-" or "!" or "#" => true,
+            BinaryExpression binary when binary.Operator is "+" or "-" or "*" or "/" or "%" => true,
+            _ => false
+        };
     }
 }

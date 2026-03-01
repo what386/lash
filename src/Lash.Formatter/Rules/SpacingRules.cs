@@ -137,6 +137,9 @@ internal static class SpacingRules
         if (LooksLikeLashAssignment(trimmed))
             return false;
 
+        if (LooksLikeLashUpdateStatement(trimmed))
+            return false;
+
         if (LooksLikeFunctionCallExpression(trimmed))
             return false;
 
@@ -372,8 +375,14 @@ internal static class SpacingRules
                 continue;
 
             var left = line[..i].TrimEnd();
-            if (left.EndsWith("+", StringComparison.Ordinal))
+            if (left.EndsWith("+", StringComparison.Ordinal)
+                || left.EndsWith("-", StringComparison.Ordinal)
+                || left.EndsWith("*", StringComparison.Ordinal)
+                || left.EndsWith("/", StringComparison.Ordinal)
+                || left.EndsWith("%", StringComparison.Ordinal))
+            {
                 left = left[..^1].TrimEnd();
+            }
 
             if (IsIdentifier(left))
                 return true;
@@ -385,6 +394,40 @@ internal static class SpacingRules
         }
 
         return false;
+    }
+
+    private static bool LooksLikeLashUpdateStatement(string line)
+    {
+        var trimmed = line.Trim();
+        const string globalPrefix = "global ";
+        if (trimmed.StartsWith(globalPrefix, StringComparison.Ordinal))
+            trimmed = trimmed[globalPrefix.Length..].TrimStart();
+
+        if (!trimmed.StartsWith("$", StringComparison.Ordinal))
+            return false;
+
+        var cursor = 1;
+        if (cursor >= trimmed.Length || !(char.IsLetter(trimmed[cursor]) || trimmed[cursor] == '_'))
+            return false;
+
+        cursor++;
+        while (cursor < trimmed.Length && (char.IsLetterOrDigit(trimmed[cursor]) || trimmed[cursor] == '_'))
+            cursor++;
+
+        while (cursor < trimmed.Length && char.IsWhiteSpace(trimmed[cursor]))
+            cursor++;
+
+        if (cursor + 1 >= trimmed.Length)
+            return false;
+
+        var op = trimmed.Substring(cursor, 2);
+        if (op is not "++" and not "--")
+            return false;
+
+        cursor += 2;
+        while (cursor < trimmed.Length && char.IsWhiteSpace(trimmed[cursor]))
+            cursor++;
+        return cursor == trimmed.Length;
     }
 
     private static bool IsIdentifier(string value)
@@ -438,7 +481,7 @@ internal static class SpacingRules
             return true;
         }
 
-        if (twoChar is "==" or "!=" or "<=" or ">=" or "&&" or "||" or "..")
+        if (twoChar is "==" or "!=" or "<=" or ">=" or "&&" or "||" or ".." or "+=" or "-=" or "*=" or "/=" or "%=" or "++" or "--")
         {
             op = twoChar;
             consume = 2;
@@ -498,7 +541,7 @@ internal static class SpacingRules
 
     private static bool IsTightOperator(string op)
     {
-        return op == "::";
+        return op is "::" or "++" or "--";
     }
 
     private static void TrimTrailingSpaces(StringBuilder sb)

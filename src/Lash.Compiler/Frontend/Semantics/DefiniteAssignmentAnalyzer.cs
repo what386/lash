@@ -48,6 +48,10 @@ public sealed class DefiniteAssignmentAnalyzer
                         SetAssigned(ident.Name, assignment.IsGlobal);
                 }
                 break;
+            case UpdateStatement updateStatement:
+                CheckExpression(updateStatement.Target);
+                SetAssigned(updateStatement.Target.Name, updateStatement.IsGlobal);
+                break;
 
             case FunctionDeclaration function:
                 PushScope();
@@ -72,7 +76,8 @@ public sealed class DefiniteAssignmentAnalyzer
                 CheckExpression(switchStatement.Value);
                 foreach (var clause in switchStatement.Cases)
                 {
-                    CheckExpression(clause.Pattern);
+                    if (!clause.IsWildcard)
+                        CheckExpression(clause.Pattern);
                     AnalyzeIsolatedBlock(clause.Body);
                 }
                 break;

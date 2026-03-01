@@ -3,10 +3,26 @@ using Lash.Compiler.Ast.Expressions;
 
 public class Assignment : Statement
 {
+    public enum AssignmentMode
+    {
+        Unresolved,
+        Simple,
+        ArrayAppend,
+        Arithmetic
+    }
+
     public bool IsGlobal { get; set; }
     public string Operator { get; set; } = "=";
+    public AssignmentMode Mode { get; set; } = AssignmentMode.Unresolved;
     public Expression Target { get; set; } = null!;
     public Expression Value { get; set; } = null!;
+}
+
+public class UpdateStatement : Statement
+{
+    public bool IsGlobal { get; set; }
+    public string Operator { get; set; } = string.Empty;
+    public IdentifierExpression Target { get; set; } = null!;
 }
 
 public class ExpressionStatement : Statement

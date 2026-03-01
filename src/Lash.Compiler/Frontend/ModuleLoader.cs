@@ -676,6 +676,9 @@ public static class ModuleLoader
         if (LooksLikeLashAssignment(trimmed))
             return false;
 
+        if (LooksLikeLashUpdateStatement(trimmed))
+            return false;
+
         if (LooksLikeFunctionCallExpression(trimmed))
             return false;
 
@@ -913,8 +916,14 @@ public static class ModuleLoader
                 continue;
 
             var left = line[..i].TrimEnd();
-            if (left.EndsWith("+", StringComparison.Ordinal))
+            if (left.EndsWith("+", StringComparison.Ordinal)
+                || left.EndsWith("-", StringComparison.Ordinal)
+                || left.EndsWith("*", StringComparison.Ordinal)
+                || left.EndsWith("/", StringComparison.Ordinal)
+                || left.EndsWith("%", StringComparison.Ordinal))
+            {
                 left = left[..^1].TrimEnd();
+            }
 
             const string globalPrefix = "global ";
             if (left.StartsWith(globalPrefix, StringComparison.Ordinal))
@@ -930,6 +939,40 @@ public static class ModuleLoader
         }
 
         return false;
+    }
+
+    private static bool LooksLikeLashUpdateStatement(string line)
+    {
+        var trimmed = line.Trim();
+        const string globalPrefix = "global ";
+        if (trimmed.StartsWith(globalPrefix, StringComparison.Ordinal))
+            trimmed = trimmed[globalPrefix.Length..].TrimStart();
+
+        if (!trimmed.StartsWith("$", StringComparison.Ordinal))
+            return false;
+
+        var cursor = 1;
+        if (cursor >= trimmed.Length || !(char.IsLetter(trimmed[cursor]) || trimmed[cursor] == '_'))
+            return false;
+
+        cursor++;
+        while (cursor < trimmed.Length && (char.IsLetterOrDigit(trimmed[cursor]) || trimmed[cursor] == '_'))
+            cursor++;
+
+        while (cursor < trimmed.Length && char.IsWhiteSpace(trimmed[cursor]))
+            cursor++;
+
+        if (cursor + 1 >= trimmed.Length)
+            return false;
+
+        var op = trimmed.Substring(cursor, 2);
+        if (op is not "++" and not "--")
+            return false;
+
+        cursor += 2;
+        while (cursor < trimmed.Length && char.IsWhiteSpace(trimmed[cursor]))
+            cursor++;
+        return cursor == trimmed.Length;
     }
 
     private static bool IsIdentifier(string value)

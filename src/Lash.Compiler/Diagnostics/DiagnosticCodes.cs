@@ -33,6 +33,7 @@ public static class DiagnosticCodes
     public const string TypeMismatch = "E200";
     public const string InvalidShellPayload = "E201";
     public const string InvalidIndexOrContainerUsage = "E202";
+    public const string AmbiguousCompoundAssignment = "E203";
 
     // Flow/Constant Safety
     public const string MaybeUninitializedVariable = "E300";

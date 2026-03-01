@@ -618,6 +618,9 @@ public class BashGenerator
                     MarkArrayLikeParameterUsages(assignment.Target, parameterNames, arrayLikeNames);
                     MarkArrayLikeParameterUsages(assignment.Value, parameterNames, arrayLikeNames);
                     break;
+                case UpdateStatement updateStatement:
+                    MarkArrayLikeParameterUsages(updateStatement.Target, parameterNames, arrayLikeNames);
+                    break;
                 case IfStatement ifStatement:
                     MarkArrayLikeParameterUsages(ifStatement.Condition, parameterNames, arrayLikeNames);
                     MarkArrayLikeParameterUsages(ifStatement.ThenBlock, parameterNames, arrayLikeNames);
@@ -632,7 +635,8 @@ public class BashGenerator
                     MarkArrayLikeParameterUsages(switchStatement.Value, parameterNames, arrayLikeNames);
                     foreach (var clause in switchStatement.Cases)
                     {
-                        MarkArrayLikeParameterUsages(clause.Pattern, parameterNames, arrayLikeNames);
+                        if (!clause.IsWildcard)
+                            MarkArrayLikeParameterUsages(clause.Pattern, parameterNames, arrayLikeNames);
                         MarkArrayLikeParameterUsages(clause.Body, parameterNames, arrayLikeNames);
                     }
                     break;

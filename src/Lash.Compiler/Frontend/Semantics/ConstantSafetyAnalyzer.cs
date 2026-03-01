@@ -39,6 +39,23 @@ public sealed class ConstantSafetyAnalyzer
                 CheckExpression(assignment.Value);
                 if (assignment.Target is IdentifierExpression identifier)
                     RemoveConstInt(identifier.Name, assignment.IsGlobal);
+                if (assignment.Operator is "/=" or "%="
+                    && TryEvaluateInt(assignment.Value, out var compoundRhs)
+                    && compoundRhs == 0)
+                {
+                    diagnostics.AddError(
+                        DiagnosticMessage.WithTip(
+                            $"Operator '{assignment.Operator}' cannot use a right-hand operand of 0.",
+                            "Ensure the divisor/modulo operand is non-zero."),
+                        assignment.Value.Line,
+                        assignment.Value.Column,
+                        DiagnosticCodes.DivisionOrModuloByZero);
+                }
+                break;
+
+            case UpdateStatement updateStatement:
+                CheckExpression(updateStatement.Target);
+                RemoveConstInt(updateStatement.Target.Name, updateStatement.IsGlobal);
                 break;
 
             case FunctionDeclaration function:
@@ -68,7 +85,8 @@ public sealed class ConstantSafetyAnalyzer
                 CheckExpression(switchStatement.Value);
                 foreach (var clause in switchStatement.Cases)
                 {
-                    CheckExpression(clause.Pattern);
+                    if (!clause.IsWildcard)
+                        CheckExpression(clause.Pattern);
                     AnalyzeIsolated(clause.Body);
                 }
                 break;

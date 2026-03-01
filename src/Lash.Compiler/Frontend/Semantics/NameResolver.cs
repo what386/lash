@@ -172,10 +172,22 @@ public sealed class NameResolver {
     case Assignment assignment:
       CheckExpression(assignment.Value);
 
+      if (assignment.Operator != "=" &&
+          assignment.Target is IndexAccessExpression) {
+        Report(assignment.Target,
+               $"Operator '{assignment.Operator}' only supports variable targets.",
+               DiagnosticCodes.InvalidAssignmentTarget);
+        break;
+      }
+
       if (assignment.Target is IdentifierExpression identifier)
         ValidateAssignmentTarget(identifier, assignment.IsGlobal);
       else if (assignment.Target is IndexAccessExpression indexAccess)
         ValidateIndexAssignmentTarget(indexAccess);
+      break;
+
+    case UpdateStatement updateStatement:
+      ValidateAssignmentTarget(updateStatement.Target, updateStatement.IsGlobal);
       break;
 
     case FunctionDeclaration function:
