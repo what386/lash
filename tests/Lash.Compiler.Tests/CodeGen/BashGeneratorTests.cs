@@ -623,7 +623,40 @@ public class BashGeneratorTests
         var bash = new BashGenerator().Generate(program);
         Assert.Contains("declare -A meta=()", bash);
         Assert.Contains("meta[\"name\"]=\"lash\"", bash);
+        Assert.Contains("selected=\"lash\"", bash);
+    }
+
+    [Fact]
+    public void BashGenerator_DoesNotFoldIndexedValueAcrossDivergentUnknownBranches()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            let meta = []
+            if $flag
+                $meta["name"] = "alpha"
+            else
+                $meta["name"] = "beta"
+            end
+            let selected = $meta["name"]
+            """);
+
+        var bash = new BashGenerator().Generate(program);
         Assert.Contains("selected=${meta[\"name\"]}", bash);
+    }
+
+    [Fact]
+    public void BashGenerator_OnlyFoldsInterpolatedStringWhenAllPlaceholdersResolve()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            const greeting = "Hello"
+            let name = $(echo who)
+            let message = $"[{greeting}] {name}"
+            """);
+
+        var bash = new BashGenerator().Generate(program);
+        Assert.Contains("message=\"[${greeting}] ${name}\"", bash);
+        Assert.DoesNotContain("message=\"[Hello] {name}\"", bash);
     }
 
     [Fact]

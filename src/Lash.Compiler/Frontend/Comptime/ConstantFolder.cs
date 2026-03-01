@@ -89,6 +89,7 @@ internal sealed class ConstantFolder
                 return new List<Statement> { variableDeclaration };
 
             case Assignment assignment:
+                assignment.Target = FoldExpression(assignment.Target);
                 assignment.Value = FoldExpression(assignment.Value);
                 if (assignment.Target is IdentifierExpression targetIdentifier)
                 {
@@ -96,7 +97,14 @@ internal sealed class ConstantFolder
                 }
                 else if (assignment.Target is IndexAccessExpression indexTarget && indexTarget.Array is IdentifierExpression arrayIdentifier)
                 {
-                    Unbind(arrayIdentifier.Name);
+                    if (TryGetIndexKey(indexTarget.Index, out var indexKey) && assignment.Value is LiteralExpression valueLiteral)
+                    {
+                        BindIndexedValue(arrayIdentifier.Name, indexKey, valueLiteral);
+                    }
+                    else
+                    {
+                        UnbindIndexedValues(arrayIdentifier.Name);
+                    }
                 }
                 return new List<Statement> { assignment };
 
@@ -179,10 +187,16 @@ internal sealed class ConstantFolder
     private List<Statement> FoldIfStatement(IfStatement ifStatement)
     {
         ifStatement.Condition = FoldExpression(ifStatement.Condition);
+        var baseline = CloneCurrentScope();
+
         if (TryEvaluateCondition(ifStatement.Condition, out var conditionValue))
         {
             if (conditionValue)
-                return FoldIsolated(ifStatement.ThenBlock);
+            {
+                var thenFolded = FoldBranchWithBaseline(ifStatement.ThenBlock, baseline, out var thenScope);
+                ReplaceCurrentScope(FilterScopeToBaseline(thenScope, baseline.Keys));
+                return thenFolded;
+            }
 
             for (int i = 0; i < ifStatement.ElifClauses.Count; i++)
             {
@@ -191,50 +205,73 @@ internal sealed class ConstantFolder
                 if (!TryEvaluateCondition(clause.Condition, out var clauseValue))
                 {
                     ifStatement.Condition = clause.Condition;
-                    ifStatement.ThenBlock = FoldIsolated(clause.Body);
+                    ifStatement.ThenBlock = FoldBranchWithBaseline(clause.Body, baseline, out var thenScope);
 
                     var remaining = new List<ElifClause>();
+                    var branchScopes = new List<Dictionary<string, Binding>> { thenScope };
                     for (int j = i + 1; j < ifStatement.ElifClauses.Count; j++)
                     {
                         var later = ifStatement.ElifClauses[j];
                         later.Condition = FoldExpression(later.Condition);
-                        later.Body = FoldIsolated(later.Body);
+                        later.Body = FoldBranchWithBaseline(later.Body, baseline, out var laterScope);
+                        branchScopes.Add(laterScope);
                         remaining.Add(later);
                     }
 
                     ifStatement.ElifClauses = remaining;
-                    ifStatement.ElseBlock = FoldIsolated(ifStatement.ElseBlock);
+                    ifStatement.ElseBlock = FoldBranchWithBaseline(ifStatement.ElseBlock, baseline, out var elseScope);
+                    branchScopes.Add(elseScope);
+                    ReplaceCurrentScope(MergeScopesOnBaseline(branchScopes, baseline.Keys));
                     return new List<Statement> { ifStatement };
                 }
 
                 if (clauseValue)
-                    return FoldIsolated(clause.Body);
+                {
+                    var clauseFolded = FoldBranchWithBaseline(clause.Body, baseline, out var clauseScope);
+                    ReplaceCurrentScope(FilterScopeToBaseline(clauseScope, baseline.Keys));
+                    return clauseFolded;
+                }
             }
 
-            return FoldIsolated(ifStatement.ElseBlock);
+            var elseFolded = FoldBranchWithBaseline(ifStatement.ElseBlock, baseline, out var elseScopeTaken);
+            ReplaceCurrentScope(FilterScopeToBaseline(elseScopeTaken, baseline.Keys));
+            return elseFolded;
         }
 
-        ifStatement.ThenBlock = FoldIsolated(ifStatement.ThenBlock);
+        var unknownScopes = new List<Dictionary<string, Binding>>();
+        ifStatement.ThenBlock = FoldBranchWithBaseline(ifStatement.ThenBlock, baseline, out var thenUnknownScope);
+        unknownScopes.Add(thenUnknownScope);
         foreach (var clause in ifStatement.ElifClauses)
         {
             clause.Condition = FoldExpression(clause.Condition);
-            clause.Body = FoldIsolated(clause.Body);
+            clause.Body = FoldBranchWithBaseline(clause.Body, baseline, out var clauseUnknownScope);
+            unknownScopes.Add(clauseUnknownScope);
         }
-        ifStatement.ElseBlock = FoldIsolated(ifStatement.ElseBlock);
+        ifStatement.ElseBlock = FoldBranchWithBaseline(ifStatement.ElseBlock, baseline, out var elseUnknownScope);
+        unknownScopes.Add(elseUnknownScope);
+        if (ifStatement.ElseBlock.Count == 0)
+            unknownScopes.Add(baseline);
+        ReplaceCurrentScope(MergeScopesOnBaseline(unknownScopes, baseline.Keys));
         return new List<Statement> { ifStatement };
     }
 
     private List<Statement> FoldSwitchStatement(SwitchStatement switchStatement)
     {
         switchStatement.Value = FoldExpression(switchStatement.Value);
+        var baseline = CloneCurrentScope();
+
         if (!TryEvaluateLiteral(switchStatement.Value, out var switchLiteral))
         {
+            var branchScopes = new List<Dictionary<string, Binding>>();
             foreach (var clause in switchStatement.Cases)
             {
                 clause.Pattern = FoldExpression(clause.Pattern);
-                clause.Body = FoldIsolated(clause.Body);
+                clause.Body = FoldBranchWithBaseline(clause.Body, baseline, out var clauseScope);
+                branchScopes.Add(clauseScope);
             }
 
+            if (branchScopes.Count > 0)
+                ReplaceCurrentScope(MergeScopesOnBaseline(branchScopes, baseline.Keys));
             return new List<Statement> { switchStatement };
         }
 
@@ -242,7 +279,7 @@ internal sealed class ConstantFolder
         {
             var clause = switchStatement.Cases[i];
             clause.Pattern = FoldExpression(clause.Pattern);
-            clause.Body = FoldIsolated(clause.Body);
+            clause.Body = FoldBranchWithBaseline(clause.Body, baseline, out var clauseScope);
 
             if (!TryEvaluateLiteral(clause.Pattern, out var patternLiteral) || !IsExactCasePattern(clause.Pattern))
             {
@@ -252,18 +289,23 @@ internal sealed class ConstantFolder
                 {
                     var later = switchStatement.Cases[j];
                     later.Pattern = FoldExpression(later.Pattern);
-                    later.Body = FoldIsolated(later.Body);
+                    later.Body = FoldBranchWithBaseline(later.Body, baseline, out _);
                     remaining.Add(later);
                 }
 
                 switchStatement.Cases = remaining;
+                ReplaceCurrentScope(FilterScopeToBaseline(clauseScope, baseline.Keys));
                 return new List<Statement> { switchStatement };
             }
 
             if (AreLiteralsEqual(switchLiteral, patternLiteral))
+            {
+                ReplaceCurrentScope(FilterScopeToBaseline(clauseScope, baseline.Keys));
                 return clause.Body;
+            }
         }
 
+        ReplaceCurrentScope(FilterScopeToBaseline(baseline, baseline.Keys));
         return new List<Statement>();
     }
 
@@ -272,6 +314,18 @@ internal sealed class ConstantFolder
         var parent = scopes.Peek();
         scopes.Push(new Dictionary<string, Binding>(parent, StringComparer.Ordinal));
         var folded = FoldStatementsInternal(statements);
+        scopes.Pop();
+        return folded;
+    }
+
+    private List<Statement> FoldBranchWithBaseline(
+        IEnumerable<Statement> statements,
+        Dictionary<string, Binding> baseline,
+        out Dictionary<string, Binding> resultingScope)
+    {
+        scopes.Push(CloneScope(baseline));
+        var folded = FoldStatementsInternal(statements);
+        resultingScope = CloneCurrentScope();
         scopes.Pop();
         return folded;
     }
@@ -321,7 +375,8 @@ internal sealed class ConstantFolder
                 for (int i = 0; i < functionCall.Arguments.Count; i++)
                     functionCall.Arguments[i] = FoldExpression(functionCall.Arguments[i], pureDepth);
 
-                if (TryFoldPureFunctionCall(functionCall, pureDepth, out var foldedPureCall))
+                if (GetExpressionPurity(functionCall) == ExpressionPurity.Pure
+                    && TryFoldPureFunctionCall(functionCall, pureDepth, out var foldedPureCall))
                     return foldedPureCall;
                 return functionCall;
 
@@ -372,13 +427,13 @@ internal sealed class ConstantFolder
 
             if (argumentExpression is LiteralExpression literalArgument)
             {
-                callBindings[parameter.Name] = new Binding(CloneLiteral(literalArgument), null, null);
+                callBindings[parameter.Name] = new Binding(CloneLiteral(literalArgument), null, null, null);
                 continue;
             }
 
             if (argumentExpression is ArrayLiteral arrayArgument)
             {
-                callBindings[parameter.Name] = new Binding(null, CloneArrayLiteral(arrayArgument), arrayArgument.Elements.Count);
+                callBindings[parameter.Name] = new Binding(null, CloneArrayLiteral(arrayArgument), arrayArgument.Elements.Count, null);
                 continue;
             }
 
@@ -402,6 +457,13 @@ internal sealed class ConstantFolder
 
     private Expression? TryFoldIndexAccess(IndexAccessExpression indexAccess)
     {
+        if (indexAccess.Array is IdentifierExpression identifier &&
+            TryGetIndexKey(indexAccess.Index, out var key) &&
+            TryResolveIndexedLiteral(identifier.Name, key, out var indexedLiteral))
+        {
+            return CloneLiteral(indexedLiteral);
+        }
+
         if (!TryGetIntIndex(indexAccess.Index, out var index))
             return null;
         if (index < 0)
@@ -437,6 +499,68 @@ internal sealed class ConstantFolder
         return null;
     }
 
+    private static bool TryGetIndexKey(Expression expression, out string key)
+    {
+        if (expression is LiteralExpression literal)
+        {
+            switch (literal.LiteralType.PrimitiveKind)
+            {
+                case PrimitiveType.Kind.Int when literal.Value is int index:
+                    key = index.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                    return true;
+                case PrimitiveType.Kind.String:
+                    key = literal.Value?.ToString() ?? string.Empty;
+                    return true;
+                case PrimitiveType.Kind.Bool when literal.Value is bool boolValue:
+                    key = boolValue ? "1" : "0";
+                    return true;
+            }
+        }
+
+        key = string.Empty;
+        return false;
+    }
+
+    private void BindIndexedValue(string name, string indexKey, LiteralExpression value)
+    {
+        var scope = scopes.Peek();
+        if (!scope.TryGetValue(name, out var existing))
+            existing = new Binding(null, null, null, null);
+
+        var indexed = existing.IndexedLiterals is null
+            ? new Dictionary<string, LiteralExpression>(StringComparer.Ordinal)
+            : existing.IndexedLiterals.ToDictionary(kvp => kvp.Key, kvp => CloneLiteral(kvp.Value), StringComparer.Ordinal);
+
+        indexed[indexKey] = CloneLiteral(value);
+        scope[name] = existing with { IndexedLiterals = indexed };
+    }
+
+    private void UnbindIndexedValues(string name)
+    {
+        var scope = scopes.Peek();
+        if (!scope.TryGetValue(name, out var existing))
+            return;
+
+        scope[name] = existing with { IndexedLiterals = null };
+    }
+
+    private bool TryResolveIndexedLiteral(string name, string indexKey, out LiteralExpression literal)
+    {
+        foreach (var scope in scopes)
+        {
+            if (scope.TryGetValue(name, out var binding)
+                && binding.IndexedLiterals is not null
+                && binding.IndexedLiterals.TryGetValue(indexKey, out var found))
+            {
+                literal = found;
+                return true;
+            }
+        }
+
+        literal = null!;
+        return false;
+    }
+
     private static bool TryGetIntIndex(Expression expression, out int index)
     {
         if (expression is LiteralExpression literal &&
@@ -466,15 +590,21 @@ internal sealed class ConstantFolder
         if (literal.Value is not string template)
             return null;
 
+        var changed = false;
         var output = Regex.Replace(template, @"\{([A-Za-z_][A-Za-z0-9_]*)\}", match =>
         {
             var symbol = match.Groups[1].Value;
             if (!TryResolveLiteral(symbol, out var replacement))
                 return match.Value;
+            changed = true;
             return LiteralToText(replacement);
         });
 
-        if (output == template)
+        if (!changed)
+            return null;
+
+        // Full-fold only: any unresolved placeholder keeps runtime interpolation.
+        if (Regex.IsMatch(output, @"\{[A-Za-z_][A-Za-z0-9_]*\}", RegexOptions.CultureInvariant))
             return null;
 
         return StringLiteral(output, literal.Line, literal.Column);
@@ -591,7 +721,7 @@ internal sealed class ConstantFolder
     {
         if (expression is LiteralExpression literal)
         {
-            scopes.Peek()[name] = new Binding(CloneLiteral(literal), null, null);
+            scopes.Peek()[name] = new Binding(CloneLiteral(literal), null, null, null);
             return;
         }
 
@@ -600,7 +730,8 @@ internal sealed class ConstantFolder
             scopes.Peek()[name] = new Binding(
                 null,
                 CloneArrayLiteral(arrayLiteral),
-                arrayLiteral.Elements.Count);
+                arrayLiteral.Elements.Count,
+                null);
             return;
         }
 
@@ -1117,6 +1248,176 @@ internal sealed class ConstantFolder
         }
     }
 
-    private sealed record Binding(LiteralExpression? Literal, ArrayLiteral? Array, int? ArrayLength);
+    private ExpressionPurity GetExpressionPurity(Expression expression)
+    {
+        return expression switch
+        {
+            LiteralExpression => ExpressionPurity.Pure,
+            IdentifierExpression => ExpressionPurity.Pure,
+            EnumAccessExpression => ExpressionPurity.Pure,
+            UnaryExpression unary => GetExpressionPurity(unary.Operand),
+            BinaryExpression binary when GetExpressionPurity(binary.Left) == ExpressionPurity.Pure
+                                         && GetExpressionPurity(binary.Right) == ExpressionPurity.Pure =>
+                ExpressionPurity.Pure,
+            IndexAccessExpression index when GetExpressionPurity(index.Array) == ExpressionPurity.Pure
+                                             && GetExpressionPurity(index.Index) == ExpressionPurity.Pure =>
+                ExpressionPurity.Pure,
+            ArrayLiteral array when array.Elements.All(element => GetExpressionPurity(element) == ExpressionPurity.Pure) =>
+                ExpressionPurity.Pure,
+            FunctionCallExpression call when pureFunctions.ContainsKey(call.FunctionName)
+                                            && call.Arguments.All(argument => GetExpressionPurity(argument) == ExpressionPurity.Pure) =>
+                ExpressionPurity.Pure,
+            _ => ExpressionPurity.Impure
+        };
+    }
+
+    private Dictionary<string, Binding> CloneCurrentScope()
+    {
+        return CloneScope(scopes.Peek());
+    }
+
+    private static Dictionary<string, Binding> CloneScope(Dictionary<string, Binding> source)
+    {
+        var clone = new Dictionary<string, Binding>(StringComparer.Ordinal);
+        foreach (var pair in source)
+            clone[pair.Key] = CloneBinding(pair.Value);
+        return clone;
+    }
+
+    private static Dictionary<string, Binding> FilterScopeToBaseline(
+        Dictionary<string, Binding> scope,
+        IEnumerable<string> baselineKeys)
+    {
+        var filtered = new Dictionary<string, Binding>(StringComparer.Ordinal);
+        foreach (var key in baselineKeys)
+        {
+            if (scope.TryGetValue(key, out var value))
+                filtered[key] = CloneBinding(value);
+        }
+
+        return filtered;
+    }
+
+    private static Dictionary<string, Binding> MergeScopesOnBaseline(
+        IReadOnlyList<Dictionary<string, Binding>> branches,
+        IEnumerable<string> baselineKeys)
+    {
+        if (branches.Count == 0)
+            return new Dictionary<string, Binding>(StringComparer.Ordinal);
+
+        var merged = new Dictionary<string, Binding>(StringComparer.Ordinal);
+        foreach (var key in baselineKeys)
+        {
+            if (!branches[0].TryGetValue(key, out var baselineBinding))
+                continue;
+
+            var allEqual = true;
+            for (var i = 1; i < branches.Count; i++)
+            {
+                if (!branches[i].TryGetValue(key, out var branchBinding) || !BindingEquals(baselineBinding, branchBinding))
+                {
+                    allEqual = false;
+                    break;
+                }
+            }
+
+            if (allEqual)
+                merged[key] = CloneBinding(baselineBinding);
+        }
+
+        return merged;
+    }
+
+    private void ReplaceCurrentScope(Dictionary<string, Binding> replacement)
+    {
+        scopes.Pop();
+        scopes.Push(replacement);
+    }
+
+    private static Binding CloneBinding(Binding binding)
+    {
+        var indexed = binding.IndexedLiterals is null
+            ? null
+            : binding.IndexedLiterals.ToDictionary(kvp => kvp.Key, kvp => CloneLiteral(kvp.Value), StringComparer.Ordinal);
+
+        return new Binding(
+            binding.Literal is null ? null : CloneLiteral(binding.Literal),
+            binding.Array is null ? null : CloneArrayLiteral(binding.Array),
+            binding.ArrayLength,
+            indexed);
+    }
+
+    private static bool BindingEquals(Binding left, Binding right)
+    {
+        if (!LiteralEquals(left.Literal, right.Literal))
+            return false;
+        if (!ArrayEquals(left.Array, right.Array))
+            return false;
+        if (left.ArrayLength != right.ArrayLength)
+            return false;
+        return IndexedLiteralsEqual(left.IndexedLiterals, right.IndexedLiterals);
+    }
+
+    private static bool LiteralEquals(LiteralExpression? left, LiteralExpression? right)
+    {
+        if (left is null && right is null)
+            return true;
+        if (left is null || right is null)
+            return false;
+        return AreLiteralsEqual(left, right);
+    }
+
+    private static bool ArrayEquals(ArrayLiteral? left, ArrayLiteral? right)
+    {
+        if (left is null && right is null)
+            return true;
+        if (left is null || right is null)
+            return false;
+        if (left.Elements.Count != right.Elements.Count)
+            return false;
+
+        for (var i = 0; i < left.Elements.Count; i++)
+        {
+            if (left.Elements[i] is not LiteralExpression ll || right.Elements[i] is not LiteralExpression rl)
+                return false;
+            if (!AreLiteralsEqual(ll, rl))
+                return false;
+        }
+
+        return true;
+    }
+
+    private static bool IndexedLiteralsEqual(
+        IReadOnlyDictionary<string, LiteralExpression>? left,
+        IReadOnlyDictionary<string, LiteralExpression>? right)
+    {
+        if (left is null && right is null)
+            return true;
+        if (left is null || right is null)
+            return false;
+        if (left.Count != right.Count)
+            return false;
+
+        foreach (var entry in left)
+        {
+            if (!right.TryGetValue(entry.Key, out var rightLiteral))
+                return false;
+            if (!AreLiteralsEqual(entry.Value, rightLiteral))
+                return false;
+        }
+
+        return true;
+    }
+
+    private sealed record Binding(
+        LiteralExpression? Literal,
+        ArrayLiteral? Array,
+        int? ArrayLength,
+        IReadOnlyDictionary<string, LiteralExpression>? IndexedLiterals);
     private sealed record PureFunctionDefinition(string Name, IReadOnlyList<Parameter> Parameters, Expression ReturnExpression);
+    private enum ExpressionPurity
+    {
+        Pure,
+        Impure
+    }
 }
