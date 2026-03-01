@@ -8,6 +8,9 @@
 - [ ] Add @allow directive for next-statement warning suppression (Wxxx only) (high) #feature #language #compiler
       @created 2026-03-01 01:11
 
+- [ ] Emit unused @allow warning (W509) when no targeted warning is matched #feature #compiler #diagnostics
+      @created 2026-03-01 01:11
+
 
 ## Completed
 
