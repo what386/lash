@@ -69,7 +69,8 @@ public sealed class WarningAnalyzer
                     SymbolKind.Variable,
                     variable.Line,
                     variable.Column,
-                    ignoreUnused: ShouldIgnoreUnusedSymbol(variable.Name) || variable.IsPublic);
+                    ignoreUnused: ShouldIgnoreUnusedSymbol(variable.Name) || variable.IsPublic,
+                    suggestConst: variable.Kind == VariableDeclaration.VarKind.Let);
 
                 if (variable.Kind == VariableDeclaration.VarKind.Const && TryEvaluateConstValue(variable.Value, out var constValue))
                 {
@@ -86,6 +87,7 @@ public sealed class WarningAnalyzer
 
                 if (assignment.Target is IdentifierExpression identifier)
                 {
+                    MarkVariableReassigned(identifier.Name);
                     InvalidateConst(identifier.Name);
                 }
                 else if (assignment.Target is IndexAccessExpression indexTarget)
@@ -93,7 +95,10 @@ public sealed class WarningAnalyzer
                     AnalyzeExpression(indexTarget.Array);
                     AnalyzeExpression(indexTarget.Index);
                     if (indexTarget.Array is IdentifierExpression arrayIdentifier)
+                    {
+                        MarkVariableReassigned(arrayIdentifier.Name);
                         InvalidateConst(arrayIdentifier.Name);
+                    }
                 }
 
                 return false;
@@ -249,6 +254,8 @@ public sealed class WarningAnalyzer
                     }
 
                     InvalidateConst(subshellStatement.IntoVariable!);
+                    if (!subshellStatement.IntoCreatesVariable)
+                        MarkVariableReassigned(subshellStatement.IntoVariable!);
                 }
 
                 if (subshellStatement.RunInBackground)
@@ -278,6 +285,8 @@ public sealed class WarningAnalyzer
                     }
 
                     InvalidateConst(coprocStatement.IntoVariable!);
+                    if (!coprocStatement.IntoCreatesVariable)
+                        MarkVariableReassigned(coprocStatement.IntoVariable!);
                 }
 
                 SetCurrentTrackedJobs(CurrentTrackedJobs() + 1);
@@ -307,6 +316,8 @@ public sealed class WarningAnalyzer
                     }
 
                     InvalidateConst(waitStatement.IntoVariable!);
+                    if (!waitStatement.IntoCreatesVariable)
+                        MarkVariableReassigned(waitStatement.IntoVariable!);
                 }
 
                 SetCurrentTrackedJobs(0);
@@ -330,6 +341,8 @@ public sealed class WarningAnalyzer
                     }
 
                     InvalidateConst(waitStatement.IntoVariable!);
+                    if (!waitStatement.IntoCreatesVariable)
+                        MarkVariableReassigned(waitStatement.IntoVariable!);
                 }
 
                 return false;
@@ -1302,9 +1315,9 @@ public sealed class WarningAnalyzer
         EmitUnusedSymbolWarnings(scope);
     }
 
-    private void DeclareSymbol(string name, SymbolKind kind, int line, int column, bool ignoreUnused)
+    private void DeclareSymbol(string name, SymbolKind kind, int line, int column, bool ignoreUnused, bool suggestConst = false)
     {
-        scopes.Peek().Symbols[name] = new SymbolEntry(name, kind, line, column, ignoreUnused);
+        scopes.Peek().Symbols[name] = new SymbolEntry(name, kind, line, column, ignoreUnused, suggestConst);
     }
 
     private void MarkVariableRead(string name)
@@ -1333,10 +1346,32 @@ public sealed class WarningAnalyzer
         }
     }
 
+    private void MarkVariableReassigned(string name)
+    {
+        foreach (var scope in scopes)
+        {
+            if (!scope.Symbols.TryGetValue(name, out var symbol))
+                continue;
+
+            if (symbol.Kind == SymbolKind.Variable)
+                symbol.IsReassigned = true;
+            return;
+        }
+    }
+
     private void EmitUnusedSymbolWarnings(ScopeFrame scope)
     {
         foreach (var symbol in scope.Symbols.Values.OrderBy(static s => s.Line).ThenBy(static s => s.Column))
         {
+            if (symbol.Kind == SymbolKind.Variable && symbol.SuggestConst && symbol.IsUsed && !symbol.IsReassigned)
+            {
+                AddWarning(
+                    $"Variable '{symbol.Name}' is declared with 'let' but never reassigned; use 'const'.",
+                    symbol.Line,
+                    symbol.Column,
+                    DiagnosticCodes.LetNeverReassigned);
+            }
+
             if (symbol.IsUsed || symbol.IgnoreUnused)
                 continue;
 
@@ -1426,6 +1461,7 @@ public sealed class WarningAnalyzer
             DiagnosticCodes.EquivalentIfBranches => "Remove the condition or keep only one branch body.",
             DiagnosticCodes.DuplicateSwitchCaseBody => "Merge equivalent case bodies or keep only one case.",
             DiagnosticCodes.EquivalentBranchAssignment => "Move this assignment outside the conditional.",
+            DiagnosticCodes.LetNeverReassigned => "Change 'let' to 'const' if this variable is intentionally immutable.",
             _ => null
         };
 
@@ -1445,13 +1481,14 @@ public sealed class WarningAnalyzer
 
     private sealed class SymbolEntry
     {
-        public SymbolEntry(string name, SymbolKind kind, int line, int column, bool ignoreUnused)
+        public SymbolEntry(string name, SymbolKind kind, int line, int column, bool ignoreUnused, bool suggestConst)
         {
             Name = name;
             Kind = kind;
             Line = line;
             Column = column;
             IgnoreUnused = ignoreUnused;
+            SuggestConst = suggestConst;
         }
 
         public string Name { get; }
@@ -1459,7 +1496,9 @@ public sealed class WarningAnalyzer
         public int Line { get; }
         public int Column { get; }
         public bool IgnoreUnused { get; }
+        public bool SuggestConst { get; }
         public bool IsUsed { get; set; }
+        public bool IsReassigned { get; set; }
     }
 
     private enum SymbolKind

@@ -53,4 +53,5 @@ public static class DiagnosticCodes
     public const string EquivalentIfBranches = "W506";
     public const string DuplicateSwitchCaseBody = "W507";
     public const string EquivalentBranchAssignment = "W508";
+    public const string LetNeverReassigned = "W509";
 }

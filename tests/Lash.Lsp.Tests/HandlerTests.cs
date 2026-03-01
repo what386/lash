@@ -82,6 +82,45 @@ public class HandlerTests
     }
 
     [Fact]
+    public async Task CodeActionHandler_OffersLetToConstQuickFixForNeverReassignedWarning()
+    {
+        var snapshot = TestHelpers.CreateSnapshot(
+            """
+            let greeting = "hello"
+            echo $greeting
+            """);
+
+        var store = new DocumentStore();
+        var tracked = store.Upsert(snapshot.Uri, snapshot.Text);
+        tracked.Analysis = snapshot.Analysis;
+
+        var handler = new CodeActionHandler(store, new SnapshotTextService());
+        var result = await handler.Handle(
+            new CodeActionParams
+            {
+                TextDocument = new TextDocumentIdentifier { Uri = snapshot.Uri },
+                Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(new Position(0, 0), new Position(0, 3)),
+                Context = new CodeActionContext
+                {
+                    Diagnostics = new Container<Diagnostic>(
+                        new Diagnostic
+                        {
+                            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(new Position(0, 0), new Position(0, 3)),
+                            Code = "W509",
+                            Source = "lash",
+                            Message = "Variable 'greeting' is declared with 'let' but never reassigned; use 'const'."
+                        })
+                }
+            },
+            CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.NotEmpty(result!);
+        var action = Assert.IsType<CodeAction>(result!.First().CodeAction);
+        Assert.Equal("Change 'let' to 'const'", action.Title);
+    }
+
+    [Fact]
     public async Task PrepareRenameHandler_ReturnsRangeForRenameableSymbol()
     {
         var snapshot = TestHelpers.CreateSnapshot("let value = 1\nlet x = $value\n");

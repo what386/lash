@@ -302,6 +302,42 @@ public class AdditionalAnalyzerTests
     }
 
     [Fact]
+    public void WarningAnalyzer_EmitsLetNeverReassignedWarning()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            let greeting = "hello"
+            echo $greeting
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new WarningAnalyzer(diagnostics).Analyze(program);
+
+        Assert.Contains(
+            diagnostics.GetWarnings(),
+            warning => warning.Code == DiagnosticCodes.LetNeverReassigned
+                       && warning.Message.Contains("use 'const'", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void WarningAnalyzer_DoesNotEmitLetNeverReassignedWhenVariableIsReassigned()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            let count = 0
+            count = $count + 1
+            echo $count
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new WarningAnalyzer(diagnostics).Analyze(program);
+
+        Assert.DoesNotContain(
+            diagnostics.GetWarnings(),
+            warning => warning.Code == DiagnosticCodes.LetNeverReassigned);
+    }
+
+    [Fact]
     public void WarningAnalyzer_TreatsInterpolatedLiteralsAsVariableReads()
     {
         var program = TestCompiler.ParseOrThrow(
