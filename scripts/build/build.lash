@@ -27,30 +27,32 @@ const BLUE = "\033[0;34m"
 const NC = "\033[0m"
 
 fn show_help()
-    echo "Usage: $0 [OPTIONS] <platform1> [platform2] ..."
-    echo ""
-    echo "Options:"
-    echo "  --no-trim [tool]   Disable trimming globally or for one tool"
-    echo "  --no-single-file   Publish as multiple files (faster builds, easier debugging)"
-    echo "  --no-ready2run     Disable ReadyToRun compilation (faster builds, slower startup)"
-    echo "  -h, --help         Show this help message"
-    echo ""
-    echo "Arguments:"
-    echo "  <platforms>  Space-separated list of platforms to build"
-    echo ""
-    echo "Available platforms:"
-    echo "  win-x64, win-x86, win-arm64"
-    echo "  linux-x64, linux-arm64, linux-arm"
-    echo "  osx-x64, osx-arm64"
-    echo ""
-    echo "Examples:"
-    echo "  $0 win-x64                           # Build only Windows 64-bit"
-    echo "  $0 --no-trim win-x64                 # Build Windows 64-bit without trimming"
-    echo "  $0 --no-trim lashlsp linux-x64       # Disable trimming only for lashlsp"
-    echo "  $0 --no-single-file --no-trim win-x64  # Fast dev build"
-    echo "  $0 win-x64 linux-x64                 # Build Windows and Linux 64-bit"
-    echo "  $0 osx-x64 osx-arm64                 # Build both macOS versions"
-    exit 0
+    echo
+    [[
+    Usage: $0 [OPTIONS] <platform1> [platform2] ...
+
+    Options:
+      --no-trim [tool]   Disable trimming globally or for one tool"
+      --no-single-file   Publish as multiple files (faster builds, easier debugging)"
+      --no-ready2run     Disable ReadyToRun compilation (faster builds, slower startup)"
+      -h, --help         Show this help message"
+
+    Arguments:
+      <platforms>  Space-separated list of platforms to build"
+
+    Available platforms:
+      win-x64, win-x86, win-arm64"
+      linux-x64, linux-arm64, linux-arm"
+      osx-x64, osx-arm64"
+
+    Examples:"
+      $0 win-x64                           # Build only Windows 64-bit"
+      $0 --no-trim win-x64                 # Build Windows 64-bit without trimming"
+      $0 --no-trim lashlsp linux-x64       # Disable trimming only for lashlsp"
+      $0 --no-single-file --no-trim win-x64  # Fast dev build"
+      $0 win-x64 linux-x64                 # Build Windows and Linux 64-bit"
+      $0 osx-x64 osx-arm64                 # Build both macOS versions"
+]]
 end
 
 fn is_known_tool(tool_name)
