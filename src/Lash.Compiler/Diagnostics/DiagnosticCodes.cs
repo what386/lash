@@ -50,4 +50,7 @@ public static class DiagnosticCodes
     public const string UnusedVariable = "W503";
     public const string UnusedParameter = "W504";
     public const string UnusedFunction = "W505";
+    public const string EquivalentIfBranches = "W506";
+    public const string DuplicateSwitchCaseBody = "W507";
+    public const string EquivalentBranchAssignment = "W508";
 }

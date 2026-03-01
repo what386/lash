@@ -374,6 +374,8 @@ public sealed class WarningAnalyzer
 
     private bool AnalyzeIfStatement(IfStatement ifStatement, bool inLoop)
     {
+        WarnEquivalentIfBranches(ifStatement);
+
         if (TryEvaluateBool(ifStatement.Condition, out var conditionValue))
         {
             if (conditionValue)
@@ -492,6 +494,8 @@ public sealed class WarningAnalyzer
 
     private bool AnalyzeSwitchStatement(SwitchStatement switchStatement, bool inLoop)
     {
+        WarnDuplicateSwitchCaseBodies(switchStatement);
+
         if (!TryEvaluateConstValue(switchStatement.Value, out var switchValue))
         {
             foreach (var clause in switchStatement.Cases)
@@ -559,6 +563,213 @@ public sealed class WarningAnalyzer
         PopTrackedJobs();
         PopScope();
         return new BranchResult(terminated, jobs);
+    }
+
+    private void WarnEquivalentIfBranches(IfStatement ifStatement)
+    {
+        if (ifStatement.ElifClauses.Count != 0 || ifStatement.ElseBlock.Count == 0)
+            return;
+
+        var blocksEquivalent = AreEquivalentBlocks(ifStatement.ThenBlock, ifStatement.ElseBlock);
+        if (blocksEquivalent)
+        {
+            AddWarning(
+                "Redundant if: 'then' and 'else' branches are equivalent.",
+                ifStatement.Line,
+                ifStatement.Column,
+                DiagnosticCodes.EquivalentIfBranches);
+        }
+
+        if (TryGetSingleAssignment(ifStatement.ThenBlock, out var thenAssignment)
+            && TryGetSingleAssignment(ifStatement.ElseBlock, out var elseAssignment)
+            && AreEquivalentAssignments(thenAssignment, elseAssignment))
+        {
+            AddWarning(
+                "Redundant if assignment: both branches assign the same target and value.",
+                ifStatement.Line,
+                ifStatement.Column,
+                DiagnosticCodes.EquivalentBranchAssignment);
+        }
+    }
+
+    private void WarnDuplicateSwitchCaseBodies(SwitchStatement switchStatement)
+    {
+        for (var i = 0; i < switchStatement.Cases.Count; i++)
+        {
+            for (var j = i + 1; j < switchStatement.Cases.Count; j++)
+            {
+                var first = switchStatement.Cases[i];
+                var second = switchStatement.Cases[j];
+                if (!AreEquivalentBlocks(first.Body, second.Body))
+                    continue;
+
+                AddWarning(
+                    "Duplicate switch case body: this case has the same body as an earlier case.",
+                    second.Line,
+                    second.Column,
+                    DiagnosticCodes.DuplicateSwitchCaseBody);
+            }
+        }
+    }
+
+    private static bool TryGetSingleAssignment(List<Statement> block, out Assignment assignment)
+    {
+        if (block.Count == 1 && block[0] is Assignment single)
+        {
+            assignment = single;
+            return true;
+        }
+
+        assignment = null!;
+        return false;
+    }
+
+    private static bool AreEquivalentAssignments(Assignment left, Assignment right)
+    {
+        return left.IsGlobal == right.IsGlobal
+               && string.Equals(left.Operator, right.Operator, StringComparison.Ordinal)
+               && AreEquivalentExpressions(left.Target, right.Target)
+               && AreEquivalentExpressions(left.Value, right.Value);
+    }
+
+    private static bool AreEquivalentBlocks(IReadOnlyList<Statement> left, IReadOnlyList<Statement> right)
+    {
+        if (left.Count != right.Count)
+            return false;
+
+        for (var i = 0; i < left.Count; i++)
+        {
+            if (!AreEquivalentStatements(left[i], right[i]))
+                return false;
+        }
+
+        return true;
+    }
+
+    private static bool AreEquivalentStatements(Statement left, Statement right)
+    {
+        if (left.GetType() != right.GetType())
+            return false;
+
+        return (left, right) switch
+        {
+            (CommandStatement l, CommandStatement r) => string.Equals(l.Script, r.Script, StringComparison.Ordinal),
+            (VariableDeclaration l, VariableDeclaration r) =>
+                l.IsGlobal == r.IsGlobal
+                && l.Kind == r.Kind
+                && string.Equals(l.Name, r.Name, StringComparison.Ordinal)
+                && AreEquivalentExpressions(l.Value, r.Value),
+            (Assignment l, Assignment r) => AreEquivalentAssignments(l, r),
+            (ExpressionStatement l, ExpressionStatement r) => AreEquivalentExpressions(l.Expression, r.Expression),
+            (ShellStatement l, ShellStatement r) => AreEquivalentExpressions(l.Command, r.Command),
+            (TestStatement l, TestStatement r) => AreEquivalentExpressions(l.Condition, r.Condition),
+            (ReturnStatement l, ReturnStatement r) =>
+                (l.Value is null && r.Value is null)
+                || (l.Value is not null && r.Value is not null && AreEquivalentExpressions(l.Value, r.Value)),
+            (BreakStatement, BreakStatement) => true,
+            (ContinueStatement, ContinueStatement) => true,
+            (IfStatement l, IfStatement r) =>
+                AreEquivalentExpressions(l.Condition, r.Condition)
+                && AreEquivalentBlocks(l.ThenBlock, r.ThenBlock)
+                && AreEquivalentElifClauses(l.ElifClauses, r.ElifClauses)
+                && AreEquivalentBlocks(l.ElseBlock, r.ElseBlock),
+            (SwitchStatement l, SwitchStatement r) =>
+                AreEquivalentExpressions(l.Value, r.Value)
+                && AreEquivalentSwitchCases(l.Cases, r.Cases),
+            _ => false
+        };
+    }
+
+    private static bool AreEquivalentElifClauses(IReadOnlyList<ElifClause> left, IReadOnlyList<ElifClause> right)
+    {
+        if (left.Count != right.Count)
+            return false;
+
+        for (var i = 0; i < left.Count; i++)
+        {
+            if (!AreEquivalentExpressions(left[i].Condition, right[i].Condition)
+                || !AreEquivalentBlocks(left[i].Body, right[i].Body))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool AreEquivalentSwitchCases(IReadOnlyList<SwitchCaseClause> left, IReadOnlyList<SwitchCaseClause> right)
+    {
+        if (left.Count != right.Count)
+            return false;
+
+        for (var i = 0; i < left.Count; i++)
+        {
+            if (!AreEquivalentExpressions(left[i].Pattern, right[i].Pattern)
+                || !AreEquivalentBlocks(left[i].Body, right[i].Body))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool AreEquivalentExpressions(Expression left, Expression right)
+    {
+        if (left.GetType() != right.GetType())
+            return false;
+
+        return (left, right) switch
+        {
+            (LiteralExpression l, LiteralExpression r) =>
+                l.IsInterpolated == r.IsInterpolated
+                && l.IsMultiline == r.IsMultiline
+                && l.LiteralType.PrimitiveKind == r.LiteralType.PrimitiveKind
+                && string.Equals(l.Value?.ToString(), r.Value?.ToString(), StringComparison.Ordinal),
+            (IdentifierExpression l, IdentifierExpression r) => string.Equals(l.Name, r.Name, StringComparison.Ordinal),
+            (EnumAccessExpression l, EnumAccessExpression r) =>
+                string.Equals(l.EnumName, r.EnumName, StringComparison.Ordinal)
+                && string.Equals(l.MemberName, r.MemberName, StringComparison.Ordinal),
+            (UnaryExpression l, UnaryExpression r) =>
+                string.Equals(l.Operator, r.Operator, StringComparison.Ordinal)
+                && AreEquivalentExpressions(l.Operand, r.Operand),
+            (BinaryExpression l, BinaryExpression r) =>
+                string.Equals(l.Operator, r.Operator, StringComparison.Ordinal)
+                && AreEquivalentExpressions(l.Left, r.Left)
+                && AreEquivalentExpressions(l.Right, r.Right),
+            (RangeExpression l, RangeExpression r) =>
+                AreEquivalentExpressions(l.Start, r.Start) && AreEquivalentExpressions(l.End, r.End),
+            (PipeExpression l, PipeExpression r) =>
+                AreEquivalentExpressions(l.Left, r.Left) && AreEquivalentExpressions(l.Right, r.Right),
+            (RedirectExpression l, RedirectExpression r) =>
+                string.Equals(l.Operator, r.Operator, StringComparison.Ordinal)
+                && AreEquivalentExpressions(l.Left, r.Left)
+                && AreEquivalentExpressions(l.Right, r.Right),
+            (IndexAccessExpression l, IndexAccessExpression r) =>
+                AreEquivalentExpressions(l.Array, r.Array) && AreEquivalentExpressions(l.Index, r.Index),
+            (FunctionCallExpression l, FunctionCallExpression r) =>
+                string.Equals(l.FunctionName, r.FunctionName, StringComparison.Ordinal)
+                && AreEquivalentExpressionLists(l.Arguments, r.Arguments),
+            (ArrayLiteral l, ArrayLiteral r) => AreEquivalentExpressionLists(l.Elements, r.Elements),
+            (ShellCaptureExpression l, ShellCaptureExpression r) => AreEquivalentExpressions(l.Command, r.Command),
+            (TestCaptureExpression l, TestCaptureExpression r) => AreEquivalentExpressions(l.Condition, r.Condition),
+            (NullLiteral, NullLiteral) => true,
+            _ => false
+        };
+    }
+
+    private static bool AreEquivalentExpressionLists(IReadOnlyList<Expression> left, IReadOnlyList<Expression> right)
+    {
+        if (left.Count != right.Count)
+            return false;
+
+        for (var i = 0; i < left.Count; i++)
+        {
+            if (!AreEquivalentExpressions(left[i], right[i]))
+                return false;
+        }
+
+        return true;
     }
 
     private void AnalyzeExpression(Expression expression)
@@ -1212,6 +1423,9 @@ public sealed class WarningAnalyzer
             DiagnosticCodes.UnusedVariable => "Remove it, use it, or prefix with '_' to explicitly mark it as intentionally unused.",
             DiagnosticCodes.UnusedParameter => "Remove it, use it, or prefix with '_' to explicitly mark it as intentionally unused.",
             DiagnosticCodes.UnusedFunction => "Call it, remove it, or mark as public if it is an external entrypoint.",
+            DiagnosticCodes.EquivalentIfBranches => "Remove the condition or keep only one branch body.",
+            DiagnosticCodes.DuplicateSwitchCaseBody => "Merge equivalent case bodies or keep only one case.",
+            DiagnosticCodes.EquivalentBranchAssignment => "Move this assignment outside the conditional.",
             _ => null
         };
 

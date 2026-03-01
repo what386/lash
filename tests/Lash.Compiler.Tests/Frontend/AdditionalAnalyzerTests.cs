@@ -209,6 +209,71 @@ public class AdditionalAnalyzerTests
     }
 
     [Fact]
+    public void WarningAnalyzer_EmitsEquivalentIfBranchWarning()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            if $flag
+                echo "same"
+            else
+                echo "same"
+            end
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new WarningAnalyzer(diagnostics).Analyze(program);
+
+        Assert.Contains(
+            diagnostics.GetWarnings(),
+            w => w.Code == DiagnosticCodes.EquivalentIfBranches
+                 && w.Message.Contains("branches are equivalent", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void WarningAnalyzer_EmitsEquivalentBranchAssignmentWarning()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            let out = ""
+            if $flag
+                out = "same"
+            else
+                out = "same"
+            end
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new WarningAnalyzer(diagnostics).Analyze(program);
+
+        Assert.Contains(
+            diagnostics.GetWarnings(),
+            w => w.Code == DiagnosticCodes.EquivalentBranchAssignment
+                 && w.Message.Contains("same target and value", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void WarningAnalyzer_EmitsDuplicateSwitchCaseBodyWarning()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            switch $mode
+                case "a":
+                    echo "same"
+                case "b":
+                    echo "same"
+            end
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new WarningAnalyzer(diagnostics).Analyze(program);
+
+        Assert.Contains(
+            diagnostics.GetWarnings(),
+            w => w.Code == DiagnosticCodes.DuplicateSwitchCaseBody
+                 && w.Message.Contains("Duplicate switch case body", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void WarningAnalyzer_EmitsUnusedSymbolWarnings()
     {
         var program = TestCompiler.ParseOrThrow(
