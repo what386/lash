@@ -338,4 +338,90 @@ public class NameResolverTests
 
         Assert.Contains(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.InvalidParameterDeclaration && e.Message.Contains("cannot appear after defaulted parameters", StringComparison.Ordinal));
     }
+
+    [Fact]
+    public void NameResolver_RejectsInvalidSetFlag()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            set -z
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new NameResolver(diagnostics).Analyze(program);
+
+        Assert.Contains(
+            diagnostics.GetErrors(),
+            e => e.Code == DiagnosticCodes.InvalidCommandUsage
+                 && e.Message.Contains("Invalid set flag", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void NameResolver_RejectsInvalidExportTarget()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            export 1BAD=value
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new NameResolver(diagnostics).Analyze(program);
+
+        Assert.Contains(
+            diagnostics.GetErrors(),
+            e => e.Code == DiagnosticCodes.InvalidCommandUsage
+                 && e.Message.Contains("Invalid export assignment target", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void NameResolver_RejectsInvalidShoptFlag()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            shopt -z nullglob
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new NameResolver(diagnostics).Analyze(program);
+
+        Assert.Contains(
+            diagnostics.GetErrors(),
+            e => e.Code == DiagnosticCodes.InvalidCommandUsage
+                 && e.Message.Contains("Invalid shopt flag", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void NameResolver_RejectsSourceWithoutPath()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            source
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new NameResolver(diagnostics).Analyze(program);
+
+        Assert.Contains(
+            diagnostics.GetErrors(),
+            e => e.Code == DiagnosticCodes.InvalidCommandUsage
+                 && e.Message.Contains("requires a path", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void NameResolver_AllowsValidShellCommands()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            set -euo pipefail
+            export PATH=/usr/bin
+            shopt -s nullglob
+            alias ll='ls -lah'
+            source ./env.sh
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new NameResolver(diagnostics).Analyze(program);
+
+        Assert.DoesNotContain(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.InvalidCommandUsage);
+    }
 }

@@ -99,6 +99,54 @@ public class GrammarTests
     }
 
     [Fact]
+    public void ModuleLoader_ParsesShellCommandsIntoStructuredAstNodes()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            set -euo pipefail
+            export PATH=/usr/bin
+            shopt -s nullglob
+            alias ll='ls -lah'
+            source ./env.sh
+            . ./env2.sh
+            """);
+
+        Assert.Collection(
+            program.Statements,
+            statement =>
+            {
+                var command = Assert.IsType<ShellCommandStatement>(statement);
+                Assert.Equal(ShellCommandKind.Set, command.Kind);
+                Assert.Equal(["-euo", "pipefail"], command.Arguments);
+            },
+            statement =>
+            {
+                var command = Assert.IsType<ShellCommandStatement>(statement);
+                Assert.Equal(ShellCommandKind.Export, command.Kind);
+            },
+            statement =>
+            {
+                var command = Assert.IsType<ShellCommandStatement>(statement);
+                Assert.Equal(ShellCommandKind.Shopt, command.Kind);
+            },
+            statement =>
+            {
+                var command = Assert.IsType<ShellCommandStatement>(statement);
+                Assert.Equal(ShellCommandKind.Alias, command.Kind);
+            },
+            statement =>
+            {
+                var command = Assert.IsType<ShellCommandStatement>(statement);
+                Assert.Equal(ShellCommandKind.Source, command.Kind);
+            },
+            statement =>
+            {
+                var command = Assert.IsType<ShellCommandStatement>(statement);
+                Assert.Equal(ShellCommandKind.Source, command.Kind);
+            });
+    }
+
+    [Fact]
     public void ModuleLoader_ParsesPipeWithFunctionStageAsExpressionStatement()
     {
         var program = TestCompiler.ParseOrThrow(

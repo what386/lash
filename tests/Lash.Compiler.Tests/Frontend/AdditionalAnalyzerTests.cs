@@ -259,6 +259,27 @@ public class AdditionalAnalyzerTests
     }
 
     [Fact]
+    public void WarningAnalyzer_TreatsCaptureCommandVariableExpansionsAsReads()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            let projects = ["a:b"]
+            for entry in $projects
+                let known = $(printf '%s' "$entry" | cut -d: -f1)
+                echo $known
+            end
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new WarningAnalyzer(diagnostics).Analyze(program);
+
+        Assert.DoesNotContain(
+            diagnostics.GetWarnings(),
+            w => w.Code == DiagnosticCodes.UnusedVariable
+                 && w.Message.Contains("entry", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void WarningAnalyzer_TreatsRawCommandVariableExpansionsAsReads()
     {
         var program = TestCompiler.ParseOrThrow(
