@@ -4,15 +4,15 @@ set -euo pipefail
 
 cd ../..
 
-let INPUT_ROOT = "./target/release"
-let OUTPUT_DIR = "./dist"
+const INPUT_ROOT = "./target/release"
+const OUTPUT_DIR = "./dist"
 
 mkdir -p "$OUTPUT_DIR"
 cd "$INPUT_ROOT"
 
 let packed = 0
 for dir in ./*
-    let archive = "../../dist/" + $dir + ".tar.gz"
+    const archive = "../../dist/" + $dir + ".tar.gz"
 
     echo "Packing:" $dir "->" $archive
     tar -czf "$archive" "$dir"
