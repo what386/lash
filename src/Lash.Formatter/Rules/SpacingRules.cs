@@ -39,6 +39,13 @@ internal static class SpacingRules
                 continue;
             }
 
+            if (TryReadCaptureSegment(line, i, out var capture, out var consumed))
+            {
+                sb.Append(capture);
+                i += consumed - 1;
+                continue;
+            }
+
             if (ch == '"')
             {
                 inString = true;
@@ -542,6 +549,89 @@ internal static class SpacingRules
     private static bool IsTightOperator(string op)
     {
         return op is "::" or "++" or "--";
+    }
+
+    private static bool TryReadCaptureSegment(string line, int index, out string segment, out int consumed)
+    {
+        segment = string.Empty;
+        consumed = 0;
+
+        if (index + 1 >= line.Length || line[index] != '$' || line[index + 1] != '(')
+            return false;
+
+        int depth = 0;
+        bool inSingleQuote = false;
+        bool inDoubleQuote = false;
+        bool escaped = false;
+
+        for (int i = index; i < line.Length; i++)
+        {
+            var ch = line[i];
+
+            if (inDoubleQuote)
+            {
+                if (escaped)
+                {
+                    escaped = false;
+                    continue;
+                }
+
+                if (ch == '\\')
+                {
+                    escaped = true;
+                    continue;
+                }
+
+                if (ch == '"')
+                    inDoubleQuote = false;
+
+                continue;
+            }
+
+            if (inSingleQuote)
+            {
+                if (ch == '\'')
+                    inSingleQuote = false;
+                continue;
+            }
+
+            if (ch == '"')
+            {
+                inDoubleQuote = true;
+                continue;
+            }
+
+            if (ch == '\'')
+            {
+                inSingleQuote = true;
+                continue;
+            }
+
+            if (ch == '(')
+            {
+                if (i > 0 && line[i - 1] == '$')
+                    depth++;
+                else if (depth > 0)
+                    depth++;
+                continue;
+            }
+
+            if (ch == ')')
+            {
+                if (depth == 0)
+                    return false;
+
+                depth--;
+                if (depth == 0)
+                {
+                    consumed = i - index + 1;
+                    segment = line.Substring(index, consumed);
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private static void TrimTrailingSpaces(StringBuilder sb)

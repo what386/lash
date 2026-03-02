@@ -154,6 +154,35 @@ public class FormatterRulesTests
     }
 
     [Fact]
+    public void Formatter_PreservesShellFlagsInsideCaptureExpressions()
+    {
+        const string input =
+            """
+            const known = $(printf '%s' $entry | cut -d: -f1)
+            const size = $(du -h "$dest" | cut -f1)
+            """;
+
+        const string expected =
+            """
+            const known = $(printf '%s' $entry | cut -d: -f1)
+            const size = $(du -h "$dest" | cut -f1)
+            """;
+
+        var formatted = LashFormatter.Format(input);
+        Assert.Equal(expected.Replace("\r\n", "\n") + "\n", formatted);
+    }
+
+    [Fact]
+    public void Formatter_NormalizesOutsideCaptureButKeepsCaptureRaw()
+    {
+        const string input = "const value=$(printf '%s' $entry | cut -d: -f1)";
+        const string expected = "const value = $(printf '%s' $entry | cut -d: -f1)\n";
+
+        var formatted = LashFormatter.Format(input);
+        Assert.Equal(expected, formatted);
+    }
+
+    [Fact]
     public void Formatter_PreservesEnumAccessOperatorWithoutSpaces()
     {
         const string input = "let selected=AccountType :: Checking";
