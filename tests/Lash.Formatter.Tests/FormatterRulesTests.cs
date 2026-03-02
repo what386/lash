@@ -185,6 +185,56 @@ public class FormatterRulesTests
     }
 
     [Fact]
+    public void Formatter_IndentsMultilineBracketLiteralEntries()
+    {
+        const string input =
+            """
+            readonly PROJECTS = [
+            "lash:./src/Lash.Cli/Lash.Cli.csproj",
+            "lashc:./src/Lash.Compiler/Lash.Compiler.csproj",
+            "lashfmt:./src/Lash.Formatter/Lash.Formatter.csproj",
+            "lashlsp:./src/Lash.Lsp/Lash.Lsp.csproj"
+            ]
+            """;
+
+        const string expected =
+            """
+            readonly PROJECTS = [
+                "lash:./src/Lash.Cli/Lash.Cli.csproj",
+                "lashc:./src/Lash.Compiler/Lash.Compiler.csproj",
+                "lashfmt:./src/Lash.Formatter/Lash.Formatter.csproj",
+                "lashlsp:./src/Lash.Lsp/Lash.Lsp.csproj"
+            ]
+            """;
+
+        var formatted = LashFormatter.Format(input);
+        Assert.Equal(expected.Replace("\r\n", "\n") + "\n", formatted);
+    }
+
+    [Fact]
+    public void Formatter_DoesNotTreatStringBlockDelimitersAsBracketBlocks()
+    {
+        const string input =
+            """
+            echo [[
+            hello
+            ]]
+            echo "done"
+            """;
+
+        const string expected =
+            """
+            echo [[
+            hello
+            ]]
+            echo "done"
+            """;
+
+        var formatted = LashFormatter.Format(input);
+        Assert.Equal(expected.Replace("\r\n", "\n") + "\n", formatted);
+    }
+
+    [Fact]
     public void Formatter_InsertsBlankLineBetweenTopLevelMajorDeclarations()
     {
         const string input =

@@ -8,7 +8,8 @@ internal static class FormatterEngine
         var lines = normalized.Split('\n');
         var output = new List<string>(lines.Length);
 
-        var blockStack = new List<string>();
+        var keywordStack = new List<string>();
+        int bracketDepth = 0;
         bool previousBlank = false;
 
         foreach (var rawLine in lines)
@@ -37,18 +38,20 @@ internal static class FormatterEngine
             line = SignatureRules.NormalizeFunctionDeclarationSpacing(line);
             var keyword = IndentationRules.GetLeadingKeyword(line);
 
-            if (keyword == "case" && blockStack.Count > 0 && blockStack[^1] == "case")
-                blockStack.RemoveAt(blockStack.Count - 1);
+            if (keyword == "case" && keywordStack.Count > 0 && keywordStack[^1] == "case")
+                keywordStack.RemoveAt(keywordStack.Count - 1);
 
             if (keyword == "end")
             {
-                if (blockStack.Count > 0 && blockStack[^1] == "case")
-                    blockStack.RemoveAt(blockStack.Count - 1);
-                if (blockStack.Count > 0)
-                    blockStack.RemoveAt(blockStack.Count - 1);
+                if (keywordStack.Count > 0 && keywordStack[^1] == "case")
+                    keywordStack.RemoveAt(keywordStack.Count - 1);
+                if (keywordStack.Count > 0)
+                    keywordStack.RemoveAt(keywordStack.Count - 1);
             }
 
-            var indentLevel = blockStack.Count;
+            var leadingBracketClosers = CountLeadingBracketClosers(line);
+            var effectiveBracketDepth = Math.Max(0, bracketDepth - leadingBracketClosers);
+            var indentLevel = keywordStack.Count + effectiveBracketDepth;
             if (keyword is "elif" or "else")
                 indentLevel = Math.Max(0, indentLevel - 1);
 
@@ -60,14 +63,100 @@ internal static class FormatterEngine
             if (keyword is not null)
             {
                 if (IndentationRules.IsIndentOpeningKeyword(keyword))
-                    blockStack.Add(keyword);
+                    keywordStack.Add(keyword);
                 else if (keyword == "case")
-                    blockStack.Add("case");
+                    keywordStack.Add("case");
             }
+
+            bracketDepth = Math.Max(0, bracketDepth + CountBracketDelta(line));
         }
 
         var normalizedLayout = LayoutRules.NormalizeTopLevelLayout(output);
         var result = string.Join('\n', normalizedLayout);
         return options.EnsureTrailingNewline ? result + '\n' : result;
+    }
+
+    private static int CountLeadingBracketClosers(string line)
+    {
+        var trimmedStart = line.TrimStart();
+        if (trimmedStart.StartsWith("]]", StringComparison.Ordinal))
+            return 0;
+
+        int closers = 0;
+        for (int i = 0; i < trimmedStart.Length; i++)
+        {
+            if (trimmedStart[i] != ']')
+                break;
+            closers++;
+        }
+
+        return closers;
+    }
+
+    private static int CountBracketDelta(string line)
+    {
+        int delta = 0;
+        bool inSingleString = false;
+        bool inDoubleString = false;
+        bool escaped = false;
+
+        for (int i = 0; i < line.Length; i++)
+        {
+            char ch = line[i];
+            char? next = i + 1 < line.Length ? line[i + 1] : null;
+
+            if (!inSingleString && !inDoubleString && ch == '/' && next == '/')
+                break;
+
+            if (!inSingleString && ch == '"' && !escaped)
+            {
+                inDoubleString = !inDoubleString;
+                escaped = false;
+                continue;
+            }
+
+            if (!inDoubleString && ch == '\'')
+            {
+                inSingleString = !inSingleString;
+                escaped = false;
+                continue;
+            }
+
+            if (inDoubleString)
+            {
+                escaped = ch == '\\' && !escaped;
+                continue;
+            }
+
+            escaped = false;
+
+            if (inSingleString)
+                continue;
+
+            if (ch == '[')
+            {
+                if (next == '[')
+                {
+                    i++;
+                    continue;
+                }
+
+                delta++;
+                continue;
+            }
+
+            if (ch == ']')
+            {
+                if (next == ']')
+                {
+                    i++;
+                    continue;
+                }
+
+                delta--;
+            }
+        }
+
+        return delta;
     }
 }
