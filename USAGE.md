@@ -153,6 +153,8 @@ end
 show(<(printf "ok\n"))
 ```
 
+`<<` is the single Lash stdin-string operator. For regular string expressions it lowers to Bash here-string form (`<<< ...`). For multiline literals (`[[...]]` / `$[[...]]`) it lowers to heredoc form (`<<...`). `<<-` is the tab-stripping variant and is intended for multiline literals.
+
 ## 9. Subshells and Wait
 
 ```lash

@@ -99,7 +99,7 @@ Lash is a lua-like language that transpiles directly to Bash with minimal runtim
 - Array literal: `[expr, expr, ...]`
 - Identifier: `name`
 - Function call: `name(args...)`
-- Shell output capture: `$sh $"...{var}..."`
+- Shell output capture: `$(...)`
 - Enum access: `EnumName::Member`
 - Index access: `expr[expr]`
 - Unary operators:
@@ -110,8 +110,7 @@ Lash is a lua-like language that transpiles directly to Bash with minimal runtim
   - comparison: `==`, `!=`, `<`, `>`, `<=`, `>=`
   - logical: `&&`, `||`
   - pipe: `|`
-  - redirection: `>`, `2>`, `&>`, `<`, `<>`, `>>`, `2>>`, `&>>`, `<<<`, `n>&m`, `n>&-`
-  - heredoc: `<< [[multiline payload]]`
+  - redirection: `>`, `2>`, `&>`, `<`, `<>`, `>>`, `2>>`, `&>>`, `<<`, `<<-`, `n>&m`, `n>&-`
   - append assignment: `+=`
 
 ### Type model (coarse)
@@ -152,8 +151,13 @@ Lash is a lua-like language that transpiles directly to Bash with minimal runtim
   - `>>` append stdout
   - `2>>` append stderr
   - `&>>` append both stdout+stderr
-  - `<<<` here-string (feed string/expression value to stdin)
-  - `<<` heredoc (feed non-interpolated string literal payload as stdin block)
+  - `<<` stdin-string redirect:
+    - non-multiline string expressions lower to Bash here-string (`<<<`)
+    - multiline string literals lower to Bash heredoc (`<<`)
+    - interpolated multiline literals lower to expanding heredoc delimiters
+  - `<<-` tab-stripping stdin-string redirect:
+    - requires a multiline string literal payload
+    - lowers to Bash `<<-`
   - `n>&m` duplicate/open file descriptor `n` to `m` (for example `3>&1`)
   - `n>&-` close file descriptor `n` (for example `1>&-`)
 
