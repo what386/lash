@@ -53,11 +53,11 @@ commandStatement
     ;
 
 variableDeclaration
-    : 'global'? ('let' | 'const') IDENTIFIER ('=' expression)?
+    : 'global'? ('let' | 'const') bindingName ('=' expression)?
     ;
 
 readonlyDeclaration
-    : 'global'? 'readonly' IDENTIFIER '=' expression
+    : 'global'? 'readonly' bindingName '=' expression
     ;
 
 enumDeclaration
@@ -109,11 +109,11 @@ elseClause
     ;
 
 forLoop
-    : 'for' IDENTIFIER 'in' (expression ('step' expression)? | GLOB_PATTERN) statement* 'end'
+    : 'for' bindingName 'in' (expression ('step' expression)? | GLOB_PATTERN) statement* 'end'
     ;
 
 selectLoop
-    : 'select' IDENTIFIER 'in' (expression | GLOB_PATTERN) statement* 'end'
+    : 'select' bindingName 'in' (expression | GLOB_PATTERN) statement* 'end'
     ;
 
 whileLoop
@@ -159,8 +159,13 @@ waitTarget
 
 intoBinding
     : 'into' variableReference
-    | 'into' 'let' IDENTIFIER
-    | 'into' 'const' IDENTIFIER
+    | 'into' 'let' bindingName
+    | 'into' 'const' bindingName
+    ;
+
+bindingName
+    : IDENTIFIER
+    | '_'
     ;
 
 breakStatement

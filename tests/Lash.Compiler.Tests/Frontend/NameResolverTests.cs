@@ -327,6 +327,24 @@ public class NameResolverTests
     }
 
     [Fact]
+    public void NameResolver_AllowsDiscardBindingsWithoutDeclarations()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            let _ = 1
+            let _ = 2
+            for _ in 0..2
+                echo "tick"
+            end
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new NameResolver(diagnostics).Analyze(program);
+
+        Assert.DoesNotContain(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.DuplicateDeclaration);
+    }
+
+    [Fact]
     public void NameResolver_RejectsReturnOutsideFunction()
     {
         var program = TestCompiler.ParseOrThrow(

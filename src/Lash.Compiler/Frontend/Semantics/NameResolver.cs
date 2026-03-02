@@ -1007,6 +1007,9 @@ public sealed class NameResolver {
 
   private void Declare(string name, bool isConst, AstNode node,
                        bool isGlobal = false) {
+    if (IsDiscardBinding(name))
+      return;
+
     if (isGlobal) {
       if (!globalDeclared.Add(name)) {
         Report(node, $"Duplicate declaration of '{name}' in the same scope.",
@@ -1186,6 +1189,9 @@ public sealed class NameResolver {
 
   private static bool IsBuiltinIdentifier(string name) =>
       string.Equals(name, "argv", StringComparison.Ordinal);
+
+  private static bool IsDiscardBinding(string name) =>
+      string.Equals(name, "_", StringComparison.Ordinal);
 
   private static bool IsImmutableDeclaration(VariableDeclaration.VarKind kind) =>
       kind is VariableDeclaration.VarKind.Const or VariableDeclaration.VarKind.Readonly;

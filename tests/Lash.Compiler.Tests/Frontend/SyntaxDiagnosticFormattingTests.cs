@@ -91,6 +91,17 @@ public class SyntaxDiagnosticFormattingTests {
         Assert.False(diagnostics.HasErrors, string.Join(Environment.NewLine, diagnostics.GetErrors()));
   }
 
+  [Fact]
+  public void ParserErrors_RejectDiscardBindingAsExpressionValue() {
+        var diagnostics = Parse(
+            """
+            let _ = 1
+            let x = _
+            """);
+
+        Assert.True(diagnostics.HasErrors);
+  }
+
   private static DiagnosticBag Parse(string source) {
     var diagnostics = new DiagnosticBag();
     var path = Path.Combine(Path.GetTempPath(),

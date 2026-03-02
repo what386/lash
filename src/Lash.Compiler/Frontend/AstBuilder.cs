@@ -41,7 +41,7 @@ public class AstBuilder : LashBaseVisitor<AstNode>
             Kind = declarationKind,
             IsGlobal = hasGlobal,
             IsPublic = false,
-            Name = context.IDENTIFIER().GetText(),
+            Name = GetBindingName(context.bindingName()),
             Value = context.expression() != null
                 ? Visit(context.expression()) as Expression ?? new NullLiteral()
                 : new NullLiteral { Line = context.Start.Line, Column = context.Start.Column }
@@ -58,7 +58,7 @@ public class AstBuilder : LashBaseVisitor<AstNode>
             Kind = VariableDeclaration.VarKind.Readonly,
             IsGlobal = hasGlobal,
             IsPublic = false,
-            Name = context.IDENTIFIER().GetText(),
+            Name = GetBindingName(context.bindingName()),
             Value = Visit(context.expression()) as Expression ?? new NullLiteral()
         };
     }
@@ -251,7 +251,7 @@ public class AstBuilder : LashBaseVisitor<AstNode>
             Line = context.Start.Line,
             Column = context.Start.Column,
             IsIncrementing = true,
-            Variable = context.IDENTIFIER().GetText(),
+            Variable = GetBindingName(context.bindingName()),
             Range = expressions.Length > 0 ? Visit(expressions[0]) as Expression ?? new NullLiteral() : null,
             GlobPattern = context.GLOB_PATTERN()?.GetText(),
             Step = expressions.Length > 1 ? Visit(expressions[1]) as Expression : null,
@@ -265,7 +265,7 @@ public class AstBuilder : LashBaseVisitor<AstNode>
         {
             Line = context.Start.Line,
             Column = context.Start.Column,
-            Variable = context.IDENTIFIER().GetText(),
+            Variable = GetBindingName(context.bindingName()),
             Options = context.expression() != null ? Visit(context.expression()) as Expression ?? new NullLiteral() : null,
             GlobPattern = context.GLOB_PATTERN()?.GetText(),
             Body = context.statement().Select(s => Visit(s) as Statement).Where(s => s != null).ToList()!
@@ -1037,7 +1037,15 @@ public class AstBuilder : LashBaseVisitor<AstNode>
         if (intoBinding.variableReference() is { } variableRef)
             return variableRef.IDENTIFIER().GetText();
 
-        return intoBinding.IDENTIFIER().GetText();
+        return GetBindingName(intoBinding.bindingName());
+    }
+
+    private static string GetBindingName(LashParser.BindingNameContext context)
+    {
+        if (context.IDENTIFIER() is { } identifier)
+            return identifier.GetText();
+
+        return context.GetText();
     }
 
     private static string UnquoteStringLiteral(string text)

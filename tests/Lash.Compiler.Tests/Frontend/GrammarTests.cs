@@ -242,6 +242,24 @@ public class GrammarTests
     }
 
     [Fact]
+    public void ModuleLoader_ParsesDiscardBindingsInDeclarationsAndLoops()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            let _ = 1
+            for _ in 0..10
+                echo "hello"
+            end
+            """);
+
+        var discardDeclaration = Assert.IsType<VariableDeclaration>(program.Statements[0]);
+        Assert.Equal("_", discardDeclaration.Name);
+
+        var discardLoop = Assert.IsType<ForLoop>(program.Statements[1]);
+        Assert.Equal("_", discardLoop.Variable);
+    }
+
+    [Fact]
     public void ModuleLoader_ParsesProcessSubstitutionInExpressions()
     {
         var program = TestCompiler.ParseOrThrow(

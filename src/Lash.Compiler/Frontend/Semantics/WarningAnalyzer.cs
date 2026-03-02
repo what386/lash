@@ -54,6 +54,11 @@ public sealed class WarningAnalyzer {
                             suggestConst: variable.Kind ==
                                 VariableDeclaration.VarKind.Let);
 
+      if (IsDiscardBinding(variable.Name)) {
+        constValues.Peek().Remove(variable.Name);
+        return false;
+      }
+
       if (variable.Kind == VariableDeclaration.VarKind.Const &&
           TryEvaluateConstValue(variable.Value, out var constValue)) {
         constValues.Peek()[variable.Name] = constValue;
@@ -1168,6 +1173,9 @@ public sealed class WarningAnalyzer {
   private void DeclareVariableSymbol(string name, int line, int column,
                                      bool ignoreUnused = false,
                                      bool suggestConst = false) {
+    if (IsDiscardBinding(name))
+      return;
+
     WarnIfShadowing(name, line, column);
     DeclareSymbol(name, SymbolKind.Variable, line, column,
                   ignoreUnused: ignoreUnused || ShouldIgnoreUnusedSymbol(name),
@@ -1288,6 +1296,9 @@ public sealed class WarningAnalyzer {
   private static bool ShouldIgnoreUnusedSymbol(string name) {
     return string.IsNullOrEmpty(name) || name.StartsWith('_');
   }
+
+  private static bool IsDiscardBinding(string name) =>
+      string.Equals(name, "_", StringComparison.Ordinal);
 
   private void PushTrackedJobs(int count) { trackedJobs.Push(count); }
 
