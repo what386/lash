@@ -141,8 +141,11 @@ fn feed()
     cat
 end
 
+feed() << "payload"
 feed() << [[line1
 line2]]
+feed() <<- [[	line1
+	line2]]
 
 fn show(path)
     cat($path)
