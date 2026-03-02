@@ -56,4 +56,11 @@ public static class DiagnosticCodes
     public const string DuplicateSwitchCaseBody = "W507";
     public const string EquivalentBranchAssignment = "W508";
     public const string LetNeverReassigned = "W509";
+    public const string NoEffectLiteralStatement = "W510";
+    public const string SuspiciousSplitMultilineArgument = "W511";
+    public const string PossibleMissingInterpolation = "W512";
+    public const string ConstantCondition = "W513";
+    public const string MalformedShellExpansion = "W514";
+    public const string SuspiciousHeredocPayload = "W515";
+    public const string UnusedCaptureResult = "W516";
 }

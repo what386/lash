@@ -15,6 +15,8 @@ public sealed class WarningAnalyzer {
       new(@"(?<!\\)\$([A-Za-z_][A-Za-z0-9_]*)", RegexOptions.Compiled);
   private static readonly Regex InterpolationPlaceholderRegex =
       new(@"\{([^{}]+)\}", RegexOptions.Compiled);
+  private static readonly Regex SuspiciousPlainStringPlaceholderRegex =
+      new(@"(?<!\\)\{[A-Za-z_][A-Za-z0-9_.]*\}", RegexOptions.Compiled);
 
   private readonly DiagnosticBag diagnostics;
   private readonly Stack<ScopeFrame> scopes = new();
@@ -31,6 +33,7 @@ public sealed class WarningAnalyzer {
 
   private bool AnalyzeBlock(IEnumerable<Statement> statements, bool inLoop) {
     bool terminated = false;
+    Statement? previousStatement = null;
 
     foreach (var statement in statements) {
       if (terminated) {
@@ -39,7 +42,9 @@ public sealed class WarningAnalyzer {
         continue;
       }
 
+      WarnSuspiciousNoEffectLiteral(statement, previousStatement);
       terminated = AnalyzeStatement(statement, inLoop);
+      previousStatement = statement;
     }
 
     return terminated;
@@ -52,7 +57,8 @@ public sealed class WarningAnalyzer {
       DeclareVariableSymbol(variable.Name, variable.Line, variable.Column,
                             ignoreUnused: variable.IsPublic,
                             suggestConst: variable.Kind ==
-                                VariableDeclaration.VarKind.Let);
+                                VariableDeclaration.VarKind.Let,
+                            isCaptureResult: IsCaptureExpression(variable.Value));
 
       if (IsDiscardBinding(variable.Name)) {
         constValues.Peek().Remove(variable.Name);
@@ -139,6 +145,11 @@ public sealed class WarningAnalyzer {
 
     case WhileLoop whileLoop:
       AnalyzeExpression(whileLoop.Condition);
+      if (TryEvaluateBool(whileLoop.Condition, out var whileConst))
+        AddWarning(
+            $"Condition is constant ({whileConst.ToString().ToLowerInvariant()}).",
+            whileLoop.Line, whileLoop.Column,
+            DiagnosticCodes.ConstantCondition);
       if (TryEvaluateBool(whileLoop.Condition, out var whileCondition) &&
           !whileCondition) {
         WarnBlockUnreachable(
@@ -152,6 +163,11 @@ public sealed class WarningAnalyzer {
 
     case UntilLoop untilLoop:
       AnalyzeExpression(untilLoop.Condition);
+      if (TryEvaluateBool(untilLoop.Condition, out var untilConst))
+        AddWarning(
+            $"Condition is constant ({untilConst.ToString().ToLowerInvariant()}).",
+            untilLoop.Line, untilLoop.Column,
+            DiagnosticCodes.ConstantCondition);
       if (TryEvaluateBool(untilLoop.Condition, out var untilCondition) &&
           untilCondition) {
         WarnBlockUnreachable(
@@ -219,14 +235,15 @@ public sealed class WarningAnalyzer {
       return false;
 
     case CommandStatement commandStatement:
-      AnalyzeCommandScript(commandStatement.Script);
+      AnalyzeCommandScript(commandStatement.Script, commandStatement.Line,
+                           commandStatement.Column, "command");
       return false;
 
     case ShellStatement shellStatement:
-      AnalyzeExpression(shellStatement.Command);
+      AnalyzeShellPayload(shellStatement.Command, "sh statement");
       return false;
     case TestStatement testStatement:
-      AnalyzeExpression(testStatement.Condition);
+      AnalyzeShellPayload(testStatement.Condition, "test statement");
       return false;
     case TrapStatement trapStatement:
       if (trapStatement.Handler != null) {
@@ -253,6 +270,9 @@ public sealed class WarningAnalyzer {
     WarnEquivalentIfBranches(ifStatement);
 
     if (TryEvaluateBool(ifStatement.Condition, out var conditionValue)) {
+      AddWarning(
+          $"Condition is constant ({conditionValue.ToString().ToLowerInvariant()}).",
+          ifStatement.Line, ifStatement.Column, DiagnosticCodes.ConstantCondition);
       if (conditionValue) {
         var thenResult =
             AnalyzeBranch(ifStatement.ThenBlock, inLoop, CurrentTrackedJobs());
@@ -695,6 +715,7 @@ public sealed class WarningAnalyzer {
     switch (expression) {
     case LiteralExpression literal:
       AnalyzeInterpolatedLiteral(literal);
+      WarnPossibleMissingInterpolation(literal);
       break;
 
     case IdentifierExpression identifier:
@@ -708,13 +729,14 @@ public sealed class WarningAnalyzer {
       break;
 
     case ShellCaptureExpression shellCapture:
-      AnalyzeShellPayload(shellCapture.Command);
+      AnalyzeShellPayload(shellCapture.Command, "shell capture");
       break;
     case TestCaptureExpression testCapture:
-      AnalyzeShellPayload(testCapture.Condition);
+      AnalyzeShellPayload(testCapture.Condition, "test capture");
       break;
     case ProcessSubstitutionExpression processSubstitution:
-      AnalyzeShellPayload(processSubstitution.Payload);
+      AnalyzeShellPayload(processSubstitution.Payload,
+                         "process substitution");
       break;
 
     case PipeExpression pipe:
@@ -729,6 +751,7 @@ public sealed class WarningAnalyzer {
     case RedirectExpression redirect:
       AnalyzeExpression(redirect.Left);
       AnalyzeExpression(redirect.Right);
+      WarnSuspiciousHeredocPayload(redirect);
       break;
 
     case UnaryExpression unary:
@@ -767,19 +790,22 @@ public sealed class WarningAnalyzer {
     }
   }
 
-  private void AnalyzeCommandScript(string script) {
+  private void AnalyzeCommandScript(string script, int line, int column,
+                                    string context) {
     foreach (Match match in BracedCommandVariableRegex.Matches(script))
       MarkVariableRead(match.Groups[1].Value);
 
     foreach (Match match in PlainCommandVariableRegex.Matches(script))
       MarkVariableRead(match.Groups[1].Value);
+
+    WarnMalformedShellExpansion(script, line, column, context);
   }
 
-  private void AnalyzeShellPayload(Expression payload) {
+  private void AnalyzeShellPayload(Expression payload, string context) {
     AnalyzeExpression(payload);
 
     if (payload is LiteralExpression { Value : string script })
-      AnalyzeCommandScript(script);
+      AnalyzeCommandScript(script, payload.Line, payload.Column, context);
   }
 
   private void AnalyzeInterpolatedLiteral(LiteralExpression literal) {
@@ -791,6 +817,106 @@ public sealed class WarningAnalyzer {
                                         out var symbolName))
         MarkVariableRead(symbolName);
     }
+  }
+
+  private void WarnSuspiciousNoEffectLiteral(Statement statement,
+                                             Statement? previousStatement) {
+    if (statement is not ExpressionStatement {
+          Expression: LiteralExpression literal
+        })
+      return;
+
+    if (literal.LiteralType is not PrimitiveType {
+          PrimitiveKind: PrimitiveType.Kind.String
+        } ||
+        !literal.IsMultiline)
+      return;
+
+    if (previousStatement is CommandStatement commandStatement) {
+      var commandName = ExtractCommandName(commandStatement.Script);
+      AddWarning(
+          $"Standalone multiline string has no effect; it is not an argument to '{commandName}'.",
+          statement.Line, statement.Column,
+          DiagnosticCodes.SuspiciousSplitMultilineArgument);
+      return;
+    }
+
+    AddWarning("Standalone multiline string has no effect.", statement.Line,
+               statement.Column, DiagnosticCodes.NoEffectLiteralStatement);
+  }
+
+  private void WarnPossibleMissingInterpolation(LiteralExpression literal) {
+    if (literal.IsInterpolated ||
+        literal.LiteralType is not PrimitiveType {
+          PrimitiveKind: PrimitiveType.Kind.String
+        } ||
+        literal.Value is not string text)
+      return;
+
+    if (!SuspiciousPlainStringPlaceholderRegex.IsMatch(text))
+      return;
+
+    AddWarning("String contains interpolation-like placeholders but is not interpolated.",
+               literal.Line, literal.Column,
+               DiagnosticCodes.PossibleMissingInterpolation);
+  }
+
+  private void WarnMalformedShellExpansion(string script, int line, int column,
+                                           string context) {
+    if (!HasUnclosedBracedExpansion(script))
+      return;
+
+    AddWarning(
+        $"Suspicious shell expansion in {context}: '${{...}}' appears to be missing a closing '}}'.",
+        line, column, DiagnosticCodes.MalformedShellExpansion);
+  }
+
+  private void WarnSuspiciousHeredocPayload(RedirectExpression redirect) {
+    if (!string.Equals(redirect.Operator, "<<", StringComparison.Ordinal))
+      return;
+
+    if (redirect.Right is LiteralExpression
+        {
+          IsInterpolated: false,
+          LiteralType: PrimitiveType {
+            PrimitiveKind: PrimitiveType.Kind.String
+          }
+        })
+      return;
+
+    AddWarning(
+        "Heredoc payload should be a non-interpolated string literal.",
+        redirect.Line, redirect.Column, DiagnosticCodes.SuspiciousHeredocPayload);
+  }
+
+  private static bool HasUnclosedBracedExpansion(string script) {
+    var cursor = 0;
+    while (cursor < script.Length) {
+      var open = script.IndexOf("${", cursor, StringComparison.Ordinal);
+      if (open < 0)
+        return false;
+
+      var close = script.IndexOf('}', open + 2);
+      if (close < 0)
+        return true;
+
+      cursor = close + 1;
+    }
+
+    return false;
+  }
+
+  private static bool IsCaptureExpression(Expression expression) {
+    return expression is ShellCaptureExpression or TestCaptureExpression;
+  }
+
+  private static string ExtractCommandName(string script) {
+    var trimmed = script.TrimStart();
+    if (trimmed.Length == 0)
+      return "command";
+
+    var firstSpace = trimmed.IndexOfAny([' ', '\t']);
+    return firstSpace < 0 ? trimmed : trimmed[..firstSpace];
   }
 
   private static bool TryGetInterpolationSymbolName(string placeholder,
@@ -1172,14 +1298,16 @@ public sealed class WarningAnalyzer {
 
   private void DeclareVariableSymbol(string name, int line, int column,
                                      bool ignoreUnused = false,
-                                     bool suggestConst = false) {
+                                     bool suggestConst = false,
+                                     bool isCaptureResult = false) {
     if (IsDiscardBinding(name))
       return;
 
     WarnIfShadowing(name, line, column);
     DeclareSymbol(name, SymbolKind.Variable, line, column,
                   ignoreUnused: ignoreUnused || ShouldIgnoreUnusedSymbol(name),
-                  suggestConst: suggestConst);
+                  suggestConst: suggestConst,
+                  isCaptureResult: isCaptureResult);
   }
 
   private void DeclareFunctionSymbol(string name, int line, int column,
@@ -1223,9 +1351,11 @@ public sealed class WarningAnalyzer {
   }
 
   private void DeclareSymbol(string name, SymbolKind kind, int line, int column,
-                             bool ignoreUnused, bool suggestConst = false) {
+                             bool ignoreUnused, bool suggestConst = false,
+                             bool isCaptureResult = false) {
     scopes.Peek().Symbols[name] =
-        new SymbolEntry(name, kind, line, column, ignoreUnused, suggestConst);
+        new SymbolEntry(name, kind, line, column, ignoreUnused, suggestConst,
+                        isCaptureResult);
   }
 
   private void MarkVariableRead(string name) {
@@ -1276,8 +1406,14 @@ public sealed class WarningAnalyzer {
 
       switch (symbol.Kind) {
       case SymbolKind.Variable:
-        AddWarning($"Variable '{symbol.Name}' is declared but never used.",
-                   symbol.Line, symbol.Column, DiagnosticCodes.UnusedVariable);
+        if (symbol.IsCaptureResult) {
+          AddWarning($"Captured result '{symbol.Name}' is never used.",
+                     symbol.Line, symbol.Column,
+                     DiagnosticCodes.UnusedCaptureResult);
+        } else {
+          AddWarning($"Variable '{symbol.Name}' is declared but never used.",
+                     symbol.Line, symbol.Column, DiagnosticCodes.UnusedVariable);
+        }
         break;
 
       case SymbolKind.Parameter:
@@ -1340,6 +1476,20 @@ public sealed class WarningAnalyzer {
       DiagnosticCodes.EquivalentBranchAssignment =>
           "Move assignment outside the conditional.",
       DiagnosticCodes.LetNeverReassigned => "Use 'const' instead of 'let'.",
+      DiagnosticCodes.NoEffectLiteralStatement =>
+          "Assign it or pass it to a command.",
+      DiagnosticCodes.SuspiciousSplitMultilineArgument =>
+          "Put the multiline literal on the same line as the command.",
+      DiagnosticCodes.PossibleMissingInterpolation =>
+          "Use $\"...\" or $[[...]] if placeholders should be expanded.",
+      DiagnosticCodes.ConstantCondition =>
+          "Simplify or remove the constant branch condition.",
+      DiagnosticCodes.MalformedShellExpansion =>
+          "Close braced expansions like '${name}'.",
+      DiagnosticCodes.SuspiciousHeredocPayload =>
+          "Use a non-interpolated multiline literal: << [[...]].",
+      DiagnosticCodes.UnusedCaptureResult =>
+          "Remove the capture or prefix the variable with '_' to mark it intentionally unused.",
       _ => null
     };
 
@@ -1356,13 +1506,15 @@ public sealed class WarningAnalyzer {
 
   private sealed class SymbolEntry {
     public SymbolEntry(string name, SymbolKind kind, int line, int column,
-                       bool ignoreUnused, bool suggestConst) {
+                       bool ignoreUnused, bool suggestConst,
+                       bool isCaptureResult) {
       Name = name;
       Kind = kind;
       Line = line;
       Column = column;
       IgnoreUnused = ignoreUnused;
       SuggestConst = suggestConst;
+      IsCaptureResult = isCaptureResult;
     }
 
     public string Name { get; }
@@ -1371,6 +1523,7 @@ public sealed class WarningAnalyzer {
     public int Column { get; }
     public bool IgnoreUnused { get; }
     public bool SuggestConst { get; }
+    public bool IsCaptureResult { get; }
     public bool IsUsed { get; set; }
     public bool IsReassigned { get; set; }
   }

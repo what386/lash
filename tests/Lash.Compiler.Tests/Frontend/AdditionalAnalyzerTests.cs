@@ -469,4 +469,142 @@ public class AdditionalAnalyzerTests
             w => w.Code == DiagnosticCodes.UnreachableStatement
                  && w.Line == 6);
     }
+
+    [Fact]
+    public void WarningAnalyzer_EmitsWarningForStandaloneMultilineLiteral()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            [[line1
+            line2]]
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new WarningAnalyzer(diagnostics).Analyze(program);
+
+        Assert.Contains(
+            diagnostics.GetWarnings(),
+            w => w.Code == DiagnosticCodes.NoEffectLiteralStatement
+                 && w.Message.Contains("no effect", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void WarningAnalyzer_EmitsWarningForSplitCommandMultilineLiteral()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            echo
+            [[line1
+            line2]]
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new WarningAnalyzer(diagnostics).Analyze(program);
+
+        Assert.Contains(
+            diagnostics.GetWarnings(),
+            w => w.Code == DiagnosticCodes.SuspiciousSplitMultilineArgument
+                 && w.Message.Contains("not an argument", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void WarningAnalyzer_EmitsWarningForPossibleMissingInterpolation()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            let name = "pilot"
+            let msg = "Hello {name}"
+            echo $msg
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new WarningAnalyzer(diagnostics).Analyze(program);
+
+        Assert.Contains(
+            diagnostics.GetWarnings(),
+            w => w.Code == DiagnosticCodes.PossibleMissingInterpolation
+                 && w.Message.Contains("not interpolated", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void WarningAnalyzer_EmitsWarningForConstantIfCondition()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            if 1 == 1
+                echo "yes"
+            else
+                echo "no"
+            end
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new WarningAnalyzer(diagnostics).Analyze(program);
+
+        Assert.Contains(
+            diagnostics.GetWarnings(),
+            w => w.Code == DiagnosticCodes.ConstantCondition
+                 && w.Message.Contains("constant", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void WarningAnalyzer_EmitsWarningForMalformedShellExpansion()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            echo "${name"
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new WarningAnalyzer(diagnostics).Analyze(program);
+
+        Assert.Contains(
+            diagnostics.GetWarnings(),
+            w => w.Code == DiagnosticCodes.MalformedShellExpansion
+                 && w.Message.Contains("missing a closing", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void WarningAnalyzer_EmitsWarningForSuspiciousHeredocPayload()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            fn feed()
+                cat
+            end
+
+            let payload = "text"
+            feed() << $payload
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new WarningAnalyzer(diagnostics).Analyze(program);
+
+        Assert.Contains(
+            diagnostics.GetWarnings(),
+            w => w.Code == DiagnosticCodes.SuspiciousHeredocPayload
+                 && w.Message.Contains("Heredoc payload", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void WarningAnalyzer_EmitsSpecificUnusedCaptureWarning()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            let out = $(printf hello)
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new WarningAnalyzer(diagnostics).Analyze(program);
+
+        Assert.Contains(
+            diagnostics.GetWarnings(),
+            w => w.Code == DiagnosticCodes.UnusedCaptureResult
+                 && w.Message.Contains("Captured result", StringComparison.Ordinal));
+
+        Assert.DoesNotContain(
+            diagnostics.GetWarnings(),
+            w => w.Code == DiagnosticCodes.UnusedVariable
+                 && w.Message.Contains("out", StringComparison.Ordinal));
+    }
 }
