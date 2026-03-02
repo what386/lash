@@ -1,6 +1,4 @@
-; ============================================================
 ; Scopes
-; ============================================================
 (function_declaration) @local.scope
 (for_loop) @local.scope
 (select_loop) @local.scope
@@ -9,9 +7,7 @@
 (subshell_statement) @local.scope
 (coproc_statement) @local.scope
 
-; ============================================================
 ; Definitions
-; ============================================================
 (function_declaration
   name: (identifier) @local.definition.function)
 
@@ -38,9 +34,7 @@
   name: (binding_name
     (identifier) @local.definition.var))
 
-; ============================================================
 ; References
-; ============================================================
 (var_ref
   name: (identifier) @local.reference)
 
