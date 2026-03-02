@@ -89,6 +89,7 @@ Lash is a lua-like language that transpiles directly to Bash with minimal runtim
   - strings:
     - standard: `"text"`
     - interpolated: `$"hello {name}"`
+    - interpolated multiline: `$[[hello {name}\nmore]]`
     - multiline/raw: `[[...]]`
 - Variable reference: `$name` — the `$` sigil is exclusively for referencing variables
 - Built-in args:
