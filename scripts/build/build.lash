@@ -56,7 +56,7 @@ end
 
 fn is_known_tool(tool_name)
     for entry in $PROJECTS
-        const known = $(printf ' % s' $entry | cut - d: - f1)
+        const known = $(printf '%s' $entry | cut -d: -f1)
         if $known == $tool_name
             return true
         end
@@ -233,7 +233,7 @@ fn build_tool_for_platform(tool_name, project_path, rid, bundle_dir)
         chmod +x "$dest_file"
     end
 
-    const size = $(du - h "$dest_file" | cut - f1)
+    const size = $(du -h "$dest_file" | cut -f1)
     echo -e "${GREEN}✓ Built ${tool_name} (${size}) -> ${dest_file}${NC}"
 end
 
@@ -248,8 +248,8 @@ fn build_platform(rid, description)
     mkdir -p "$bundle_dir"
 
     for entry in $PROJECTS
-        const tool_name = $(printf ' % s' $entry | cut - d: - f1)
-        const project_path = $(printf ' % s' $entry | cut - d: - f2 - )
+        const tool_name = $(printf '%s' $entry | cut -d: -f1)
+        const project_path = $(printf '%s' $entry | cut -d: -f2-)
         subshell into let publish_pid
             build_tool_for_platform($tool_name, $project_path, $rid, $bundle_dir)
         end &
@@ -258,8 +258,8 @@ fn build_platform(rid, description)
     end
 
     for job in $publish_jobs
-        const pid = $(printf ' % s' $job | cut - d: - f1)
-        const tool_name = $(printf ' % s' $job | cut - d: - f2 - )
+        const pid = $(printf '%s' $job | cut -d: -f1)
+        const tool_name = $(printf '%s' $job | cut -d: -f2-)
 
         wait $pid into let wait_status
         if $wait_status != 0
@@ -268,7 +268,7 @@ fn build_platform(rid, description)
         end
     end
 
-    const bundle_size = $(du - sh "$bundle_dir" | cut - f1)
+    const bundle_size = $(du -sh "$bundle_dir" | cut -f1)
     echo -e "${GREEN}✓ Bundle ready (${bundle_size}) -> ${bundle_dir}${NC}"
     ls -lah "$bundle_dir"
 end
