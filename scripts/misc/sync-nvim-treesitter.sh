@@ -6,6 +6,8 @@ REPO_ROOT="$(cd -- "${SCRIPT_DIR}/../.." && pwd)"
 
 SOURCE_DIR="${REPO_ROOT}/tree-sitter"
 TARGET_DIR="${HOME}/.config/nvim/treesitter/lash"
+QUERY_SOURCE_DIR="${SOURCE_DIR}/queries"
+QUERY_TARGET_DIR="${HOME}/.config/nvim/queries/lash"
 
 DRY_RUN=false
 DELETE=true
@@ -58,6 +60,10 @@ if [[ ! -d "${SOURCE_DIR}" ]]; then
     echo "error: source parser directory not found: ${SOURCE_DIR}" >&2
     exit 1
 fi
+if [[ ! -d "${QUERY_SOURCE_DIR}" ]]; then
+    echo "error: query directory not found: ${QUERY_SOURCE_DIR}" >&2
+    exit 1
+fi
 
 mkdir -p "${TARGET_DIR}"
 
@@ -72,10 +78,16 @@ fi
 echo "Syncing tree-sitter parser:"
 echo "  source: ${SOURCE_DIR}"
 echo "  target: ${TARGET_DIR}"
+echo "  query-source: ${QUERY_SOURCE_DIR}"
+echo "  query-target: ${QUERY_TARGET_DIR}"
 echo "  delete: ${DELETE}"
 echo "  dryrun: ${DRY_RUN}"
 
 rsync "${RSYNC_FLAGS[@]}" "${SOURCE_DIR}/" "${TARGET_DIR}/"
+
+mkdir -p "${QUERY_TARGET_DIR}"
+rsync "${RSYNC_FLAGS[@]}" "${QUERY_SOURCE_DIR}/" "${QUERY_TARGET_DIR}/"
+echo "Synced query files: ${QUERY_TARGET_DIR}"
 
 if [[ "${DRY_RUN}" == true ]]; then
     echo "Dry run complete. No files were modified."
