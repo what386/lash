@@ -27,37 +27,37 @@ const BLUE = "\033[0;34m"
 const NC = "\033[0m"
 
 fn show_help()
-    echo
+    printf
     [[
     Usage: $0 [OPTIONS] <platform1> [platform2] ...
 
     Options:
-      --no-trim [tool]   Disable trimming globally or for one tool"
-      --no-single-file   Publish as multiple files (faster builds, easier debugging)"
-      --no-ready2run     Disable ReadyToRun compilation (faster builds, slower startup)"
-      -h, --help         Show this help message"
+    --no-trim [tool]   Disable trimming globally or for one tool"
+    --no-single-file   Publish as multiple files (faster builds, easier debugging)"
+    --no-ready2run     Disable ReadyToRun compilation (faster builds, slower startup)"
+    -h, --help         Show this help message"
 
     Arguments:
-      <platforms>  Space-separated list of platforms to build"
+    <platforms>  Space-separated list of platforms to build"
 
     Available platforms:
-      win-x64, win-x86, win-arm64"
-      linux-x64, linux-arm64, linux-arm"
-      osx-x64, osx-arm64"
+    win-x64, win-x86, win-arm64"
+    linux-x64, linux-arm64, linux-arm"
+    osx-x64, osx-arm64"
 
     Examples:"
-      $0 win-x64                           # Build only Windows 64-bit"
-      $0 --no-trim win-x64                 # Build Windows 64-bit without trimming"
-      $0 --no-trim lashlsp linux-x64       # Disable trimming only for lashlsp"
-      $0 --no-single-file --no-trim win-x64  # Fast dev build"
-      $0 win-x64 linux-x64                 # Build Windows and Linux 64-bit"
-      $0 osx-x64 osx-arm64                 # Build both macOS versions"
-]]
+    $0 win-x64                           # Build only Windows 64-bit"
+    $0 --no-trim win-x64                 # Build Windows 64-bit without trimming"
+    $0 --no-trim lashlsp linux-x64       # Disable trimming only for lashlsp"
+    $0 --no-single-file --no-trim win-x64  # Fast dev build"
+    $0 win-x64 linux-x64                 # Build Windows and Linux 64-bit"
+    $0 osx-x64 osx-arm64                 # Build both macOS versions"\n
+    ]]
 end
 
 fn is_known_tool(tool_name)
     for entry in $PROJECTS
-        const known = $(printf '%s' $entry | cut -d: -f1)
+        const known = $(printf ' % s' $entry | cut - d: - f1)
         if $known == $tool_name
             return true
         end
@@ -165,7 +165,7 @@ fn find_published_executable(temp_dir, rid, project_stem)
         if file_exists($expected)
             src_file = $expected
         else
-            src_file = $(find "$temp_dir" -maxdepth 1 -type f -name '*.exe' ! -name 'createdump.exe' -print -quit)
+            src_file = $(find "$temp_dir" - maxdepth 1 - type f - name ' * .exe' ! - name 'createdump.exe' - print - quit)
         end
         return $src_file
     end
@@ -174,7 +174,7 @@ fn find_published_executable(temp_dir, rid, project_stem)
     if file_exists($expected)
         src_file = $expected
     else
-        src_file = $(find "$temp_dir" -maxdepth 1 -type f -perm -u+x -print -quit)
+        src_file = $(find "$temp_dir" - maxdepth 1 - type f - perm - u + x - print - quit)
     end
     return $src_file
 end
@@ -234,7 +234,7 @@ fn build_tool_for_platform(tool_name, project_path, rid, bundle_dir)
         chmod +x "$dest_file"
     end
 
-    const size = $(du -h "$dest_file" | cut -f1)
+    const size = $(du - h "$dest_file" | cut - f1)
     echo -e "${GREEN}✓ Built ${tool_name} (${size}) -> ${dest_file}${NC}"
 end
 
@@ -249,8 +249,8 @@ fn build_platform(rid, description)
     mkdir -p "$bundle_dir"
 
     for entry in $PROJECTS
-        const tool_name = $(printf '%s' $entry | cut -d: -f1)
-        const project_path = $(printf '%s' $entry | cut -d: -f2-)
+        const tool_name = $(printf ' % s' $entry | cut - d: - f1)
+        const project_path = $(printf ' % s' $entry | cut - d: - f2 - )
         subshell into let publish_pid
             build_tool_for_platform($tool_name, $project_path, $rid, $bundle_dir)
         end &
@@ -259,8 +259,8 @@ fn build_platform(rid, description)
     end
 
     for job in $publish_jobs
-        const pid = $(printf '%s' $job | cut -d: -f1)
-        const tool_name = $(printf '%s' $job | cut -d: -f2-)
+        const pid = $(printf ' % s' $job | cut - d: - f1)
+        const tool_name = $(printf ' % s' $job | cut - d: - f2 - )
 
         wait $pid into let wait_status
         if $wait_status != 0
@@ -269,7 +269,7 @@ fn build_platform(rid, description)
         end
     end
 
-    const bundle_size = $(du -sh "$bundle_dir" | cut -f1)
+    const bundle_size = $(du - sh "$bundle_dir" | cut - f1)
     echo -e "${GREEN}✓ Bundle ready (${bundle_size}) -> ${bundle_dir}${NC}"
     ls -lah "$bundle_dir"
 end
