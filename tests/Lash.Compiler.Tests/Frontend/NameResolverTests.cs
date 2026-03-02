@@ -229,6 +229,23 @@ public class NameResolverTests
     }
 
     [Fact]
+    public void NameResolver_SuggestsClosestTrapSignal()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            trap EXTI "echo nope"
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new NameResolver(diagnostics).Analyze(program);
+
+        Assert.Contains(
+            diagnostics.GetErrors(),
+            e => e.Code == DiagnosticCodes.InvalidTrapSignal
+                 && e.Message.Contains("Did you mean 'EXIT'", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void NameResolver_RejectsTrapHandlerCallsWithArguments()
     {
         var program = TestCompiler.ParseOrThrow(
@@ -385,6 +402,23 @@ public class NameResolverTests
             diagnostics.GetErrors(),
             e => e.Code == DiagnosticCodes.InvalidCommandUsage
                  && e.Message.Contains("Invalid set flag", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void NameResolver_SuggestsClosestSetLongOption()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            set -euo pipefal
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new NameResolver(diagnostics).Analyze(program);
+
+        Assert.Contains(
+            diagnostics.GetErrors(),
+            e => e.Code == DiagnosticCodes.InvalidCommandUsage
+                 && e.Message.Contains("Did you mean 'pipefail'", StringComparison.Ordinal));
     }
 
     [Fact]

@@ -578,8 +578,14 @@ public sealed class NameResolver {
         ValidTrapSignals.Contains(normalized))
       return;
 
-    Report(node, $"'{signal}' is not a valid trap signal.",
-           DiagnosticCodes.InvalidTrapSignal);
+    var suggestion = TryNormalizeTrapSignal(signal, out var typoSignal) &&
+                     TrySuggestClosest(typoSignal, ValidTrapSignals, out var suggestedSignal)
+                         ? signal.TrimStart().StartsWith("SIG", StringComparison.OrdinalIgnoreCase)
+                               ? $"SIG{suggestedSignal}"
+                               : suggestedSignal
+                         : null;
+    ReportWithSuggestion(node, $"'{signal}' is not a valid trap signal.",
+                         DiagnosticCodes.InvalidTrapSignal, suggestion);
   }
 
   private static bool TryNormalizeTrapSignal(string signal,
@@ -654,10 +660,22 @@ public sealed class NameResolver {
 
           if (i + 1 >= args.Count ||
               !ValidSetLongOptions.Contains(args[i + 1])) {
-            Report(
-                command,
-                $"Invalid set option '{arg}': expected one of [{string.Join(", ", ValidSetLongOptions.OrderBy(v => v))}] after '{arg}'.",
-                DiagnosticCodes.InvalidCommandUsage);
+            if (i + 1 < args.Count) {
+              var invalidLongOption = args[i + 1];
+              var suggestion = TrySuggestClosest(invalidLongOption, ValidSetLongOptions,
+                                                 out var suggestedLongOption)
+                                   ? suggestedLongOption
+                                   : null;
+              ReportWithSuggestion(
+                  command,
+                  $"Invalid set option name '{invalidLongOption}' after '{arg}'.",
+                  DiagnosticCodes.InvalidCommandUsage, suggestion);
+            } else {
+              Report(
+                  command,
+                  $"Invalid set option '{arg}': expected one of [{string.Join(", ", ValidSetLongOptions.OrderBy(v => v))}] after '{arg}'.",
+                  DiagnosticCodes.InvalidCommandUsage);
+            }
             return;
           }
 
@@ -666,8 +684,12 @@ public sealed class NameResolver {
         }
 
         if (!ValidSetShortFlags.Contains(flag)) {
-          Report(command, $"Invalid set flag '{sign}{flag}'.",
-                 DiagnosticCodes.InvalidCommandUsage);
+          var suggestion = TrySuggestCaseVariantFlag(flag, ValidSetShortFlags,
+                                                     out var suggestedFlag)
+                               ? $"{sign}{suggestedFlag}"
+                               : null;
+          ReportWithSuggestion(command, $"Invalid set flag '{sign}{flag}'.",
+                               DiagnosticCodes.InvalidCommandUsage, suggestion);
           return;
         }
       }
@@ -714,8 +736,13 @@ public sealed class NameResolver {
 
         foreach (var flag in optionBody) {
           if (!ValidUnsetShortFlags.Contains(flag)) {
-            Report(command, $"Invalid unset flag '-{flag}'.",
-                   DiagnosticCodes.InvalidCommandUsage);
+            var suggestion = TrySuggestCaseVariantFlag(
+                flag, ValidUnsetShortFlags, out var suggestedFlag)
+                                 ? $"-{suggestedFlag}"
+                                 : null;
+            ReportWithSuggestion(command, $"Invalid unset flag '-{flag}'.",
+                                 DiagnosticCodes.InvalidCommandUsage,
+                                 suggestion);
             return;
           }
         }
@@ -761,8 +788,14 @@ public sealed class NameResolver {
         foreach (var flag in optionBody) {
           if (!validFlags.Contains(flag) ||
               (!allowGlobalFlag && flag == 'g')) {
-            Report(command, $"Invalid {commandName} flag '{sign}{flag}'.",
-                   DiagnosticCodes.InvalidCommandUsage);
+            var suggestion = TrySuggestCaseVariantFlag(flag, validFlags,
+                                                       out var suggestedFlag) &&
+                                     (allowGlobalFlag || suggestedFlag != 'g')
+                                 ? $"{sign}{suggestedFlag}"
+                                 : null;
+            ReportWithSuggestion(
+                command, $"Invalid {commandName} flag '{sign}{flag}'.",
+                DiagnosticCodes.InvalidCommandUsage, suggestion);
             return;
           }
         }
@@ -807,8 +840,13 @@ public sealed class NameResolver {
 
         foreach (var flag in optionBody) {
           if (!allowedFlags.Contains(flag)) {
-            Report(command, $"Invalid {commandName} flag '-{flag}'.",
-                   DiagnosticCodes.InvalidCommandUsage);
+            var suggestion = TrySuggestCaseVariantFlag(flag, allowedFlags,
+                                                       out var suggestedFlag)
+                                 ? $"-{suggestedFlag}"
+                                 : null;
+            ReportWithSuggestion(
+                command, $"Invalid {commandName} flag '-{flag}'.",
+                DiagnosticCodes.InvalidCommandUsage, suggestion);
             return;
           }
         }
@@ -1001,6 +1039,115 @@ public sealed class NameResolver {
 
   private void Report(AstNode node, string message, string code) {
     diagnostics.AddError(WithTip(message, code), node.Line, node.Column, code);
+  }
+
+  private void ReportWithSuggestion(AstNode node, string message, string code,
+                                    string? suggestion) {
+    if (!string.IsNullOrWhiteSpace(suggestion))
+      message = $"{message} Did you mean '{suggestion}'?";
+    Report(node, message, code);
+  }
+
+  private static bool TrySuggestCaseVariantFlag(char flag,
+                                                HashSet<char> allowedFlags,
+                                                out char suggestion) {
+    suggestion = '\0';
+    if (!char.IsLetter(flag))
+      return false;
+
+    var swapped = char.IsLower(flag) ? char.ToUpperInvariant(flag)
+                                     : char.ToLowerInvariant(flag);
+    if (!allowedFlags.Contains(swapped))
+      return false;
+
+    suggestion = swapped;
+    return true;
+  }
+
+  private static bool TrySuggestClosest(string input,
+                                        IEnumerable<string> candidates,
+                                        out string suggestion) {
+    suggestion = string.Empty;
+    if (string.IsNullOrWhiteSpace(input))
+      return false;
+
+    var probe = input.Trim();
+    var maxDistance = probe.Length switch {
+      <= 4 => 2,
+      <= 8 => 2,
+      _ => 3
+    };
+
+    var best = string.Empty;
+    var bestDistance = int.MaxValue;
+    var bestLengthDelta = int.MaxValue;
+    var tie = false;
+
+    foreach (var candidate in candidates) {
+      if (string.IsNullOrWhiteSpace(candidate))
+        continue;
+
+      var distance = ComputeEditDistanceBounded(
+          probe, candidate, maxDistance, StringComparison.OrdinalIgnoreCase);
+      if (distance < 0)
+        continue;
+
+      var lengthDelta = Math.Abs(candidate.Length - probe.Length);
+      if (distance < bestDistance ||
+          (distance == bestDistance && lengthDelta < bestLengthDelta) ||
+          (distance == bestDistance && lengthDelta == bestLengthDelta &&
+           string.CompareOrdinal(candidate, best) < 0)) {
+        tie = distance == bestDistance && lengthDelta == bestLengthDelta &&
+              !string.Equals(best, candidate, StringComparison.Ordinal);
+        best = candidate;
+        bestDistance = distance;
+        bestLengthDelta = lengthDelta;
+      } else if (distance == bestDistance && lengthDelta == bestLengthDelta &&
+                 !string.Equals(best, candidate, StringComparison.Ordinal)) {
+        tie = true;
+      }
+    }
+
+    if (string.IsNullOrEmpty(best) || tie)
+      return false;
+
+    suggestion = best;
+    return true;
+  }
+
+  private static int ComputeEditDistanceBounded(
+      string left, string right, int maxDistance, StringComparison comparison) {
+    if (Math.Abs(left.Length - right.Length) > maxDistance)
+      return -1;
+
+    var rows = left.Length + 1;
+    var cols = right.Length + 1;
+    var previous = new int[cols];
+    var current = new int[cols];
+
+    for (var j = 0; j < cols; j++)
+      previous[j] = j;
+
+    for (var i = 1; i < rows; i++) {
+      current[0] = i;
+      var rowMin = current[0];
+      for (var j = 1; j < cols; j++) {
+        var equal = string.Compare(left, i - 1, right, j - 1, 1, comparison) == 0;
+        var substitutionCost = equal ? 0 : 1;
+        current[j] = Math.Min(
+            Math.Min(previous[j] + 1, current[j - 1] + 1),
+            previous[j - 1] + substitutionCost);
+        rowMin = Math.Min(rowMin, current[j]);
+      }
+
+      if (rowMin > maxDistance)
+        return -1;
+
+      (previous, current) = (current, previous);
+    }
+
+    var result = previous[cols - 1];
+    return result <= maxDistance ? result : -1;
   }
 
   private static string WithTip(string message, string code) {
