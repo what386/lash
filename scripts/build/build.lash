@@ -27,31 +27,30 @@ const BLUE = "\033[0;34m"
 const NC = "\033[0m"
 
 fn show_help()
-    printf
-    [[
-    Usage: $0 [OPTIONS] <platform1> [platform2] ...
+    echo [[
+    Usage: build.lash [OPTIONS] <platform1> [platform2] ...
 
     Options:
-    --no-trim [tool]   Disable trimming globally or for one tool"
-    --no-single-file   Publish as multiple files (faster builds, easier debugging)"
-    --no-ready2run     Disable ReadyToRun compilation (faster builds, slower startup)"
-    -h, --help         Show this help message"
+    --no-trim [tool]   Disable trimming globally or for one tool
+    --no-single-file   Publish as multiple files (faster builds, easier debugging)
+    --no-ready2run     Disable ReadyToRun compilation (faster builds, slower startup)
+    -h, --help         Show this help message
 
     Arguments:
-    <platforms>  Space-separated list of platforms to build"
+    <platforms>  Space-separated list of platforms to build
 
     Available platforms:
-    win-x64, win-x86, win-arm64"
-    linux-x64, linux-arm64, linux-arm"
-    osx-x64, osx-arm64"
+    win-x64, win-x86, win-arm64
+    linux-x64, linux-arm64, linux-arm
+    osx-x64, osx-arm64
 
-    Examples:"
-    $0 win-x64                           # Build only Windows 64-bit"
-    $0 --no-trim win-x64                 # Build Windows 64-bit without trimming"
-    $0 --no-trim lashlsp linux-x64       # Disable trimming only for lashlsp"
-    $0 --no-single-file --no-trim win-x64  # Fast dev build"
-    $0 win-x64 linux-x64                 # Build Windows and Linux 64-bit"
-    $0 osx-x64 osx-arm64                 # Build both macOS versions"\n
+    Examples:
+    build.lash win-x64                              # Build only Windows 64-bit
+    build.lash --no-trim win-x64                    # Build Windows 64-bit without trimming
+    build.lash --no-trim lashlsp linux-x64          # Disable trimming only for lashlsp
+    build.lash --no-single-file --no-trim win-x64   # Fast dev build
+    build.lash win-x64 linux-x64                    # Build Windows and Linux 64-bit
+    build.lash osx-x64 osx-arm64                    # Build both macOS versions
     ]]
 end
 
@@ -74,10 +73,10 @@ fn list_to_csv(values)
     let is_first = true
     for value in $values
         if $is_first
-            result = $value
-            is_first = false
+            $result = $value
+            $is_first = false
         else
-            result = $"{$result},{$value}"
+            $result = $"{$result},{$value}"
         end
     end
 
@@ -121,37 +120,37 @@ fn get_output_dirname(rid)
 
     switch $rid
         case "win-x64":
-            platform = "win"
-            arch = "x86"
-            bits = "64"
+            $platform = "win"
+            $arch = "x86"
+            $bits = "64"
         case "win-x86":
-            platform = "win"
-            arch = "x86"
-            bits = "32"
+            $platform = "win"
+            $arch = "x86"
+            $bits = "32"
         case "win-arm64":
-            platform = "win"
-            arch = "arm"
-            bits = "64"
+            $platform = "win"
+            $arch = "arm"
+            $bits = "64"
         case "linux-x64":
-            platform = "linux"
-            arch = "x86"
-            bits = "64"
+            $platform = "linux"
+            $arch = "x86"
+            $bits = "64"
         case "linux-arm64":
-            platform = "linux"
-            arch = "arm"
-            bits = "64"
+            $platform = "linux"
+            $arch = "arm"
+            $bits = "64"
         case "linux-arm":
-            platform = "linux"
-            arch = "arm"
-            bits = "32"
+            $platform = "linux"
+            $arch = "arm"
+            $bits = "32"
         case "osx-x64":
-            platform = "osx"
-            arch = "x86"
-            bits = "64"
+            $platform = "osx"
+            $arch = "x86"
+            $bits = "64"
         case "osx-arm64":
-            platform = "osx"
-            arch = "arm"
-            bits = "64"
+            $platform = "osx"
+            $arch = "arm"
+            $bits = "64"
     end
 
     return $PROJECT_NAME + "-" + $platform + "_" + $arch + "-" + $bits
@@ -163,18 +162,18 @@ fn find_published_executable(temp_dir, rid, project_stem)
     if is_windows_rid($rid)
         const expected = $temp_dir + "/" + $project_stem + ".exe"
         if file_exists($expected)
-            src_file = $expected
+            $src_file = $expected
         else
-            src_file = $(find "$temp_dir" - maxdepth 1 - type f - name ' * .exe' ! - name 'createdump.exe' - print - quit)
+            $src_file = $(find "$temp_dir" -maxdepth 1 -type f -name '*.exe' ! -name 'createdump.exe' -print -quit)
         end
         return $src_file
     end
 
     const expected = $temp_dir + "/" + $project_stem
     if file_exists($expected)
-        src_file = $expected
+        $src_file = $expected
     else
-        src_file = $(find "$temp_dir" - maxdepth 1 - type f - perm - u + x - print - quit)
+        $src_file = $(find "$temp_dir" -maxdepth 1 -type f -perm -u+x -print -quit)
     end
     return $src_file
 end
@@ -194,15 +193,15 @@ fn build_tool_for_platform(tool_name, project_path, rid, bundle_dir)
     ]
 
     if $ENABLE_SINGLE_FILE
-        publish_args += ["-p:PublishSingleFile=True"]
+        $publish_args += ["-p:PublishSingleFile=True"]
     end
 
     if $ENABLE_READY_TO_RUN
-        publish_args += ["-p:PublishReadyToRun=True"]
+        $publish_args += ["-p:PublishReadyToRun=True"]
     end
 
     if should_trim_tool($tool_name)
-        publish_args += [
+        $publish_args += [
         "-p:PublishTrimmed=True",
         "-p:TrimMode=CopyUsed",
         "-p:EnableTrimAnalyzer=True",
@@ -223,7 +222,7 @@ fn build_tool_for_platform(tool_name, project_path, rid, bundle_dir)
 
     let extension = ""
     if is_windows_rid($rid)
-        extension = ".exe"
+        $extension = ".exe"
     end
 
     const dest_file = $bundle_dir + "/" + $tool_name + $extension
@@ -255,7 +254,7 @@ fn build_platform(rid, description)
             build_tool_for_platform($tool_name, $project_path, $rid, $bundle_dir)
         end &
 
-        publish_jobs += [$publish_pid + ":" + $tool_name]
+        $publish_jobs += [$publish_pid + ":" + $tool_name]
     end
 
     for job in $publish_jobs
@@ -304,23 +303,24 @@ while #$argv > 0
 
     if $arg == "-h" || $arg == "--help"
         show_help()
+        exit 0
     elif $arg == "--no-trim"
         if #$argv > 1 && is_known_tool($argv[1])
-            NO_TRIM_TOOLS += [$argv[1]]
+            $NO_TRIM_TOOLS += [$argv[1]]
             shift
             shift
         else
-            ENABLE_TRIMMING = false
+            $ENABLE_TRIMMING = false
             shift
         end
     elif $arg == "--no-single-file"
-        ENABLE_SINGLE_FILE = false
+        $ENABLE_SINGLE_FILE = false
         shift
     elif $arg == "--no-ready2run"
-        ENABLE_READY_TO_RUN = false
+        $ENABLE_READY_TO_RUN = false
         shift
     else
-        BUILD_PLATFORMS += [$arg]
+        $BUILD_PLATFORMS += [$arg]
         shift
     end
 end
@@ -329,6 +329,7 @@ if #$BUILD_PLATFORMS == 0
     echo -e "${RED}Error: No platforms specified${NC}"
     echo ""
     show_help()
+    exit 1
 end
 
 echo -e "${GREEN}  Building ${PROJECT_NAME}${NC}"
