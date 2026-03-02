@@ -88,6 +88,50 @@ public class PreprocessorTests
     }
 
     [Fact]
+    public void Preprocessor_EmitsWarningForMissingShebang()
+    {
+        var result = TestCompiler.LoadProgram(
+            """
+            let x = 1
+            """);
+
+        Assert.True(result.Success, string.Join(Environment.NewLine, result.Diagnostics.GetErrors()));
+        Assert.Contains(
+            result.Diagnostics.GetWarnings(),
+            w => w.Code == DiagnosticCodes.MissingShebang);
+    }
+
+    [Fact]
+    public void Preprocessor_EmitsWarningForMalformedShebang()
+    {
+        var result = TestCompiler.LoadProgram(
+            """
+            #!/usr/bin/env bash
+            let x = 1
+            """);
+
+        Assert.True(result.Success, string.Join(Environment.NewLine, result.Diagnostics.GetErrors()));
+        Assert.Contains(
+            result.Diagnostics.GetWarnings(),
+            w => w.Code == DiagnosticCodes.MalformedShebang);
+    }
+
+    [Fact]
+    public void Preprocessor_DoesNotEmitShebangWarningsForValidLashRunShebang()
+    {
+        var result = TestCompiler.LoadProgram(
+            """
+            #!/usr/bin/env -S lash run
+            let x = 1
+            """);
+
+        Assert.True(result.Success, string.Join(Environment.NewLine, result.Diagnostics.GetErrors()));
+        Assert.DoesNotContain(
+            result.Diagnostics.GetWarnings(),
+            w => w.Code == DiagnosticCodes.MissingShebang || w.Code == DiagnosticCodes.MalformedShebang);
+    }
+
+    [Fact]
     public void Preprocessor_DirectiveIfElse_KeepsActiveBranchOnly()
     {
         var program = TestCompiler.ParseOrThrow(

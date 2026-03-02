@@ -72,4 +72,6 @@ public static class DiagnosticCodes
     public const string ForStepDirectionMismatch = "W518";
     public const string NonPositiveWaitTarget = "W519";
     public const string IgnoredCaptureSideEffects = "W520";
+    public const string MissingShebang = "W521";
+    public const string MalformedShebang = "W522";
 }
