@@ -3,6 +3,7 @@ namespace Lash.Compiler.Frontend.Semantics;
 using Lash.Compiler.Ast;
 using Lash.Compiler.Ast.Expressions;
 using Lash.Compiler.Ast.Statements;
+using Lash.Compiler.Ast.Types;
 using Lash.Compiler.Diagnostics;
 
 public sealed class NameResolver {
@@ -107,8 +108,22 @@ public sealed class NameResolver {
                  $"Duplicate enum declaration '{enumDeclaration.Name}'.",
                  DiagnosticCodes.DuplicateDeclaration);
         } else {
-          enums[enumDeclaration.Name] = new HashSet<string>(
-              enumDeclaration.Members, StringComparer.Ordinal);
+          if (enumDeclaration.Members.Count == 0) {
+            Report(enumDeclaration,
+                   $"Enum '{enumDeclaration.Name}' must declare at least one member.",
+                   DiagnosticCodes.EmptyEnumDeclaration);
+          }
+
+          var members = new HashSet<string>(StringComparer.Ordinal);
+          foreach (var member in enumDeclaration.Members) {
+            if (!members.Add(member)) {
+              Report(enumDeclaration,
+                     $"Enum '{enumDeclaration.Name}' has duplicate member '{member}'.",
+                     DiagnosticCodes.DuplicateEnumMember);
+            }
+          }
+
+          enums[enumDeclaration.Name] = members;
         }
         break;
 
@@ -217,9 +232,24 @@ public sealed class NameResolver {
 
     case SwitchStatement switchStatement:
       CheckExpression(switchStatement.Value);
+      var wildcardSeen = false;
+      var seenExactPatterns = new HashSet<string>(StringComparer.Ordinal);
       foreach (var clause in switchStatement.Cases) {
-        if (!clause.IsWildcard)
+        if (!clause.IsWildcard) {
           CheckExpression(clause.Pattern);
+          if (TryGetExactSwitchPatternKey(clause.Pattern, out var patternKey) &&
+              !seenExactPatterns.Add(patternKey)) {
+            Report(clause,
+                   "Duplicate switch case pattern; an earlier case uses the same pattern.",
+                   DiagnosticCodes.DuplicateSwitchCasePattern);
+          }
+        } else {
+          if (wildcardSeen) {
+            Report(clause, "Switch can contain at most one wildcard case '_'.",
+                   DiagnosticCodes.DuplicateWildcardCase);
+          }
+          wildcardSeen = true;
+        }
         PushScope();
         foreach (var nested in clause.Body)
           CheckStatement(nested);
@@ -953,6 +983,33 @@ public sealed class NameResolver {
     return true;
   }
 
+  private static bool TryGetExactSwitchPatternKey(Expression pattern,
+                                                  out string key) {
+    key = string.Empty;
+
+    if (pattern is LiteralExpression literal &&
+        literal.LiteralType is PrimitiveType primitive) {
+      switch (primitive.PrimitiveKind) {
+      case PrimitiveType.Kind.Int when literal.Value is int intValue:
+        key = $"int:{intValue}";
+        return true;
+      case PrimitiveType.Kind.Bool when literal.Value is bool boolValue:
+        key = $"bool:{(boolValue ? 1 : 0)}";
+        return true;
+      case PrimitiveType.Kind.String:
+        key = $"str:{literal.Value?.ToString() ?? string.Empty}";
+        return true;
+      }
+    }
+
+    if (pattern is EnumAccessExpression enumAccess) {
+      key = $"enum:{enumAccess.EnumName}::{enumAccess.MemberName}";
+      return true;
+    }
+
+    return false;
+  }
+
   private void ResolveIntoBinding(string? targetName, IntoBindingMode mode,
                                   AstNode node,
                                   Action<bool, bool> setResolution) {
@@ -963,6 +1020,12 @@ public sealed class NameResolver {
     if (IsBuiltinIdentifier(targetName)) {
       Report(node, $"Cannot assign to built-in variable '{targetName}'.",
              DiagnosticCodes.InvalidAssignmentTarget);
+      return;
+    }
+
+    if (mode == IntoBindingMode.Const && loopDepth > 0) {
+      Report(node, "'into const' is not allowed inside repeated contexts.",
+             DiagnosticCodes.InvalidIntoConstContext);
       return;
     }
 
@@ -1175,6 +1238,16 @@ public sealed class NameResolver {
           "Use a valid form for this command, or use sh to emit it directly.",
       DiagnosticCodes.InvalidReadonlyContext =>
           "Use 'const' for compile-time immutability in loops, or hoist 'readonly' outside the repeated block.",
+      DiagnosticCodes.DuplicateEnumMember =>
+          "Remove or rename the duplicate enum member.",
+      DiagnosticCodes.EmptyEnumDeclaration =>
+          "Add at least one member to the enum.",
+      DiagnosticCodes.DuplicateSwitchCasePattern =>
+          "Remove or change the duplicate case pattern.",
+      DiagnosticCodes.DuplicateWildcardCase =>
+          "Keep a single wildcard case, typically as the final case.",
+      DiagnosticCodes.InvalidIntoConstContext =>
+          "Use 'into let' in repeated contexts or move 'into const' outside the loop.",
       _ => null
     };
 

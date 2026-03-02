@@ -28,6 +28,11 @@ public static class DiagnosticCodes
     public const string InvalidTrapHandler = "E118";
     public const string InvalidCommandUsage = "E119";
     public const string InvalidReadonlyContext = "E120";
+    public const string DuplicateEnumMember = "E121";
+    public const string EmptyEnumDeclaration = "E122";
+    public const string DuplicateSwitchCasePattern = "E123";
+    public const string DuplicateWildcardCase = "E124";
+    public const string InvalidIntoConstContext = "E125";
 
     // Type/Semantics
     public const string TypeMismatch = "E200";
@@ -63,4 +68,8 @@ public static class DiagnosticCodes
     public const string MalformedShellExpansion = "W514";
     public const string SuspiciousHeredocPayload = "W515";
     public const string UnusedCaptureResult = "W516";
+    public const string SwitchWithoutMatchingCase = "W517";
+    public const string ForStepDirectionMismatch = "W518";
+    public const string NonPositiveWaitTarget = "W519";
+    public const string IgnoredCaptureSideEffects = "W520";
 }

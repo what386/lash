@@ -54,6 +54,15 @@ public sealed class WarningAnalyzer {
     switch (statement) {
     case VariableDeclaration variable:
       AnalyzeExpression(variable.Value);
+      if (!IsDiscardBinding(variable.Name) &&
+          ShouldIgnoreUnusedSymbol(variable.Name) &&
+          IsCaptureExpression(variable.Value)) {
+        AddWarning(
+            $"Capture assigned to ignored variable '{variable.Name}' still executes for side effects.",
+            variable.Line, variable.Column,
+            DiagnosticCodes.IgnoredCaptureSideEffects);
+      }
+
       DeclareVariableSymbol(variable.Name, variable.Line, variable.Column,
                             ignoreUnused: variable.IsPublic,
                             suggestConst: variable.Kind ==
@@ -123,6 +132,7 @@ public sealed class WarningAnalyzer {
         AnalyzeExpression(forLoop.Range);
       if (forLoop.Step != null)
         AnalyzeExpression(forLoop.Step);
+      WarnForStepDirectionMismatch(forLoop);
 
       ExecuteScoped(CurrentTrackedJobs(), () => {
         DeclareVariableSymbol(forLoop.Variable, forLoop.Line, forLoop.Column);
@@ -223,8 +233,16 @@ public sealed class WarningAnalyzer {
 
     case WaitStatement waitStatement:
       if (waitStatement.TargetKind == WaitTargetKind.Target &&
-          waitStatement.Target != null)
+          waitStatement.Target != null) {
         AnalyzeExpression(waitStatement.Target);
+        if (TryEvaluateInt(waitStatement.Target, out var waitTarget) &&
+            waitTarget <= 0) {
+          AddWarning(
+              $"'wait' target is constant non-positive value ({waitTarget}).",
+              waitStatement.Target.Line, waitStatement.Target.Column,
+              DiagnosticCodes.NonPositiveWaitTarget);
+        }
+      }
       ApplyIntoWrite(waitStatement.IntoVariable, waitStatement.IntoCreatesVariable,
                      waitStatement.Line, waitStatement.Column);
 
@@ -434,6 +452,13 @@ public sealed class WarningAnalyzer {
 
       SetCurrentTrackedJobs(matched.TrackedJobs);
       return matched.Terminated;
+    }
+
+    if (!switchStatement.Cases.Any(static c => c.IsWildcard)) {
+      AddWarning(
+          "Constant switch value has no matching case and no wildcard fallback.",
+          switchStatement.Line, switchStatement.Column,
+          DiagnosticCodes.SwitchWithoutMatchingCase);
     }
 
     return false;
@@ -908,6 +933,23 @@ public sealed class WarningAnalyzer {
 
   private static bool IsCaptureExpression(Expression expression) {
     return expression is ShellCaptureExpression or TestCaptureExpression;
+  }
+
+  private void WarnForStepDirectionMismatch(ForLoop forLoop) {
+    if (forLoop.Range is not RangeExpression rangeExpression ||
+        forLoop.Step == null ||
+        !TryEvaluateInt(rangeExpression.Start, out var start) ||
+        !TryEvaluateInt(rangeExpression.End, out var end) ||
+        !TryEvaluateInt(forLoop.Step, out var step)) {
+      return;
+    }
+
+    if ((start < end && step < 0) || (start > end && step > 0)) {
+      AddWarning(
+          $"For-loop step ({step}) moves away from range direction {start}..{end}.",
+          forLoop.Step.Line, forLoop.Step.Column,
+          DiagnosticCodes.ForStepDirectionMismatch);
+    }
   }
 
   private static string ExtractCommandName(string script) {
@@ -1490,6 +1532,14 @@ public sealed class WarningAnalyzer {
           "Use a non-interpolated multiline literal: << [[...]].",
       DiagnosticCodes.UnusedCaptureResult =>
           "Remove the capture or prefix the variable with '_' to mark it intentionally unused.",
+      DiagnosticCodes.SwitchWithoutMatchingCase =>
+          "Add a matching case or a wildcard case '_'.",
+      DiagnosticCodes.ForStepDirectionMismatch =>
+          "Use a step sign that progresses toward the range endpoint.",
+      DiagnosticCodes.NonPositiveWaitTarget =>
+          "Wait targets should be positive process IDs.",
+      DiagnosticCodes.IgnoredCaptureSideEffects =>
+          "Use 'sh ...' for side-effect-only commands, or store the capture in a non-ignored variable.",
       _ => null
     };
 

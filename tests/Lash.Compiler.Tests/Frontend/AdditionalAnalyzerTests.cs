@@ -607,4 +607,79 @@ public class AdditionalAnalyzerTests
             w => w.Code == DiagnosticCodes.UnusedVariable
                  && w.Message.Contains("out", StringComparison.Ordinal));
     }
+
+    [Fact]
+    public void WarningAnalyzer_EmitsWarningForConstantSwitchWithoutMatchingCase()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            switch "z"
+                case "a":
+                    echo "a"
+                case "b":
+                    echo "b"
+            end
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new WarningAnalyzer(diagnostics).Analyze(program);
+
+        Assert.Contains(
+            diagnostics.GetWarnings(),
+            w => w.Code == DiagnosticCodes.SwitchWithoutMatchingCase
+                 && w.Message.Contains("no matching case", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void WarningAnalyzer_EmitsWarningForForStepDirectionMismatch()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            for i in 0..10 step -1
+                echo $i
+            end
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new WarningAnalyzer(diagnostics).Analyze(program);
+
+        Assert.Contains(
+            diagnostics.GetWarnings(),
+            w => w.Code == DiagnosticCodes.ForStepDirectionMismatch
+                 && w.Message.Contains("moves away from range direction", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void WarningAnalyzer_EmitsWarningForNonPositiveWaitTarget()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            wait 0
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new WarningAnalyzer(diagnostics).Analyze(program);
+
+        Assert.Contains(
+            diagnostics.GetWarnings(),
+            w => w.Code == DiagnosticCodes.NonPositiveWaitTarget
+                 && w.Message.Contains("non-positive value", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void WarningAnalyzer_EmitsWarningForIgnoredCaptureSideEffects()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            let _out = $(printf hello)
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new WarningAnalyzer(diagnostics).Analyze(program);
+
+        Assert.Contains(
+            diagnostics.GetWarnings(),
+            w => w.Code == DiagnosticCodes.IgnoredCaptureSideEffects
+                 && w.Message.Contains("still executes for side effects", StringComparison.Ordinal));
+    }
 }

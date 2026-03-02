@@ -558,4 +558,121 @@ public class NameResolverTests
             e => e.Code == DiagnosticCodes.InvalidCommandUsage
                  && e.Message.Contains("Invalid declare assignment target", StringComparison.Ordinal));
     }
+
+    [Fact]
+    public void NameResolver_RejectsDuplicateEnumMembers()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            enum Color
+                Red
+                Red
+            end
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new NameResolver(diagnostics).Analyze(program);
+
+        Assert.Contains(
+            diagnostics.GetErrors(),
+            e => e.Code == DiagnosticCodes.DuplicateEnumMember
+                 && e.Message.Contains("duplicate member 'Red'", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void NameResolver_RejectsEmptyEnumDeclaration()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            enum Empty
+            end
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new NameResolver(diagnostics).Analyze(program);
+
+        Assert.Contains(
+            diagnostics.GetErrors(),
+            e => e.Code == DiagnosticCodes.EmptyEnumDeclaration
+                 && e.Message.Contains("must declare at least one member", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void NameResolver_RejectsDuplicateExactSwitchCasePatterns()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            switch "a"
+                case "a":
+                    echo first
+                case "a":
+                    echo second
+            end
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new NameResolver(diagnostics).Analyze(program);
+
+        Assert.Contains(
+            diagnostics.GetErrors(),
+            e => e.Code == DiagnosticCodes.DuplicateSwitchCasePattern
+                 && e.Message.Contains("Duplicate switch case pattern", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void NameResolver_RejectsMultipleWildcardCases()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            switch "x"
+                case _:
+                    echo one
+                case _:
+                    echo two
+            end
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new NameResolver(diagnostics).Analyze(program);
+
+        Assert.Contains(
+            diagnostics.GetErrors(),
+            e => e.Code == DiagnosticCodes.DuplicateWildcardCase
+                 && e.Message.Contains("at most one wildcard case", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void NameResolver_RejectsIntoConstInsideLoops()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            for i in 1..3
+                wait into const status
+            end
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new NameResolver(diagnostics).Analyze(program);
+
+        Assert.Contains(
+            diagnostics.GetErrors(),
+            e => e.Code == DiagnosticCodes.InvalidIntoConstContext
+                 && e.Message.Contains("not allowed inside repeated contexts", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void NameResolver_AllowsIntoConstOutsideRepeatedContexts()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            wait into const status
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new NameResolver(diagnostics).Analyze(program);
+
+        Assert.DoesNotContain(
+            diagnostics.GetErrors(),
+            e => e.Code == DiagnosticCodes.InvalidIntoConstContext);
+    }
 }
