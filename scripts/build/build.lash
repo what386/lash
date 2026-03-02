@@ -14,10 +14,10 @@ readonly PROJECT_NAME = "Lash"
 readonly CONFIGURATION = "Release"
 readonly OUTPUT_DIR = "./target/release"
 readonly PROJECTS = [
-"lash:./src/Lash.Cli/Lash.Cli.csproj",
-"lashc:./src/Lash.Compiler/Lash.Compiler.csproj",
-"lashfmt:./src/Lash.Formatter/Lash.Formatter.csproj",
-"lashlsp:./src/Lash.Lsp/Lash.Lsp.csproj"
+    "lash:./src/Lash.Cli/Lash.Cli.csproj",
+    "lashc:./src/Lash.Compiler/Lash.Compiler.csproj",
+    "lashfmt:./src/Lash.Formatter/Lash.Formatter.csproj",
+    "lashlsp:./src/Lash.Lsp/Lash.Lsp.csproj"
 ]
 
 // Build defaults
@@ -181,15 +181,15 @@ end
 fn build_tool_for_platform(tool_name, project_path, rid, bundle_dir)
     const temp_dir = $OUTPUT_DIR + "/temp_" + $tool_name + "_" + $rid
     let publish_args = [
-    $project_path,
-    "-c",
-    $CONFIGURATION,
-    "-r",
-    $rid,
-    "--self-contained",
-    "-p:UseAppHost=true",
-    "-o",
-    $temp_dir
+        $project_path,
+        "-c",
+        $CONFIGURATION,
+        "-r",
+        $rid,
+        "--self-contained",
+        "-p:UseAppHost=true",
+        "-o",
+        $temp_dir
     ]
 
     if $ENABLE_SINGLE_FILE
@@ -202,10 +202,10 @@ fn build_tool_for_platform(tool_name, project_path, rid, bundle_dir)
 
     if should_trim_tool($tool_name)
         $publish_args += [
-        "-p:PublishTrimmed=True",
-        "-p:TrimMode=CopyUsed",
-        "-p:EnableTrimAnalyzer=True",
-        "-warnaserror:IL2*"
+            "-p:PublishTrimmed=True",
+            "-p:TrimMode=CopyUsed",
+            "-p:EnableTrimAnalyzer=True",
+            "-warnaserror:IL2*"
         ]
     end
 
@@ -307,71 +307,71 @@ while #$argv > 0
     elif $arg == "--no-trim"
         if #$argv > 1 && is_known_tool($argv[1])
             $NO_TRIM_TOOLS += [$argv[1]]
-            shift
-            shift
-        else
-            $ENABLE_TRIMMING = false
-            shift
+                    shift
+                    shift
+                else
+                    $ENABLE_TRIMMING = false
+                    shift
+                end
+            elif $arg == "--no-single-file"
+                $ENABLE_SINGLE_FILE = false
+                shift
+            elif $arg == "--no-ready2run"
+                $ENABLE_READY_TO_RUN = false
+                shift
+            else
+                $BUILD_PLATFORMS += [$arg]
+                shift
+            end
         end
-    elif $arg == "--no-single-file"
-        $ENABLE_SINGLE_FILE = false
-        shift
-    elif $arg == "--no-ready2run"
-        $ENABLE_READY_TO_RUN = false
-        shift
-    else
-        $BUILD_PLATFORMS += [$arg]
-        shift
-    end
-end
 
-if #$BUILD_PLATFORMS == 0
-    echo -e "${RED}Error: No platforms specified${NC}"
-    echo ""
-    show_help()
-    exit 1
-end
+        if #$BUILD_PLATFORMS == 0
+            echo -e "${RED}Error: No platforms specified${NC}"
+            echo ""
+            show_help()
+            exit 1
+        end
 
-echo -e "${GREEN}  Building ${PROJECT_NAME}${NC}"
-echo -e "${BLUE}Configuration:${NC}"
-if $ENABLE_TRIMMING
-    if #$NO_TRIM_TOOLS == 0
-        echo -e "  Trimming:     ${GREEN}Enabled${NC}"
-    else
-        const disabled = list_to_csv($NO_TRIM_TOOLS)
-        echo -e "  Trimming:     ${YELLOW}Enabled (except: ${disabled})${NC}"
-    end
-else
-    echo -e "  Trimming:     ${YELLOW}Disabled${NC}"
-end
-if $ENABLE_SINGLE_FILE
-    echo -e "  Single File:  ${GREEN}Enabled${NC}"
-else
-    echo -e "  Single File:  ${YELLOW}Disabled${NC}"
-end
-if $ENABLE_READY_TO_RUN
-    echo -e "  ReadyToRun:   ${GREEN}Enabled${NC}"
-else
-    echo -e "  ReadyToRun:   ${YELLOW}Disabled${NC}"
-end
+        echo -e "${GREEN}  Building ${PROJECT_NAME}${NC}"
+        echo -e "${BLUE}Configuration:${NC}"
+        if $ENABLE_TRIMMING
+            if #$NO_TRIM_TOOLS == 0
+                echo -e "  Trimming:     ${GREEN}Enabled${NC}"
+            else
+                const disabled = list_to_csv($NO_TRIM_TOOLS)
+                echo -e "  Trimming:     ${YELLOW}Enabled (except: ${disabled})${NC}"
+            end
+        else
+            echo -e "  Trimming:     ${YELLOW}Disabled${NC}"
+        end
+        if $ENABLE_SINGLE_FILE
+            echo -e "  Single File:  ${GREEN}Enabled${NC}"
+        else
+            echo -e "  Single File:  ${YELLOW}Disabled${NC}"
+        end
+        if $ENABLE_READY_TO_RUN
+            echo -e "  ReadyToRun:   ${GREEN}Enabled${NC}"
+        else
+            echo -e "  ReadyToRun:   ${YELLOW}Disabled${NC}"
+        end
 
-if dir_exists($OUTPUT_DIR)
-    echo -e "${YELLOW}Cleaning output directory...${NC}"
-    rm -rf "$OUTPUT_DIR"
-end
-mkdir -p "$OUTPUT_DIR"
+        if dir_exists($OUTPUT_DIR)
+            echo -e "${YELLOW}Cleaning output directory...${NC}"
+            rm -rf "$OUTPUT_DIR"
+        end
+        mkdir -p "$OUTPUT_DIR"
 
-echo -e "${BLUE}Building platforms: ${BUILD_PLATFORMS[*]}${NC}"
-for rid in $BUILD_PLATFORMS
-    const description = get_platform_description($rid)
-    build_platform($rid, $description)
-end
+        echo -e "${BLUE}Building platforms: ${BUILD_PLATFORMS[*]}${NC}"
+        for rid in $BUILD_PLATFORMS
+            const description = get_platform_description($rid)
+            build_platform($rid, $description)
+        end
 
-echo ""
-echo -e "${GREEN}========================================${NC}"
-echo -e "${GREEN}  Build Complete!${NC}"
-echo -e "${GREEN}========================================${NC}"
-echo ""
-echo "Bundles are located in:"
-echo ""
-find "$OUTPUT_DIR" -maxdepth 1 -mindepth 1 -type d -name "${PROJECT_NAME}-*" | sort
+        echo ""
+        echo -e "${GREEN}========================================${NC}"
+        echo -e "${GREEN}  Build Complete!${NC}"
+        echo -e "${GREEN}========================================${NC}"
+        echo ""
+        echo "Bundles are located in:"
+        echo ""
+        find "$OUTPUT_DIR" -maxdepth 1 -mindepth 1 -type d -name "${PROJECT_NAME}-*" | sort
