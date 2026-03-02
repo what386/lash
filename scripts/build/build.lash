@@ -2,16 +2,6 @@
 
 set -euo pipefail
 
-const PROJECT_NAME = "Lash"
-
-const OUTPUT_DIR = "./target/release"
-const PROJECTS = [
-"lash:./src/Lash.Cli/Lash.Cli.csproj",
-"lashc:./src/Lash.Compiler/Lash.Compiler.csproj",
-"lashfmt:./src/Lash.Formatter/Lash.Formatter.csproj",
-"lashlsp:./src/Lash.Lsp/Lash.Lsp.csproj"
-]
-
 // Color output
 readonly RED = "\033[0;31m"
 readonly GREEN = "\033[0;32m"
@@ -19,8 +9,16 @@ readonly YELLOW = "\033[1;33m"
 readonly BLUE = "\033[0;34m"
 readonly NC = "\033[0m"
 
-// Build type (release vs debug)
+// Build configuration
+readonly PROJECT_NAME = "Lash"
 readonly CONFIGURATION = "Release"
+readonly OUTPUT_DIR = "./target/release"
+readonly PROJECTS = [
+"lash:./src/Lash.Cli/Lash.Cli.csproj",
+"lashc:./src/Lash.Compiler/Lash.Compiler.csproj",
+"lashfmt:./src/Lash.Formatter/Lash.Formatter.csproj",
+"lashlsp:./src/Lash.Lsp/Lash.Lsp.csproj"
+]
 
 // Build defaults
 let ENABLE_TRIMMING = true
