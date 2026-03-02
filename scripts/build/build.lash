@@ -12,6 +12,13 @@ const PROJECTS = [
 "lashlsp:./src/Lash.Lsp/Lash.Lsp.csproj"
 ]
 
+// Color output
+readonly RED = "\033[0;31m"
+readonly GREEN = "\033[0;32m"
+readonly YELLOW = "\033[1;33m"
+readonly BLUE = "\033[0;34m"
+readonly NC = "\033[0m"
+
 // Build type (release vs debug)
 readonly CONFIGURATION = "Release"
 
@@ -20,13 +27,6 @@ let ENABLE_TRIMMING = true
 let NO_TRIM_TOOLS = []
 let ENABLE_SINGLE_FILE = true
 let ENABLE_READY_TO_RUN = true
-
-// Color output
-readonly RED = "\033[0;31m"
-readonly GREEN = "\033[0;32m"
-readonly YELLOW = "\033[1;33m"
-readonly BLUE = "\033[0;34m"
-readonly NC = "\033[0m"
 
 fn show_help()
     echo [[
