@@ -312,7 +312,7 @@ public class RoundTripTests
     }
 
     [Fact]
-    public void RoundTrip_HereString_RedirectsInputToFunctionCall()
+    public void RoundTrip_StdinStringRedirect_RedirectsInputToFunctionCall()
     {
         var result = CompilerPipeline.Compile(
             """
@@ -320,7 +320,7 @@ public class RoundTripTests
                 cat
             end
 
-            feed() <<< "payload"
+            feed() << "payload"
             """);
 
         Assert.False(result.Diagnostics.HasErrors, string.Join(Environment.NewLine, result.Diagnostics.GetErrors()));

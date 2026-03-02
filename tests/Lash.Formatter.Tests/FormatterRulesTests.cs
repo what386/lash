@@ -129,7 +129,8 @@ public class FormatterRulesTests
             write()&>"all-truncate.log"
             feed()<"input.log"
             feed()<>"rw.log"
-            feed()<<<"payload"
+            feed()<<"payload"
+            feed()<<-"payload"
             feed()3>&1
             feed()1>&-
             """;
@@ -144,7 +145,8 @@ public class FormatterRulesTests
             write() &> "all-truncate.log"
             feed() < "input.log"
             feed() <> "rw.log"
-            feed() <<< "payload"
+            feed() << "payload"
+            feed() <<- "payload"
             feed() 3>&1
             feed() 1>&-
             """;

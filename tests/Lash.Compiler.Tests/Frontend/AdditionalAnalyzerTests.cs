@@ -78,7 +78,7 @@ public class AdditionalAnalyzerTests
     }
 
     [Fact]
-    public void CodegenFeasibilityAnalyzer_RejectsHeredocWithNonLiteralPayload()
+    public void CodegenFeasibilityAnalyzer_RejectsTabStripStdinRedirectWithNonMultilinePayload()
     {
         var program = TestCompiler.ParseOrThrow(
             """
@@ -87,7 +87,7 @@ public class AdditionalAnalyzerTests
             end
 
             let payload = "text"
-            feed() << $payload
+            feed() <<- $payload
             """);
 
         var diagnostics = new DiagnosticBag();
@@ -97,7 +97,7 @@ public class AdditionalAnalyzerTests
 
         Assert.Contains(diagnostics.GetErrors(), e =>
             e.Code == DiagnosticCodes.UnsupportedStatementForCodegen
-            && e.Message.Contains("Heredoc redirection", StringComparison.Ordinal));
+            && e.Message.Contains("Tab-stripping stdin redirection", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -565,7 +565,7 @@ public class AdditionalAnalyzerTests
     }
 
     [Fact]
-    public void WarningAnalyzer_EmitsWarningForSuspiciousHeredocPayload()
+    public void WarningAnalyzer_DoesNotEmitRemovedSuspiciousHeredocPayloadWarning()
     {
         var program = TestCompiler.ParseOrThrow(
             """
@@ -580,10 +580,9 @@ public class AdditionalAnalyzerTests
         var diagnostics = new DiagnosticBag();
         new WarningAnalyzer(diagnostics).Analyze(program);
 
-        Assert.Contains(
+        Assert.DoesNotContain(
             diagnostics.GetWarnings(),
-            w => w.Code == DiagnosticCodes.SuspiciousHeredocPayload
-                 && w.Message.Contains("Heredoc payload", StringComparison.Ordinal));
+            w => w.Code == DiagnosticCodes.SuspiciousHeredocPayload);
     }
 
     [Fact]

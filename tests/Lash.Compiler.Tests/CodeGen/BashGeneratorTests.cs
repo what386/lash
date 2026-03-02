@@ -404,9 +404,11 @@ public class BashGeneratorTests
             write() &> "all-truncate.log"
             feed() < "input.log"
             feed() <> "rw.log"
-            feed() <<< "payload"
+            feed() << "payload"
             feed() << [[line1
             line2]]
+            feed() <<- [[line3
+            line4]]
             feed() 3>&1
             feed() 1>&-
             """);
@@ -421,9 +423,13 @@ public class BashGeneratorTests
         Assert.Contains("feed < \"input.log\"", bash);
         Assert.Contains("feed <> \"rw.log\"", bash);
         Assert.Contains("feed <<< \"payload\"", bash);
-        Assert.Contains("feed <<'LASH_HEREDOC'", bash);
+        Assert.Contains("feed <<'EOF", bash);
+        Assert.Contains("feed <<-'EOF", bash);
+        Assert.DoesNotContain("LASH_HEREDOC", bash);
         Assert.Contains("line1", bash);
         Assert.Contains("line2", bash);
+        Assert.Contains("line3", bash);
+        Assert.Contains("line4", bash);
         Assert.Contains("feed 3>&1", bash);
         Assert.Contains("feed 1>&-", bash);
     }
@@ -442,6 +448,27 @@ public class BashGeneratorTests
 
         var bash = new BashGenerator().Generate(program);
         Assert.Contains("diff_files <(sort \"a.txt\") >(cat)", bash);
+    }
+
+    [Fact]
+    public void BashGenerator_UsesUnquotedDelimiterForInterpolatedMultilineStdinRedirect()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            fn feed()
+                cat
+            end
+
+            let name = "world"
+            feed() << $[[hello
+            {name}
+            ]]
+            """);
+
+        var bash = new BashGenerator().Generate(program);
+        Assert.Contains("feed <<EOF", bash);
+        Assert.DoesNotContain("feed <<'EOF", bash);
+        Assert.Contains("${name}", bash);
     }
 
     [Fact]

@@ -102,6 +102,19 @@ public class SyntaxDiagnosticFormattingTests {
         Assert.True(diagnostics.HasErrors);
   }
 
+  [Fact]
+  public void ParserErrors_ReportDeprecatedHereStringOperator() {
+        var diagnostics = Parse(
+            """
+            feed() <<< "x"
+            """);
+
+        Assert.True(diagnostics.HasErrors);
+        var error = diagnostics.GetErrors().First();
+        Assert.Contains("<<<", error.Message, StringComparison.Ordinal);
+        Assert.Contains("Use '<<'", error.Message, StringComparison.Ordinal);
+  }
+
   private static DiagnosticBag Parse(string source) {
     var diagnostics = new DiagnosticBag();
     var path = Path.Combine(Path.GetTempPath(),
