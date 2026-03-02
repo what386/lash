@@ -6,8 +6,8 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 cd "${REPO_ROOT}"
 
 RID="linux-x64"
-CONFIGURATION="Release"
-OUTPUT_ROOT="./target/release"
+CONFIGURATION="Debug"
+OUTPUT_ROOT="./target/Debug"
 BUNDLE_DIR="${OUTPUT_ROOT}/Lash-linux_x86-64"
 
 PROJECTS=(
@@ -17,7 +17,7 @@ PROJECTS=(
     "lashlsp:./src/Lash.Lsp/Lash.Lsp.csproj"
 )
 
-printf "Kickstart build (linux-x64)\n"
+printf "Bootstrap build (linux-x64)\n"
 
 rm -rf "${BUNDLE_DIR}"
 mkdir -p "${BUNDLE_DIR}"
