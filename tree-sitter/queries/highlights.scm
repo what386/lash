@@ -1,264 +1,262 @@
-; ============================================================
-; Shebang
-; ============================================================
-(shebang) @keyword.directive
+; =============================================================================
+; Lash – Tree-sitter highlights
+; =============================================================================
 
-; ============================================================
-; Preprocessor directives
-; ============================================================
-(preprocessor_if_directive) @keyword.directive
-(preprocessor_elif_directive) @keyword.directive
-(preprocessor_else_directive) @keyword.directive
-(preprocessor_end_directive) @keyword.directive
-(preprocessor_import_directive) @keyword.directive
-(preprocessor_raw_directive) @keyword.directive
-(preprocessor_define_directive) @keyword.directive
-(preprocessor_undef_directive) @keyword.directive
-(preprocessor_error_directive) @keyword.directive
-(preprocessor_warning_directive) @keyword.directive
-
-; Preprocessor arguments / names
-(preprocessor_import_directive
-  path: (preprocessor_directive_argument) @string.special)
-(preprocessor_define_directive
-  name: (identifier) @constant)
-(preprocessor_define_directive
-  value: (preprocessor_directive_argument) @string.special)
-(preprocessor_undef_directive
-  name: (identifier) @constant)
-(preprocessor_if_directive
-  condition: (preprocessor_directive_argument) @string.special)
-(preprocessor_elif_directive
-  condition: (preprocessor_directive_argument) @string.special)
-(preprocessor_error_directive
-  message: (preprocessor_directive_argument) @string.special)
-(preprocessor_warning_directive
-  message: (preprocessor_directive_argument) @string.special)
-
-; ============================================================
-; Comments
-; ============================================================
-(line_comment) @comment
-(block_comment) @comment
-
-; ============================================================
+; -----------------------------------------------------------------------------
 ; Keywords
-; ============================================================
-"fn"       @keyword.function
-"return"   @keyword.return
-"end"      @keyword
-"let"      @keyword
-"const"    @keyword
-"readonly" @keyword
-"global"   @keyword
+; -----------------------------------------------------------------------------
 
-"if"       @keyword.conditional
-"elif"     @keyword.conditional
-"else"     @keyword.conditional
-"switch"   @keyword.conditional
-"case"     @keyword.conditional
+[
+  "let"
+  "const"
+  "readonly"
+  "global"
+] @keyword.storage
 
-"for"      @keyword.repeat
-"select"   @keyword.repeat
-"in"       @keyword.repeat
-"step"     @keyword.repeat
-"while"    @keyword.repeat
-"until"    @keyword.repeat
-"subshell" @keyword.repeat
-"coproc"   @keyword.repeat
-"wait"     @keyword.repeat
-"shift"    @keyword.repeat
+[
+  "fn"
+] @keyword.function
 
-"into"     @keyword
-"test"     @keyword
-"trap"     @keyword
-"untrap"   @keyword
-"enum"     @keyword
+[
+  "return"
+] @keyword.return
 
-(break_statement)    @keyword
-(continue_statement) @keyword
+[
+  "if"
+  "elif"
+  "else"
+  "end"
+] @keyword.conditional
 
-; ============================================================
-; Booleans
-; ============================================================
-(boolean) @boolean
+[
+  "switch"
+  "case"
+] @keyword.conditional
 
-; ============================================================
-; Numbers
-; ============================================================
-(number) @number
+[
+  "for"
+  "in"
+  "step"
+  "while"
+  "until"
+  "select"
+] @keyword.repeat
 
-; ============================================================
-; Strings
-; ============================================================
-(string)              @string
-(interpolated_string) @string.special
-(interpolated_multiline_string) @string.special
-(multiline_string)    @string
-(glob_pattern)        @string.special
+[
+  "break"
+  "continue"
+] @keyword.control
 
-; ============================================================
-; Variable references  ($var)
-; ============================================================
-(var_ref "$" @operator)
-(var_ref name: (identifier) @variable)
+[
+  "enum"
+] @keyword.type
 
-; ============================================================
-; Shell capture  $(...)
-; ============================================================
-(shell_capture_expression
-  "$"                           @operator
-  "("                           @punctuation.bracket
-  payload: (capture_payload)    @string.special
-  ")"                           @punctuation.bracket)
+[
+  "subshell"
+  "coproc"
+  "wait"
+  "jobs"
+  "shift"
+  "into"
+  "sh"
+  "test"
+  "trap"
+  "untrap"
+] @keyword.special
 
-(process_substitution_expression
-  operator: _                   @operator
-  "("                           @punctuation.bracket
-  payload: (capture_payload)    @string.special
-  ")"                           @punctuation.bracket)
+; -----------------------------------------------------------------------------
+; Preprocessor directives
+; -----------------------------------------------------------------------------
 
-; ============================================================
-; Function declarations
-; ============================================================
+[
+  "@if"
+  "@elif"
+  "@else"
+  "@end"
+  "@define"
+  "@undef"
+  "@import"
+  "@raw"
+  "@error"
+  "@warning"
+] @keyword.directive
+
+(preprocessor_directive_argument) @string.special
+
+; -----------------------------------------------------------------------------
+; Declarations
+; -----------------------------------------------------------------------------
+
 (function_declaration
   name: (identifier) @function)
 
-; ============================================================
-; Parameters
-; ============================================================
 (parameter
   name: (identifier) @variable.parameter)
-; default_value is an expression — highlight its outermost node naturally;
-; the specific child nodes will be caught by their own rules below.
 
-; ============================================================
-; Function calls
-; ============================================================
+(parameter
+  default_value: (_) @variable.parameter.default)
+
+(enum_declaration
+  name: (identifier) @type)
+
+(enum_member
+  (identifier) @constant)
+
+; -----------------------------------------------------------------------------
+; Calls
+; -----------------------------------------------------------------------------
+
 (function_call
   name: (identifier) @function.call)
 
-; ============================================================
-; Command statements  (bare-word shell invocations)
-; ============================================================
-(command_statement
-  name: (identifier) @function.call)
-
-; ============================================================
-; sh / test statements — command expression highlighted as string
-; ============================================================
-(sh_statement   "sh"   @keyword
-  command: (_) @string.special)
-(test_statement "test" @keyword
-  condition: (_) @string.special)
-
-; ============================================================
-; trap / untrap — signal names
-; ============================================================
-(trap_statement
-  signal: (identifier) @constant)
-(untrap_statement
-  signal: (identifier) @constant)
-
-; ============================================================
-; Variable declarations
-; ============================================================
-(variable_declaration
-  name: (identifier) @variable)
-
-(readonly_declaration
-  name: (identifier) @variable)
-
-; ============================================================
-; Assignments
-; ============================================================
-(assignment
-  target: (var_ref
-    name: (identifier) @variable))
-
-
-; ============================================================
-; For / select loop variables
-; ============================================================
-(for_loop
-  variable: (identifier) @variable)
-(for_loop
-  glob: (glob_pattern) @string.special)
-
-(select_loop
-  variable: (identifier) @variable)
-(select_loop
-  glob: (glob_pattern) @string.special)
-
-; ============================================================
-; wait — jobs keyword & into binding
-; ============================================================
-(wait_statement "jobs" @keyword)
-
-; ============================================================
-; into bindings
-; ============================================================
-(into_binding "into" @keyword)
-(into_binding "let"  @keyword)
-(into_binding "const" @keyword)
-(into_binding
-  target: (var_ref name: (identifier) @variable))
-(into_binding
-  name: (identifier) @variable)
-
-; ============================================================
-; Enum declarations
-; ============================================================
-(enum_declaration
-  name: (identifier) @type)
-(enum_member) @constant
-
-; ============================================================
-; Enum access  Foo::Bar
-; ============================================================
 (enum_access
   enum:   (identifier) @type
   member: (identifier) @constant)
 
-(wildcard_pattern) @constant.builtin
+; -----------------------------------------------------------------------------
+; Variables
+; -----------------------------------------------------------------------------
 
-; ============================================================
+(variable_declaration
+  name: (binding_name) @variable)
+
+(readonly_declaration
+  name: (binding_name) @variable)
+
+(assignment
+  target: (var_ref
+    name: (identifier) @variable))
+
+(update_statement
+  target: (var_ref
+    name: (identifier) @variable))
+
+(var_ref
+  name: (identifier) @variable)
+
+; Built-in argv
+(argv_index_expression) @variable.builtin
+(argv_length_expression) @variable.builtin
+
+; Binding names in for / select / into bindings
+(for_loop
+  variable: (binding_name) @variable)
+
+(select_loop
+  variable: (binding_name) @variable)
+
+(into_binding
+  name: (binding_name) @variable)
+
+(into_binding
+  target: (var_ref
+    name: (identifier) @variable))
+
+; Discard binding
+(binding_name
+  "_" @variable.builtin)
+
+; Wildcard pattern in case
+(wildcard_pattern) @variable.builtin
+
+; -----------------------------------------------------------------------------
 ; Operators
-; ============================================================
-(pipe_expression "|" @operator)
-(fd_dup_expression
-  operator: (fd_dup_operator) @operator)
+; -----------------------------------------------------------------------------
 
-; Redirect operators — listed most-specific first so longer tokens win
-(redirect_expression operator: "&>>"  @operator)
-(redirect_expression operator: "2>>"  @operator)
-(redirect_expression operator: ">>"   @operator)
-(redirect_expression operator: "<<-"  @operator)
-(redirect_expression operator: "<<"   @operator)
-(redirect_expression operator: "&>"   @operator)
-(redirect_expression operator: "2>"   @operator)
-(redirect_expression operator: "<>"   @operator)
+[
+  "=" "+=" "-=" "*=" "/=" "%="
+] @operator
 
-"&"  @operator
-"::" @operator
+[
+  "++" "--"
+] @operator
 
-(range_expression         ".."       @operator)
-(additive_expression      operator: _ @operator)
-(multiplicative_expression operator: _ @operator)
-(comparison_expression    operator: _ @operator)
-(logical_expression       "&&"       @operator)
-(logical_expression       "||"       @operator)
-(unary_expression         operator: _ @operator)
-(assignment               operator: _ @operator)
-(update_statement         operator: _ @operator)
-(variable_declaration     "="        @operator)
+[
+  "+" "-" "*" "/" "%"
+] @operator.arithmetic
 
-; ============================================================
+[
+  "==" "!=" "<" ">" "<=" ">="
+] @operator.comparison
+
+[
+  "&&" "||" "!"
+] @operator.logical
+
+[
+  "|"
+] @operator.pipe
+
+[
+  ">>" "&>>" "2>>"
+  "<<" "<<-"
+  "&>" "2>"
+  "<>"
+] @operator.redirect
+
+(fd_dup_operator) @operator.redirect
+
+".." @operator.range
+
+"#" @operator.length
+
+; -----------------------------------------------------------------------------
+; Literals
+; -----------------------------------------------------------------------------
+
+(boolean)  @boolean
+(number)   @number
+
+(string)                     @string
+(multiline_string)           @string
+(interpolated_string)        @string
+(interpolated_multiline_string) @string
+
+; Interpolation delimiters inside interpolated strings
+; (Tree-sitter does not expose sub-tokens here; highlight the whole node uniformly)
+
+; -----------------------------------------------------------------------------
+; Shell integration
+; -----------------------------------------------------------------------------
+
+(shell_capture_expression
+  payload: (shell_payload) @string.special)
+
+(process_substitution_expression
+  payload: (shell_payload) @string.special)
+
+(sh_statement
+  command: (_) @string.special)
+
+(command_statement
+  name: (identifier) @function.builtin)
+
+(command_argument) @string
+
+(glob_pattern) @string.special
+
+; -----------------------------------------------------------------------------
+; Comments
+; -----------------------------------------------------------------------------
+
+(line_comment)  @comment
+(block_comment) @comment
+
+; -----------------------------------------------------------------------------
 ; Punctuation
-; ============================================================
-"," @punctuation.delimiter
-":" @punctuation.delimiter
-"(" @punctuation.bracket
-")" @punctuation.bracket
-"[" @punctuation.bracket
-"]" @punctuation.bracket
+; -----------------------------------------------------------------------------
+
+["(" ")"] @punctuation.bracket
+["[" "]"] @punctuation.bracket
+"::"      @punctuation.delimiter
+":"       @punctuation.delimiter
+","       @punctuation.delimiter
+
+; Background launch
+"&" @operator.special
+
+; -----------------------------------------------------------------------------
+; Shebang
+; -----------------------------------------------------------------------------
+
+(shebang) @comment.special

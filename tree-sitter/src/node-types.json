@@ -55,6 +55,46 @@
     }
   },
   {
+    "type": "argv_expression",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "argv_index_expression",
+          "named": true
+        },
+        {
+          "type": "argv_length_expression",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "argv_index_expression",
+    "named": true,
+    "fields": {
+      "index": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "expression",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "argv_length_expression",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "array_literal",
     "named": true,
     "fields": {},
@@ -130,6 +170,21 @@
     }
   },
   {
+    "type": "binding_name",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "identifier",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "block",
     "named": true,
     "fields": {},
@@ -188,6 +243,14 @@
       "required": true,
       "types": [
         {
+          "type": "bare_word",
+          "named": true
+        },
+        {
+          "type": "glob_pattern",
+          "named": true
+        },
+        {
           "type": "interpolated_multiline_string",
           "named": true
         },
@@ -201,6 +264,14 @@
         },
         {
           "type": "number",
+          "named": true
+        },
+        {
+          "type": "process_substitution_expression",
+          "named": true
+        },
+        {
+          "type": "shell_capture_expression",
           "named": true
         },
         {
@@ -220,7 +291,7 @@
     "fields": {
       "argument": {
         "multiple": true,
-        "required": false,
+        "required": true,
         "types": [
           {
             "type": "command_argument",
@@ -576,7 +647,7 @@
         "required": true,
         "types": [
           {
-            "type": "identifier",
+            "type": "binding_name",
             "named": true
           }
         ]
@@ -740,7 +811,7 @@
         "required": false,
         "types": [
           {
-            "type": "identifier",
+            "type": "binding_name",
             "named": true
           }
         ]
@@ -1076,6 +1147,10 @@
       "required": true,
       "types": [
         {
+          "type": "argv_expression",
+          "named": true
+        },
+        {
           "type": "array_literal",
           "named": true
         },
@@ -1139,11 +1214,11 @@
         "required": true,
         "types": [
           {
-            "type": "<",
+            "type": "<(",
             "named": false
           },
           {
-            "type": ">",
+            "type": ">(",
             "named": false
           }
         ]
@@ -1153,7 +1228,7 @@
         "required": true,
         "types": [
           {
-            "type": "capture_payload",
+            "type": "shell_payload",
             "named": true
           }
         ]
@@ -1195,7 +1270,7 @@
         "required": true,
         "types": [
           {
-            "type": "identifier",
+            "type": "binding_name",
             "named": true
           }
         ]
@@ -1331,7 +1406,7 @@
         "required": true,
         "types": [
           {
-            "type": "identifier",
+            "type": "binding_name",
             "named": true
           }
         ]
@@ -1363,7 +1438,7 @@
         "required": true,
         "types": [
           {
-            "type": "capture_payload",
+            "type": "shell_payload",
             "named": true
           }
         ]
@@ -1755,12 +1830,26 @@
     "type": "variable_declaration",
     "named": true,
     "fields": {
+      "kind": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "const",
+            "named": false
+          },
+          {
+            "type": "let",
+            "named": false
+          }
+        ]
+      },
       "name": {
         "multiple": false,
         "required": true,
         "types": [
           {
-            "type": "identifier",
+            "type": "binding_name",
             "named": true
           }
         ]
@@ -1834,6 +1923,11 @@
     }
   },
   {
+    "type": "wildcard_pattern",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "!",
     "named": false
   },
@@ -1847,6 +1941,10 @@
   },
   {
     "type": "$",
+    "named": false
+  },
+  {
+    "type": "$(",
     "named": false
   },
   {
@@ -1950,6 +2048,10 @@
     "named": false
   },
   {
+    "type": "<(",
+    "named": false
+  },
+  {
     "type": "<<",
     "named": false
   },
@@ -1975,6 +2077,10 @@
   },
   {
     "type": ">",
+    "named": false
+  },
+  {
+    "type": ">(",
     "named": false
   },
   {
@@ -2022,16 +2128,24 @@
     "named": false
   },
   {
+    "type": "_",
+    "named": false
+  },
+  {
+    "type": "argv",
+    "named": false
+  },
+  {
+    "type": "bare_word",
+    "named": true
+  },
+  {
     "type": "block_comment",
     "named": true,
     "extra": true
   },
   {
     "type": "break_statement",
-    "named": true
-  },
-  {
-    "type": "capture_payload",
     "named": true
   },
   {
@@ -2172,6 +2286,10 @@
     "named": true
   },
   {
+    "type": "shell_payload",
+    "named": true
+  },
+  {
     "type": "shift",
     "named": false
   },
@@ -2218,10 +2336,6 @@
   {
     "type": "while",
     "named": false
-  },
-  {
-    "type": "wildcard_pattern",
-    "named": true
   },
   {
     "type": "|",
