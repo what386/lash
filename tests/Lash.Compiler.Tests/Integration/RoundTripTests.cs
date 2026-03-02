@@ -105,6 +105,61 @@ public class RoundTripTests
     }
 
     [Fact]
+    public void RoundTrip_InterpolatedMultilineStringRendersPlaceholders()
+    {
+        var result = CompilerPipeline.Compile(
+            """
+            let name = "pilot"
+            let message = $[[line1 {name}
+            line2]]
+            sh $"printf '%s\\n' \"{message}\""
+            """);
+
+        Assert.False(result.Diagnostics.HasErrors, string.Join(Environment.NewLine, result.Diagnostics.GetErrors()));
+        var bash = Assert.IsType<string>(result.Bash);
+
+        var run = CompilerPipeline.RunBash(bash);
+        Assert.Equal(0, run.ExitCode);
+        Assert.Equal("line1 pilot\nline2\n", run.StdOut);
+    }
+
+    [Fact]
+    public void RoundTrip_BareCommandAcceptsInterpolatedMultilineLiteralArgument()
+    {
+        var result = CompilerPipeline.Compile(
+            """
+            let name = "pilot"
+            echo $[[line1 {name}
+            line2]]
+            """);
+
+        Assert.False(result.Diagnostics.HasErrors, string.Join(Environment.NewLine, result.Diagnostics.GetErrors()));
+        var bash = Assert.IsType<string>(result.Bash);
+
+        var run = CompilerPipeline.RunBash(bash);
+        Assert.Equal(0, run.ExitCode);
+        Assert.Equal("line1 pilot\nline2\n", run.StdOut);
+    }
+
+    [Fact]
+    public void RoundTrip_StandaloneMultilineLiteralIsInert()
+    {
+        var result = CompilerPipeline.Compile(
+            """
+            [[line1
+            line2]]
+            echo ok
+            """);
+
+        Assert.False(result.Diagnostics.HasErrors, string.Join(Environment.NewLine, result.Diagnostics.GetErrors()));
+        var bash = Assert.IsType<string>(result.Bash);
+
+        var run = CompilerPipeline.RunBash(bash);
+        Assert.Equal(0, run.ExitCode);
+        Assert.Equal("ok\n", run.StdOut);
+    }
+
+    [Fact]
     public void RoundTrip_CommandCaptureSupportsInterpolationAndSpread()
     {
         var result = CompilerPipeline.Compile(

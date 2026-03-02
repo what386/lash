@@ -84,6 +84,48 @@ public class GrammarTests
     }
 
     [Fact]
+    public void ModuleLoader_RewritesBareCommandContainingInterpolatedMultilineLiteral()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            echo $[[line1 {name}
+            line2]]
+            """);
+
+        var command = Assert.IsType<CommandStatement>(Assert.Single(program.Statements));
+        Assert.Equal("echo $'line1 '\"${name}\"$'\\nline2'", command.Script);
+    }
+
+    [Fact]
+    public void ModuleLoader_DoesNotRewriteStandaloneMultilineLiteralAsCommand()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            [[line1
+            line2]]
+            """);
+
+        Assert.Single(program.Statements);
+        Assert.IsType<ExpressionStatement>(program.Statements[0]);
+    }
+
+    [Fact]
+    public void ModuleLoader_DoesNotRewriteStandaloneInterpolatedMultilineLiteralAsCommand()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            $[[line1 {name}
+            line2]]
+            """);
+
+        Assert.Single(program.Statements);
+        Assert.IsType<ExpressionStatement>(program.Statements[0]);
+        var literal = Assert.IsType<LiteralExpression>(((ExpressionStatement)program.Statements[0]).Expression);
+        Assert.True(literal.IsInterpolated);
+        Assert.True(literal.IsMultiline);
+    }
+
+    [Fact]
     public void ModuleLoader_RewritesSingleWordAndPathCommands()
     {
         var program = TestCompiler.ParseOrThrow(
@@ -98,6 +140,25 @@ public class GrammarTests
         Assert.Contains(program.Statements, s => s is CommandStatement { Script: "pwd" });
         Assert.Contains(program.Statements, s => s is CommandStatement { Script: "./scripts/build/build.sh" });
         Assert.Contains(program.Statements, s => s is CommandStatement { Script: "/bin/echo hi" });
+    }
+
+    [Fact]
+    public void ModuleLoader_RewritesBareCommandAfterIndexedArrayAppend()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            let argv = ["--no-trim", "lashlsp"]
+            let no_trim_tools = []
+
+            if #$argv > 1
+                $no_trim_tools += [$argv[1]]
+            end
+
+            echo -e "ok"
+            """);
+
+        var command = Assert.IsType<CommandStatement>(program.Statements[^1]);
+        Assert.Equal("echo -e \"ok\"", command.Script);
     }
 
     [Fact]
@@ -308,6 +369,8 @@ public class GrammarTests
             let raw = [[line1
             "line2"
             line3]]
+            let rich = $[[line1 {name}
+            line2]]
             """);
 
         var interpolated = Assert.IsType<VariableDeclaration>(program.Statements[1]);
@@ -315,6 +378,11 @@ public class GrammarTests
 
         var raw = Assert.IsType<VariableDeclaration>(program.Statements[2]);
         Assert.True(Assert.IsType<LiteralExpression>(raw.Value).IsMultiline);
+
+        var rich = Assert.IsType<VariableDeclaration>(program.Statements[3]);
+        var richLiteral = Assert.IsType<LiteralExpression>(rich.Value);
+        Assert.True(richLiteral.IsInterpolated);
+        Assert.True(richLiteral.IsMultiline);
     }
 
     [Fact]
