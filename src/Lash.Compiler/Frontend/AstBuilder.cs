@@ -771,8 +771,10 @@ public class AstBuilder : LashBaseVisitor<AstNode>
                 Value = UnquoteStringLiteral(stringLiteral.GetText()),
                 LiteralType = new PrimitiveType { PrimitiveKind = PrimitiveType.Kind.String },
                 Type = ExpressionTypes.String,
-                IsInterpolated = stringLiteral.INTERPOLATED_STRING() != null,
+                IsInterpolated = stringLiteral.INTERPOLATED_STRING() != null
+                    || stringLiteral.INTERPOLATED_MULTILINE_STRING() != null,
                 IsMultiline = stringLiteral.MULTILINE_STRING() != null
+                    || stringLiteral.INTERPOLATED_MULTILINE_STRING() != null
             };
         }
 
@@ -880,9 +882,11 @@ public class AstBuilder : LashBaseVisitor<AstNode>
         if (raw.Length < 2)
             return false;
 
-        var isInterpolated = raw.StartsWith("$\"", StringComparison.Ordinal) && raw.EndsWith("\"", StringComparison.Ordinal);
+        var isInterpolated = (raw.StartsWith("$\"", StringComparison.Ordinal) && raw.EndsWith("\"", StringComparison.Ordinal))
+            || (raw.StartsWith("$[[", StringComparison.Ordinal) && raw.EndsWith("]]", StringComparison.Ordinal));
         var isString = raw.StartsWith("\"", StringComparison.Ordinal) && raw.EndsWith("\"", StringComparison.Ordinal);
-        var isMultiline = raw.StartsWith("[[", StringComparison.Ordinal) && raw.EndsWith("]]", StringComparison.Ordinal);
+        var isMultiline = (raw.StartsWith("[[", StringComparison.Ordinal) && raw.EndsWith("]]", StringComparison.Ordinal))
+            || (raw.StartsWith("$[[", StringComparison.Ordinal) && raw.EndsWith("]]", StringComparison.Ordinal));
         if (!isInterpolated && !isString && !isMultiline)
             return false;
 
@@ -1050,6 +1054,8 @@ public class AstBuilder : LashBaseVisitor<AstNode>
 
     private static string UnquoteStringLiteral(string text)
     {
+        if (text.StartsWith("$[[", StringComparison.Ordinal) && text.EndsWith("]]", StringComparison.Ordinal) && text.Length >= 5)
+            return text[3..^2];
         if (text.StartsWith("$\"") && text.EndsWith("\"") && text.Length >= 3)
             return text[2..^1];
         if (text.StartsWith("\"") && text.EndsWith("\"") && text.Length >= 2)

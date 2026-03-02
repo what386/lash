@@ -83,6 +83,11 @@ internal sealed partial class StatementGenerator
                     owner.Emit(GenerateRedirectStatement(redirectExpression));
                 }
                 return;
+
+            case LiteralExpression:
+                // Standalone value expressions are inert in Lash; don't emit them as shell commands.
+                owner.Emit(":");
+                return;
         }
 
         owner.Emit(owner.GenerateExpression(expression));

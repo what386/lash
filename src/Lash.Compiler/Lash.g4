@@ -236,6 +236,7 @@ literal
 stringLiteral
     : STRING
     | INTERPOLATED_STRING
+    | INTERPOLATED_MULTILINE_STRING
     | MULTILINE_STRING
     ;
 
@@ -326,6 +327,10 @@ STRING
 
 INTERPOLATED_STRING
     : '$"' ( ~["{\\] | '\\' . | '{' ~[}]* '}' )* '"'
+    ;
+
+INTERPOLATED_MULTILINE_STRING
+    : '$[[' .*? ']]'
     ;
 
 MULTILINE_STRING

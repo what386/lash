@@ -192,9 +192,17 @@ public static class ModuleLoader
             literalText.Append('\n');
             literalText.Append(line[..closeIndex]);
 
-            var prefix = trimmed[..openIndex];
+            var isInterpolatedMultilineLiteral = openIndex > 0 && trimmed[openIndex - 1] == '$';
+            var prefix = isInterpolatedMultilineLiteral
+                ? trimmed[..(openIndex - 1)]
+                : trimmed[..openIndex];
+            if (string.IsNullOrWhiteSpace(prefix))
+                return false;
+
             var suffix = line[(closeIndex + 2)..].TrimEnd();
-            var escapedLiteral = EscapeAsAnsiCString(literalText.ToString());
+            var escapedLiteral = isInterpolatedMultilineLiteral
+                ? EscapeInterpolatedMultilineAsBashConcatenation(literalText.ToString())
+                : EscapeAsAnsiCString(literalText.ToString());
             var indentLength = firstLine.Length - firstLine.TrimStart().Length;
             var indent = firstLine[..indentLength];
 
@@ -240,6 +248,86 @@ public static class ModuleLoader
         return escaped.ToString();
     }
 
+    private static string EscapeInterpolatedMultilineAsBashConcatenation(string template)
+    {
+        var output = new System.Text.StringBuilder(template.Length + 16);
+        var cursor = 0;
+
+        while (cursor < template.Length)
+        {
+            var openBrace = FindNextUnescaped(template, '{', cursor);
+            if (openBrace < 0)
+            {
+                AppendAnsiCStringSegment(output, template[cursor..]);
+                break;
+            }
+
+            AppendAnsiCStringSegment(output, template[cursor..openBrace]);
+
+            var closeBrace = FindNextUnescaped(template, '}', openBrace + 1);
+            if (closeBrace < 0)
+            {
+                AppendAnsiCStringSegment(output, template[openBrace..]);
+                break;
+            }
+
+            var placeholder = template[(openBrace + 1)..closeBrace].Trim();
+            if (TryGetIdentifierPath(placeholder, out var path))
+            {
+                output.Append("\"${");
+                output.Append(path);
+                output.Append("}\"");
+            }
+            else
+            {
+                AppendAnsiCStringSegment(output, template[openBrace..(closeBrace + 1)]);
+            }
+
+            cursor = closeBrace + 1;
+        }
+
+        return output.Length == 0 ? "$''" : output.ToString();
+    }
+
+    private static void AppendAnsiCStringSegment(System.Text.StringBuilder output, string segment)
+    {
+        if (segment.Length == 0)
+            return;
+
+        output.Append(EscapeAsAnsiCString(segment));
+    }
+
+    private static int FindNextUnescaped(string text, char needle, int start)
+    {
+        for (int i = start; i < text.Length; i++)
+        {
+            if (text[i] == needle && (i == 0 || text[i - 1] != '\\'))
+                return i;
+        }
+
+        return -1;
+    }
+
+    private static bool TryGetIdentifierPath(string value, out string path)
+    {
+        path = string.Empty;
+        if (string.IsNullOrWhiteSpace(value))
+            return false;
+
+        var parts = value.Split('.', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (parts.Length == 0)
+            return false;
+
+        foreach (var part in parts)
+        {
+            if (!IsIdentifier(part))
+                return false;
+        }
+
+        path = string.Join("_", parts);
+        return true;
+    }
+
     private static void UpdateEnumDeclarationState(string trimmedLine, ref bool inEnumDeclaration)
     {
         if (trimmedLine.Length == 0)
@@ -261,10 +349,22 @@ public static class ModuleLoader
         var inSingleQuote = false;
         var inDoubleQuote = false;
         var escaped = false;
+        var inMultilineLiteral = false;
 
         for (int i = 0; i < line.Length; i++)
         {
             var ch = line[i];
+
+            if (inMultilineLiteral)
+            {
+                if (ch == ']' && i + 1 < line.Length && line[i + 1] == ']')
+                {
+                    inMultilineLiteral = false;
+                    i++;
+                }
+
+                continue;
+            }
 
             if (inDoubleQuote)
             {
@@ -307,6 +407,13 @@ public static class ModuleLoader
 
             if (ch == '/' && i + 1 < line.Length && line[i + 1] == '/')
                 break;
+
+            if (i + 1 < line.Length && ch == '[' && line[i + 1] == '[')
+            {
+                inMultilineLiteral = true;
+                i++;
+                continue;
+            }
 
             if (ch is '(' or '[')
             {
@@ -667,7 +774,9 @@ public static class ModuleLoader
             || trimmed.StartsWith("//", StringComparison.Ordinal)
             || trimmed.StartsWith("/*", StringComparison.Ordinal)
             || trimmed.StartsWith("*/", StringComparison.Ordinal)
-            || trimmed.StartsWith("*", StringComparison.Ordinal))
+            || trimmed.StartsWith("*", StringComparison.Ordinal)
+            || trimmed.StartsWith("[[", StringComparison.Ordinal)
+            || trimmed.StartsWith("$[[", StringComparison.Ordinal))
             return false;
 
         if (IsKnownStatementPrefix(trimmed))
