@@ -1,3 +1,5 @@
+#!/bin/env -S lash run
+
 let limit = 100
 
 if #$argv > 0
@@ -24,10 +26,6 @@ while $p * $p <= $limit
         end
     end
     $p = $p + 1
-end
-
-for _ in 0..10
-
 end
 
 echo "Primes up to" $limit
