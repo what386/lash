@@ -93,6 +93,7 @@
 ; ============================================================
 (string)              @string
 (interpolated_string) @string.special
+(interpolated_multiline_string) @string.special
 (multiline_string)    @string
 (glob_pattern)        @string.special
 

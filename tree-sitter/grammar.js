@@ -324,6 +324,7 @@ module.exports = grammar({
     command_argument: $ => choice(
       $.var_ref,
       $.interpolated_string,
+      $.interpolated_multiline_string,
       $.multiline_string,
       $.string,
       $.number,
@@ -429,6 +430,7 @@ module.exports = grammar({
       $.number,
       $.string,
       $.interpolated_string,
+      $.interpolated_multiline_string,
       $.multiline_string,
       $.array_literal,
       $.enum_access,
@@ -519,6 +521,12 @@ module.exports = grammar({
       '$"',
       repeat(choice(/[^"\\{]+/, /\\./, /\{[^}\r\n]*\}/)),
       '"',
+    )),
+
+    interpolated_multiline_string: _ => token(seq(
+      "$[[",
+      /(.|\n|\r)*?/,
+      "]]",
     )),
 
     multiline_string: _ => token(seq(
