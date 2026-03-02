@@ -2318,8 +2318,8 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
         '<', 8,
         '>', 9,
         '[', 21,
-        '*', 200,
-        '?', 200,
+        '*', 206,
+        '?', 206,
         ']', 61,
         '~', 61,
       );
@@ -2362,11 +2362,11 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       END_STATE();
     case 10:
       if (lookahead == '*') ADVANCE(12);
-      if (lookahead == '/') ADVANCE(257);
+      if (lookahead == '/') ADVANCE(263);
       END_STATE();
     case 11:
       if (lookahead == '*') ADVANCE(11);
-      if (lookahead == '/') ADVANCE(258);
+      if (lookahead == '/') ADVANCE(264);
       if (lookahead != 0) ADVANCE(12);
       END_STATE();
     case 12:
@@ -2374,19 +2374,19 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       if (lookahead != 0) ADVANCE(12);
       END_STATE();
     case 13:
-      if (lookahead == '-') ADVANCE(202);
-      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(203);
+      if (lookahead == '-') ADVANCE(208);
+      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(209);
       END_STATE();
     case 14:
       if (lookahead == '.') ADVANCE(135);
       END_STATE();
     case 15:
-      if (lookahead == '/') ADVANCE(211);
+      if (lookahead == '/') ADVANCE(217);
       if (lookahead == '\t' ||
-          lookahead == ' ') ADVANCE(214);
+          lookahead == ' ') ADVANCE(220);
       if (lookahead == '\n' ||
           lookahead == '\r') SKIP(15);
-      if (lookahead != 0) ADVANCE(253);
+      if (lookahead != 0) ADVANCE(259);
       END_STATE();
     case 16:
       if (lookahead == '/') ADVANCE(166);
@@ -2414,7 +2414,7 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
     case 21:
       if (lookahead == '[') ADVANCE(27);
       if (lookahead == '*' ||
-          lookahead == '?') ADVANCE(200);
+          lookahead == '?') ADVANCE(206);
       if (('-' <= lookahead && lookahead <= '9') ||
           ('A' <= lookahead && lookahead <= 'Z') ||
           lookahead == ']' ||
@@ -2426,17 +2426,17 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       if (lookahead == '[') ADVANCE(28);
       END_STATE();
     case 23:
-      if (lookahead == ']') ADVANCE(192);
+      if (lookahead == ']') ADVANCE(195);
       if (lookahead != 0) ADVANCE(26);
       END_STATE();
     case 24:
-      if (lookahead == ']') ADVANCE(190);
+      if (lookahead == ']') ADVANCE(191);
       if (lookahead != 0) ADVANCE(28);
       END_STATE();
     case 25:
-      if (lookahead == ']') ADVANCE(193);
+      if (lookahead == ']') ADVANCE(196);
       if (lookahead == '*' ||
-          lookahead == '?') ADVANCE(199);
+          lookahead == '?') ADVANCE(205);
       if (('-' <= lookahead && lookahead <= '9') ||
           ('A' <= lookahead && lookahead <= '[') ||
           lookahead == '_' ||
@@ -2451,7 +2451,7 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
     case 27:
       if (lookahead == ']') ADVANCE(25);
       if (lookahead == '*' ||
-          lookahead == '?') ADVANCE(199);
+          lookahead == '?') ADVANCE(205);
       if (('-' <= lookahead && lookahead <= '9') ||
           ('A' <= lookahead && lookahead <= '[') ||
           lookahead == '_' ||
@@ -2573,7 +2573,7 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       END_STATE();
     case 61:
       if (lookahead == '*' ||
-          lookahead == '?') ADVANCE(200);
+          lookahead == '?') ADVANCE(206);
       if (('-' <= lookahead && lookahead <= '9') ||
           ('A' <= lookahead && lookahead <= '[') ||
           lookahead == ']' ||
@@ -2728,8 +2728,8 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
         '>', 9,
         '@', 31,
         '[', 157,
-        '*', 200,
-        '?', 200,
+        '*', 206,
+        '?', 206,
         ']', 61,
         '~', 61,
       );
@@ -2746,19 +2746,19 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       if (eof) ADVANCE(71);
       ADVANCE_MAP(
         '!', 151,
-        '"', 207,
+        '"', 213,
         '#', 154,
         '$', 172,
         '(', 103,
         '+', 139,
         '-', 144,
-        '/', 211,
-        '<', 209,
-        '>', 210,
-        '@', 222,
+        '/', 217,
+        '<', 215,
+        '>', 216,
+        '@', 228,
         '[', 158,
-        '\t', 206,
-        ' ', 206,
+        '\t', 212,
+        ' ', 212,
       );
       if (lookahead == '\n' ||
           lookahead == '\r') SKIP(70);
@@ -2766,7 +2766,7 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       if (('A' <= lookahead && lookahead <= 'Z') ||
           lookahead == '_' ||
           ('a' <= lookahead && lookahead <= 'z')) ADVANCE(185);
-      if (lookahead != 0) ADVANCE(253);
+      if (lookahead != 0) ADVANCE(259);
       END_STATE();
     case 71:
       ACCEPT_TOKEN(ts_builtin_sym_end);
@@ -2784,7 +2784,7 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       ACCEPT_TOKEN(anon_sym_ATif);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
     case 75:
       ACCEPT_TOKEN(anon_sym_ATelif);
@@ -2793,7 +2793,7 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       ACCEPT_TOKEN(anon_sym_ATelif);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
     case 77:
       ACCEPT_TOKEN(sym_preprocessor_else_directive);
@@ -2802,7 +2802,7 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       ACCEPT_TOKEN(sym_preprocessor_else_directive);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
     case 79:
       ACCEPT_TOKEN(sym_preprocessor_end_directive);
@@ -2811,7 +2811,7 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       ACCEPT_TOKEN(sym_preprocessor_end_directive);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
     case 81:
       ACCEPT_TOKEN(anon_sym_ATimport);
@@ -2820,7 +2820,7 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       ACCEPT_TOKEN(anon_sym_ATimport);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
     case 83:
       ACCEPT_TOKEN(sym_preprocessor_raw_directive);
@@ -2829,7 +2829,7 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       ACCEPT_TOKEN(sym_preprocessor_raw_directive);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
     case 85:
       ACCEPT_TOKEN(anon_sym_ATdefine);
@@ -2838,7 +2838,7 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       ACCEPT_TOKEN(anon_sym_ATdefine);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
     case 87:
       ACCEPT_TOKEN(anon_sym_ATundef);
@@ -2847,7 +2847,7 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       ACCEPT_TOKEN(anon_sym_ATundef);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
     case 89:
       ACCEPT_TOKEN(anon_sym_ATerror);
@@ -2856,7 +2856,7 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       ACCEPT_TOKEN(anon_sym_ATerror);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
     case 91:
       ACCEPT_TOKEN(anon_sym_ATwarning);
@@ -2865,7 +2865,7 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       ACCEPT_TOKEN(anon_sym_ATwarning);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
     case 93:
       ACCEPT_TOKEN(anon_sym_EQ);
@@ -2902,7 +2902,7 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       ACCEPT_TOKEN(anon_sym_LPAREN);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
     case 104:
       ACCEPT_TOKEN(anon_sym_RPAREN);
@@ -2926,9 +2926,9 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       END_STATE();
     case 110:
       ACCEPT_TOKEN(sym_bare_word);
-      if (lookahead == '*') ADVANCE(197);
-      if (lookahead == '/') ADVANCE(254);
-      if (lookahead == '?') ADVANCE(200);
+      if (lookahead == '*') ADVANCE(203);
+      if (lookahead == '/') ADVANCE(260);
+      if (lookahead == '?') ADVANCE(206);
       if (lookahead == '[' ||
           lookahead == ']' ||
           lookahead == '~') ADVANCE(61);
@@ -2948,7 +2948,7 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
     case 112:
       ACCEPT_TOKEN(sym_bare_word);
       if (lookahead == '*' ||
-          lookahead == '?') ADVANCE(200);
+          lookahead == '?') ADVANCE(206);
       if (lookahead == '[' ||
           lookahead == ']' ||
           lookahead == '~') ADVANCE(61);
@@ -2961,7 +2961,7 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
     case 113:
       ACCEPT_TOKEN(sym_bare_word);
       if (lookahead == '*' ||
-          lookahead == '?') ADVANCE(200);
+          lookahead == '?') ADVANCE(206);
       if (lookahead == '[' ||
           lookahead == ']' ||
           lookahead == '~') ADVANCE(61);
@@ -3078,7 +3078,7 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       ACCEPT_TOKEN(anon_sym_PLUS);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
     case 140:
       ACCEPT_TOKEN(anon_sym_DASH);
@@ -3095,7 +3095,7 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
     case 143:
       ACCEPT_TOKEN(anon_sym_DASH);
       if (lookahead == '*' ||
-          lookahead == '?') ADVANCE(200);
+          lookahead == '?') ADVANCE(206);
       if (lookahead == '[' ||
           lookahead == ']' ||
           lookahead == '~') ADVANCE(61);
@@ -3108,7 +3108,7 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       ACCEPT_TOKEN(anon_sym_DASH);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
     case 145:
       ACCEPT_TOKEN(anon_sym_STAR);
@@ -3117,13 +3117,13 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
     case 146:
       ACCEPT_TOKEN(anon_sym_SLASH);
       if (lookahead == '*') ADVANCE(12);
-      if (lookahead == '/') ADVANCE(256);
+      if (lookahead == '/') ADVANCE(262);
       if (lookahead == '=') ADVANCE(98);
       END_STATE();
     case 147:
       ACCEPT_TOKEN(anon_sym_SLASH);
       if (lookahead == '*') ADVANCE(12);
-      if (lookahead == '/') ADVANCE(257);
+      if (lookahead == '/') ADVANCE(263);
       if (lookahead == '=') ADVANCE(98);
       END_STATE();
     case 148:
@@ -3141,7 +3141,7 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       ACCEPT_TOKEN(anon_sym_BANG);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
     case 152:
       ACCEPT_TOKEN(anon_sym_POUND);
@@ -3154,7 +3154,7 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       ACCEPT_TOKEN(anon_sym_POUND);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
     case 155:
       ACCEPT_TOKEN(anon_sym_LBRACK);
@@ -3167,7 +3167,7 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       ACCEPT_TOKEN(anon_sym_LBRACK);
       if (lookahead == '[') ADVANCE(27);
       if (lookahead == '*' ||
-          lookahead == '?') ADVANCE(200);
+          lookahead == '?') ADVANCE(206);
       if (('-' <= lookahead && lookahead <= '9') ||
           ('A' <= lookahead && lookahead <= 'Z') ||
           lookahead == ']' ||
@@ -3177,10 +3177,10 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       END_STATE();
     case 158:
       ACCEPT_TOKEN(anon_sym_LBRACK);
-      if (lookahead == '[') ADVANCE(218);
+      if (lookahead == '[') ADVANCE(224);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
     case 159:
       ACCEPT_TOKEN(anon_sym_RBRACK);
@@ -3192,7 +3192,7 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       ACCEPT_TOKEN(anon_sym_DOLLAR_LPAREN);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
     case 162:
       ACCEPT_TOKEN(anon_sym_LT_LPAREN);
@@ -3201,7 +3201,7 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       ACCEPT_TOKEN(anon_sym_LT_LPAREN);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
     case 164:
       ACCEPT_TOKEN(anon_sym_GT_LPAREN);
@@ -3210,7 +3210,7 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       ACCEPT_TOKEN(anon_sym_GT_LPAREN);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
     case 166:
       ACCEPT_TOKEN(sym_shell_payload);
@@ -3267,12 +3267,12 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       END_STATE();
     case 172:
       ACCEPT_TOKEN(anon_sym_DOLLAR);
-      if (lookahead == '"') ADVANCE(208);
+      if (lookahead == '"') ADVANCE(214);
       if (lookahead == '(') ADVANCE(161);
-      if (lookahead == '[') ADVANCE(215);
+      if (lookahead == '[') ADVANCE(221);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
     case 173:
       ACCEPT_TOKEN(anon_sym_COLON_COLON);
@@ -3303,7 +3303,7 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       ACCEPT_TOKEN(sym_number);
       if (lookahead == '.') ADVANCE(112);
       if (lookahead == '*' ||
-          lookahead == '?') ADVANCE(200);
+          lookahead == '?') ADVANCE(206);
       if (lookahead == '[' ||
           lookahead == ']' ||
           lookahead == '~') ADVANCE(61);
@@ -3315,16 +3315,16 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       END_STATE();
     case 179:
       ACCEPT_TOKEN(sym_number);
-      if (lookahead == '.') ADVANCE(252);
+      if (lookahead == '.') ADVANCE(258);
       if (('0' <= lookahead && lookahead <= '9')) ADVANCE(179);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
     case 180:
       ACCEPT_TOKEN(sym_number);
       if (lookahead == '*' ||
-          lookahead == '?') ADVANCE(200);
+          lookahead == '?') ADVANCE(206);
       if (lookahead == '[' ||
           lookahead == ']' ||
           lookahead == '~') ADVANCE(61);
@@ -3343,12 +3343,12 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       if (('0' <= lookahead && lookahead <= '9')) ADVANCE(182);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
     case 183:
       ACCEPT_TOKEN(sym_identifier);
       if (lookahead == '*' ||
-          lookahead == '?') ADVANCE(200);
+          lookahead == '?') ADVANCE(206);
       if (lookahead == '[' ||
           lookahead == ']' ||
           lookahead == '~') ADVANCE(61);
@@ -3373,7 +3373,7 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
           ('a' <= lookahead && lookahead <= 'z')) ADVANCE(185);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
     case 186:
       ACCEPT_TOKEN(sym_string);
@@ -3382,7 +3382,7 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       ACCEPT_TOKEN(sym_string);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
     case 188:
       ACCEPT_TOKEN(sym_interpolated_string);
@@ -3391,166 +3391,202 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       ACCEPT_TOKEN(sym_interpolated_string);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
     case 190:
       ACCEPT_TOKEN(sym_interpolated_multiline_string);
-      if (lookahead == ']') ADVANCE(190);
-      if (lookahead != 0) ADVANCE(28);
       END_STATE();
     case 191:
       ACCEPT_TOKEN(sym_interpolated_multiline_string);
-      if (lookahead == ']') ADVANCE(191);
-      if (lookahead == '\n' ||
-          lookahead == '\r') ADVANCE(28);
-      if (lookahead != 0) ADVANCE(219);
+      if (lookahead == ']') ADVANCE(190);
       END_STATE();
     case 192:
-      ACCEPT_TOKEN(sym_multiline_string);
-      if (lookahead == ']') ADVANCE(192);
-      if (lookahead != 0) ADVANCE(26);
+      ACCEPT_TOKEN(sym_interpolated_multiline_string);
+      if (lookahead == ']') ADVANCE(193);
+      if (lookahead != 0 &&
+          lookahead != '\n' &&
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
     case 193:
-      ACCEPT_TOKEN(sym_multiline_string);
-      if (lookahead == ']') ADVANCE(193);
-      if (lookahead == '*' ||
-          lookahead == '?') ADVANCE(199);
-      if (('-' <= lookahead && lookahead <= '9') ||
-          ('A' <= lookahead && lookahead <= '[') ||
-          lookahead == '_' ||
-          ('a' <= lookahead && lookahead <= 'z') ||
-          lookahead == '~') ADVANCE(27);
-      if (lookahead != 0) ADVANCE(26);
+      ACCEPT_TOKEN(sym_interpolated_multiline_string);
+      if (lookahead != 0 &&
+          lookahead != '\n' &&
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
     case 194:
       ACCEPT_TOKEN(sym_multiline_string);
-      if (lookahead == ']') ADVANCE(194);
-      if (lookahead == '*' ||
-          ('-' <= lookahead && lookahead <= '9') ||
-          lookahead == '?' ||
-          ('A' <= lookahead && lookahead <= '[') ||
-          lookahead == '_' ||
-          ('a' <= lookahead && lookahead <= 'z') ||
-          lookahead == '~') ADVANCE(199);
-      if (lookahead != 0) ADVANCE(26);
       END_STATE();
     case 195:
       ACCEPT_TOKEN(sym_multiline_string);
-      if (lookahead == ']') ADVANCE(195);
-      if (lookahead == '\n' ||
-          lookahead == '\r') ADVANCE(26);
-      if (lookahead != 0) ADVANCE(218);
+      if (lookahead == ']') ADVANCE(194);
       END_STATE();
     case 196:
-      ACCEPT_TOKEN(sym_glob_pattern);
-      if (lookahead == '*') ADVANCE(196);
-      if (lookahead == '/') ADVANCE(197);
+      ACCEPT_TOKEN(sym_multiline_string);
+      if (lookahead == ']') ADVANCE(199);
+      if (lookahead == '*' ||
+          lookahead == '?') ADVANCE(206);
       if (('-' <= lookahead && lookahead <= '9') ||
-          lookahead == '?' ||
           ('A' <= lookahead && lookahead <= '[') ||
-          lookahead == ']' ||
           lookahead == '_' ||
           ('a' <= lookahead && lookahead <= 'z') ||
-          lookahead == '~') ADVANCE(197);
-      if (lookahead != 0) ADVANCE(12);
+          lookahead == '~') ADVANCE(61);
       END_STATE();
     case 197:
+      ACCEPT_TOKEN(sym_multiline_string);
+      if (lookahead == ']') ADVANCE(200);
+      if (lookahead == '*' ||
+          ('-' <= lookahead && lookahead <= '9') ||
+          lookahead == '?' ||
+          ('A' <= lookahead && lookahead <= '[') ||
+          lookahead == '_' ||
+          ('a' <= lookahead && lookahead <= 'z') ||
+          lookahead == '~') ADVANCE(206);
+      END_STATE();
+    case 198:
+      ACCEPT_TOKEN(sym_multiline_string);
+      if (lookahead == ']') ADVANCE(201);
+      if (lookahead != 0 &&
+          lookahead != '\n' &&
+          lookahead != '\r') ADVANCE(259);
+      END_STATE();
+    case 199:
+      ACCEPT_TOKEN(sym_multiline_string);
+      if (lookahead == '*' ||
+          lookahead == '?') ADVANCE(206);
+      if (('-' <= lookahead && lookahead <= '9') ||
+          ('A' <= lookahead && lookahead <= '[') ||
+          lookahead == ']' ||
+          lookahead == '_' ||
+          ('a' <= lookahead && lookahead <= 'z') ||
+          lookahead == '~') ADVANCE(61);
+      END_STATE();
+    case 200:
+      ACCEPT_TOKEN(sym_multiline_string);
+      if (lookahead == '*' ||
+          ('-' <= lookahead && lookahead <= '9') ||
+          lookahead == '?' ||
+          ('A' <= lookahead && lookahead <= '[') ||
+          lookahead == ']' ||
+          lookahead == '_' ||
+          ('a' <= lookahead && lookahead <= 'z') ||
+          lookahead == '~') ADVANCE(206);
+      END_STATE();
+    case 201:
+      ACCEPT_TOKEN(sym_multiline_string);
+      if (lookahead != 0 &&
+          lookahead != '\n' &&
+          lookahead != '\r') ADVANCE(259);
+      END_STATE();
+    case 202:
       ACCEPT_TOKEN(sym_glob_pattern);
-      if (lookahead == '*') ADVANCE(196);
+      if (lookahead == '*') ADVANCE(202);
+      if (lookahead == '/') ADVANCE(203);
       if (('-' <= lookahead && lookahead <= '9') ||
           lookahead == '?' ||
           ('A' <= lookahead && lookahead <= '[') ||
           lookahead == ']' ||
           lookahead == '_' ||
           ('a' <= lookahead && lookahead <= 'z') ||
-          lookahead == '~') ADVANCE(197);
+          lookahead == '~') ADVANCE(203);
       if (lookahead != 0) ADVANCE(12);
       END_STATE();
-    case 198:
-      ACCEPT_TOKEN(sym_glob_pattern);
-      if (lookahead == ']') ADVANCE(194);
-      if (lookahead == '*' ||
-          ('-' <= lookahead && lookahead <= '9') ||
-          lookahead == '?' ||
-          ('A' <= lookahead && lookahead <= '[') ||
-          lookahead == '_' ||
-          ('a' <= lookahead && lookahead <= 'z') ||
-          lookahead == '~') ADVANCE(199);
-      if (lookahead != 0) ADVANCE(26);
-      END_STATE();
-    case 199:
-      ACCEPT_TOKEN(sym_glob_pattern);
-      if (lookahead == ']') ADVANCE(198);
-      if (lookahead == '*' ||
-          ('-' <= lookahead && lookahead <= '9') ||
-          lookahead == '?' ||
-          ('A' <= lookahead && lookahead <= '[') ||
-          lookahead == '_' ||
-          ('a' <= lookahead && lookahead <= 'z') ||
-          lookahead == '~') ADVANCE(199);
-      if (lookahead != 0) ADVANCE(26);
-      END_STATE();
-    case 200:
-      ACCEPT_TOKEN(sym_glob_pattern);
-      if (lookahead == '*' ||
-          ('-' <= lookahead && lookahead <= '9') ||
-          lookahead == '?' ||
-          ('A' <= lookahead && lookahead <= '[') ||
-          lookahead == ']' ||
-          lookahead == '_' ||
-          ('a' <= lookahead && lookahead <= 'z') ||
-          lookahead == '~') ADVANCE(200);
-      END_STATE();
-    case 201:
-      ACCEPT_TOKEN(sym_glob_pattern);
-      if (lookahead == '*' ||
-          ('-' <= lookahead && lookahead <= '9') ||
-          lookahead == '?' ||
-          ('A' <= lookahead && lookahead <= '[') ||
-          lookahead == ']' ||
-          lookahead == '_' ||
-          ('a' <= lookahead && lookahead <= 'z') ||
-          lookahead == '~') ADVANCE(201);
-      if (lookahead != 0 &&
-          lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(257);
-      END_STATE();
-    case 202:
-      ACCEPT_TOKEN(sym_fd_dup_operator);
-      END_STATE();
     case 203:
-      ACCEPT_TOKEN(sym_fd_dup_operator);
-      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(203);
+      ACCEPT_TOKEN(sym_glob_pattern);
+      if (lookahead == '*') ADVANCE(202);
+      if (('-' <= lookahead && lookahead <= '9') ||
+          lookahead == '?' ||
+          ('A' <= lookahead && lookahead <= '[') ||
+          lookahead == ']' ||
+          lookahead == '_' ||
+          ('a' <= lookahead && lookahead <= 'z') ||
+          lookahead == '~') ADVANCE(203);
+      if (lookahead != 0) ADVANCE(12);
       END_STATE();
     case 204:
+      ACCEPT_TOKEN(sym_glob_pattern);
+      if (lookahead == ']') ADVANCE(197);
+      if (lookahead == '*' ||
+          ('-' <= lookahead && lookahead <= '9') ||
+          lookahead == '?' ||
+          ('A' <= lookahead && lookahead <= '[') ||
+          lookahead == '_' ||
+          ('a' <= lookahead && lookahead <= 'z') ||
+          lookahead == '~') ADVANCE(205);
+      if (lookahead != 0) ADVANCE(26);
+      END_STATE();
+    case 205:
+      ACCEPT_TOKEN(sym_glob_pattern);
+      if (lookahead == ']') ADVANCE(204);
+      if (lookahead == '*' ||
+          ('-' <= lookahead && lookahead <= '9') ||
+          lookahead == '?' ||
+          ('A' <= lookahead && lookahead <= '[') ||
+          lookahead == '_' ||
+          ('a' <= lookahead && lookahead <= 'z') ||
+          lookahead == '~') ADVANCE(205);
+      if (lookahead != 0) ADVANCE(26);
+      END_STATE();
+    case 206:
+      ACCEPT_TOKEN(sym_glob_pattern);
+      if (lookahead == '*' ||
+          ('-' <= lookahead && lookahead <= '9') ||
+          lookahead == '?' ||
+          ('A' <= lookahead && lookahead <= '[') ||
+          lookahead == ']' ||
+          lookahead == '_' ||
+          ('a' <= lookahead && lookahead <= 'z') ||
+          lookahead == '~') ADVANCE(206);
+      END_STATE();
+    case 207:
+      ACCEPT_TOKEN(sym_glob_pattern);
+      if (lookahead == '*' ||
+          ('-' <= lookahead && lookahead <= '9') ||
+          lookahead == '?' ||
+          ('A' <= lookahead && lookahead <= '[') ||
+          lookahead == ']' ||
+          lookahead == '_' ||
+          ('a' <= lookahead && lookahead <= 'z') ||
+          lookahead == '~') ADVANCE(207);
+      if (lookahead != 0 &&
+          lookahead != '\n' &&
+          lookahead != '\r') ADVANCE(263);
+      END_STATE();
+    case 208:
+      ACCEPT_TOKEN(sym_fd_dup_operator);
+      END_STATE();
+    case 209:
+      ACCEPT_TOKEN(sym_fd_dup_operator);
+      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(209);
+      END_STATE();
+    case 210:
       ACCEPT_TOKEN(sym_preprocessor_directive_argument);
       if (lookahead == '\r') ADVANCE(4);
       if (lookahead != 0 &&
-          lookahead != '\n') ADVANCE(207);
+          lookahead != '\n') ADVANCE(213);
       END_STATE();
-    case 205:
+    case 211:
       ACCEPT_TOKEN(sym_preprocessor_directive_argument);
       if (lookahead == '\r') ADVANCE(5);
       if (lookahead != 0 &&
-          lookahead != '\n') ADVANCE(208);
+          lookahead != '\n') ADVANCE(214);
       END_STATE();
-    case 206:
+    case 212:
       ACCEPT_TOKEN(sym_preprocessor_directive_argument);
       ADVANCE_MAP(
         '!', 151,
-        '"', 207,
+        '"', 213,
         '#', 154,
         '$', 172,
         '(', 103,
         '+', 139,
         '-', 144,
-        '/', 211,
-        '<', 209,
-        '>', 210,
-        '@', 222,
+        '/', 217,
+        '<', 215,
+        '>', 216,
+        '@', 228,
         '[', 158,
-        '\t', 206,
-        ' ', 206,
+        '\t', 212,
+        ' ', 212,
       );
       if (('0' <= lookahead && lookahead <= '9')) ADVANCE(179);
       if (('A' <= lookahead && lookahead <= 'Z') ||
@@ -3559,399 +3595,399 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       if (lookahead != 0 &&
           lookahead != '\t' &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
-    case 207:
+    case 213:
       ACCEPT_TOKEN(sym_preprocessor_directive_argument);
       if (lookahead == '"') ADVANCE(187);
-      if (lookahead == '\\') ADVANCE(204);
+      if (lookahead == '\\') ADVANCE(210);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(207);
+          lookahead != '\r') ADVANCE(213);
       END_STATE();
-    case 208:
+    case 214:
       ACCEPT_TOKEN(sym_preprocessor_directive_argument);
       if (lookahead == '"') ADVANCE(189);
-      if (lookahead == '\\') ADVANCE(205);
-      if (lookahead == '{') ADVANCE(251);
+      if (lookahead == '\\') ADVANCE(211);
+      if (lookahead == '{') ADVANCE(257);
       if (lookahead == '\n' ||
           lookahead == '\r') ADVANCE(5);
-      if (lookahead != 0) ADVANCE(208);
+      if (lookahead != 0) ADVANCE(214);
       END_STATE();
-    case 209:
+    case 215:
       ACCEPT_TOKEN(sym_preprocessor_directive_argument);
       if (lookahead == '(') ADVANCE(163);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
-    case 210:
+    case 216:
       ACCEPT_TOKEN(sym_preprocessor_directive_argument);
       if (lookahead == '(') ADVANCE(165);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
-      END_STATE();
-    case 211:
-      ACCEPT_TOKEN(sym_preprocessor_directive_argument);
-      if (lookahead == '*') ADVANCE(213);
-      if (lookahead == '/') ADVANCE(253);
-      if (lookahead != 0 &&
-          lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
-      END_STATE();
-    case 212:
-      ACCEPT_TOKEN(sym_preprocessor_directive_argument);
-      if (lookahead == '*') ADVANCE(212);
-      if (lookahead == '/') ADVANCE(213);
-      if (lookahead == '\n' ||
-          lookahead == '\r') ADVANCE(12);
-      if (lookahead != 0) ADVANCE(213);
-      END_STATE();
-    case 213:
-      ACCEPT_TOKEN(sym_preprocessor_directive_argument);
-      if (lookahead == '*') ADVANCE(212);
-      if (lookahead == '\n' ||
-          lookahead == '\r') ADVANCE(12);
-      if (lookahead != 0) ADVANCE(213);
-      END_STATE();
-    case 214:
-      ACCEPT_TOKEN(sym_preprocessor_directive_argument);
-      if (lookahead == '/') ADVANCE(211);
-      if (lookahead == '\t' ||
-          lookahead == ' ') ADVANCE(214);
-      if (lookahead != 0 &&
-          lookahead != '\t' &&
-          lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
-      END_STATE();
-    case 215:
-      ACCEPT_TOKEN(sym_preprocessor_directive_argument);
-      if (lookahead == '[') ADVANCE(219);
-      if (lookahead != 0 &&
-          lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
-      END_STATE();
-    case 216:
-      ACCEPT_TOKEN(sym_preprocessor_directive_argument);
-      if (lookahead == ']') ADVANCE(195);
-      if (lookahead == '\n' ||
-          lookahead == '\r') ADVANCE(26);
-      if (lookahead != 0) ADVANCE(218);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
     case 217:
       ACCEPT_TOKEN(sym_preprocessor_directive_argument);
-      if (lookahead == ']') ADVANCE(191);
-      if (lookahead == '\n' ||
-          lookahead == '\r') ADVANCE(28);
-      if (lookahead != 0) ADVANCE(219);
+      if (lookahead == '*') ADVANCE(219);
+      if (lookahead == '/') ADVANCE(259);
+      if (lookahead != 0 &&
+          lookahead != '\n' &&
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
     case 218:
       ACCEPT_TOKEN(sym_preprocessor_directive_argument);
-      if (lookahead == ']') ADVANCE(216);
+      if (lookahead == '*') ADVANCE(218);
+      if (lookahead == '/') ADVANCE(219);
       if (lookahead == '\n' ||
-          lookahead == '\r') ADVANCE(26);
-      if (lookahead != 0) ADVANCE(218);
+          lookahead == '\r') ADVANCE(12);
+      if (lookahead != 0) ADVANCE(219);
       END_STATE();
     case 219:
       ACCEPT_TOKEN(sym_preprocessor_directive_argument);
-      if (lookahead == ']') ADVANCE(217);
+      if (lookahead == '*') ADVANCE(218);
       if (lookahead == '\n' ||
-          lookahead == '\r') ADVANCE(28);
+          lookahead == '\r') ADVANCE(12);
       if (lookahead != 0) ADVANCE(219);
       END_STATE();
     case 220:
       ACCEPT_TOKEN(sym_preprocessor_directive_argument);
-      if (lookahead == 'a') ADVANCE(250);
+      if (lookahead == '/') ADVANCE(217);
+      if (lookahead == '\t' ||
+          lookahead == ' ') ADVANCE(220);
       if (lookahead != 0 &&
+          lookahead != '\t' &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
     case 221:
       ACCEPT_TOKEN(sym_preprocessor_directive_argument);
-      if (lookahead == 'a') ADVANCE(248);
+      if (lookahead == '[') ADVANCE(225);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
     case 222:
       ACCEPT_TOKEN(sym_preprocessor_directive_argument);
-      if (lookahead == 'd') ADVANCE(225);
-      if (lookahead == 'e') ADVANCE(237);
-      if (lookahead == 'i') ADVANCE(229);
-      if (lookahead == 'r') ADVANCE(220);
-      if (lookahead == 'u') ADVANCE(239);
-      if (lookahead == 'w') ADVANCE(221);
-      if (lookahead != 0 &&
-          lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+      if (lookahead == ']') ADVANCE(198);
+      if (lookahead == '\n' ||
+          lookahead == '\r') ADVANCE(26);
+      if (lookahead != 0) ADVANCE(224);
       END_STATE();
     case 223:
+      ACCEPT_TOKEN(sym_preprocessor_directive_argument);
+      if (lookahead == ']') ADVANCE(192);
+      if (lookahead == '\n' ||
+          lookahead == '\r') ADVANCE(28);
+      if (lookahead != 0) ADVANCE(225);
+      END_STATE();
+    case 224:
+      ACCEPT_TOKEN(sym_preprocessor_directive_argument);
+      if (lookahead == ']') ADVANCE(222);
+      if (lookahead == '\n' ||
+          lookahead == '\r') ADVANCE(26);
+      if (lookahead != 0) ADVANCE(224);
+      END_STATE();
+    case 225:
+      ACCEPT_TOKEN(sym_preprocessor_directive_argument);
+      if (lookahead == ']') ADVANCE(223);
+      if (lookahead == '\n' ||
+          lookahead == '\r') ADVANCE(28);
+      if (lookahead != 0) ADVANCE(225);
+      END_STATE();
+    case 226:
+      ACCEPT_TOKEN(sym_preprocessor_directive_argument);
+      if (lookahead == 'a') ADVANCE(256);
+      if (lookahead != 0 &&
+          lookahead != '\n' &&
+          lookahead != '\r') ADVANCE(259);
+      END_STATE();
+    case 227:
+      ACCEPT_TOKEN(sym_preprocessor_directive_argument);
+      if (lookahead == 'a') ADVANCE(254);
+      if (lookahead != 0 &&
+          lookahead != '\n' &&
+          lookahead != '\r') ADVANCE(259);
+      END_STATE();
+    case 228:
+      ACCEPT_TOKEN(sym_preprocessor_directive_argument);
+      if (lookahead == 'd') ADVANCE(231);
+      if (lookahead == 'e') ADVANCE(243);
+      if (lookahead == 'i') ADVANCE(235);
+      if (lookahead == 'r') ADVANCE(226);
+      if (lookahead == 'u') ADVANCE(245);
+      if (lookahead == 'w') ADVANCE(227);
+      if (lookahead != 0 &&
+          lookahead != '\n' &&
+          lookahead != '\r') ADVANCE(259);
+      END_STATE();
+    case 229:
       ACCEPT_TOKEN(sym_preprocessor_directive_argument);
       if (lookahead == 'd') ADVANCE(80);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
-    case 224:
+    case 230:
       ACCEPT_TOKEN(sym_preprocessor_directive_argument);
-      if (lookahead == 'd') ADVANCE(228);
+      if (lookahead == 'd') ADVANCE(234);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
-    case 225:
+    case 231:
       ACCEPT_TOKEN(sym_preprocessor_directive_argument);
-      if (lookahead == 'e') ADVANCE(230);
+      if (lookahead == 'e') ADVANCE(236);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
-    case 226:
+    case 232:
       ACCEPT_TOKEN(sym_preprocessor_directive_argument);
       if (lookahead == 'e') ADVANCE(78);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
-    case 227:
+    case 233:
       ACCEPT_TOKEN(sym_preprocessor_directive_argument);
       if (lookahead == 'e') ADVANCE(86);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
-    case 228:
+    case 234:
       ACCEPT_TOKEN(sym_preprocessor_directive_argument);
-      if (lookahead == 'e') ADVANCE(232);
+      if (lookahead == 'e') ADVANCE(238);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
-    case 229:
+    case 235:
       ACCEPT_TOKEN(sym_preprocessor_directive_argument);
       if (lookahead == 'f') ADVANCE(74);
-      if (lookahead == 'm') ADVANCE(244);
+      if (lookahead == 'm') ADVANCE(250);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
-    case 230:
+    case 236:
       ACCEPT_TOKEN(sym_preprocessor_directive_argument);
-      if (lookahead == 'f') ADVANCE(235);
+      if (lookahead == 'f') ADVANCE(241);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
-    case 231:
+    case 237:
       ACCEPT_TOKEN(sym_preprocessor_directive_argument);
       if (lookahead == 'f') ADVANCE(76);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
-    case 232:
+    case 238:
       ACCEPT_TOKEN(sym_preprocessor_directive_argument);
       if (lookahead == 'f') ADVANCE(88);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
-    case 233:
+    case 239:
       ACCEPT_TOKEN(sym_preprocessor_directive_argument);
       if (lookahead == 'g') ADVANCE(92);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
-    case 234:
+    case 240:
       ACCEPT_TOKEN(sym_preprocessor_directive_argument);
-      if (lookahead == 'i') ADVANCE(231);
-      if (lookahead == 's') ADVANCE(226);
+      if (lookahead == 'i') ADVANCE(237);
+      if (lookahead == 's') ADVANCE(232);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
-    case 235:
+    case 241:
       ACCEPT_TOKEN(sym_preprocessor_directive_argument);
-      if (lookahead == 'i') ADVANCE(240);
+      if (lookahead == 'i') ADVANCE(246);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
-    case 236:
+    case 242:
       ACCEPT_TOKEN(sym_preprocessor_directive_argument);
-      if (lookahead == 'i') ADVANCE(238);
+      if (lookahead == 'i') ADVANCE(244);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
-    case 237:
+    case 243:
       ACCEPT_TOKEN(sym_preprocessor_directive_argument);
-      if (lookahead == 'l') ADVANCE(234);
-      if (lookahead == 'n') ADVANCE(223);
-      if (lookahead == 'r') ADVANCE(245);
+      if (lookahead == 'l') ADVANCE(240);
+      if (lookahead == 'n') ADVANCE(229);
+      if (lookahead == 'r') ADVANCE(251);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
-    case 238:
+    case 244:
+      ACCEPT_TOKEN(sym_preprocessor_directive_argument);
+      if (lookahead == 'n') ADVANCE(239);
+      if (lookahead != 0 &&
+          lookahead != '\n' &&
+          lookahead != '\r') ADVANCE(259);
+      END_STATE();
+    case 245:
+      ACCEPT_TOKEN(sym_preprocessor_directive_argument);
+      if (lookahead == 'n') ADVANCE(230);
+      if (lookahead != 0 &&
+          lookahead != '\n' &&
+          lookahead != '\r') ADVANCE(259);
+      END_STATE();
+    case 246:
       ACCEPT_TOKEN(sym_preprocessor_directive_argument);
       if (lookahead == 'n') ADVANCE(233);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
-    case 239:
+    case 247:
       ACCEPT_TOKEN(sym_preprocessor_directive_argument);
-      if (lookahead == 'n') ADVANCE(224);
+      if (lookahead == 'n') ADVANCE(242);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
-    case 240:
+    case 248:
       ACCEPT_TOKEN(sym_preprocessor_directive_argument);
-      if (lookahead == 'n') ADVANCE(227);
+      if (lookahead == 'o') ADVANCE(252);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
-    case 241:
+    case 249:
       ACCEPT_TOKEN(sym_preprocessor_directive_argument);
-      if (lookahead == 'n') ADVANCE(236);
+      if (lookahead == 'o') ADVANCE(253);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
-    case 242:
+    case 250:
       ACCEPT_TOKEN(sym_preprocessor_directive_argument);
-      if (lookahead == 'o') ADVANCE(246);
+      if (lookahead == 'p') ADVANCE(249);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
-    case 243:
+    case 251:
       ACCEPT_TOKEN(sym_preprocessor_directive_argument);
-      if (lookahead == 'o') ADVANCE(247);
+      if (lookahead == 'r') ADVANCE(248);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
-    case 244:
-      ACCEPT_TOKEN(sym_preprocessor_directive_argument);
-      if (lookahead == 'p') ADVANCE(243);
-      if (lookahead != 0 &&
-          lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
-      END_STATE();
-    case 245:
-      ACCEPT_TOKEN(sym_preprocessor_directive_argument);
-      if (lookahead == 'r') ADVANCE(242);
-      if (lookahead != 0 &&
-          lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
-      END_STATE();
-    case 246:
+    case 252:
       ACCEPT_TOKEN(sym_preprocessor_directive_argument);
       if (lookahead == 'r') ADVANCE(90);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
-    case 247:
+    case 253:
       ACCEPT_TOKEN(sym_preprocessor_directive_argument);
-      if (lookahead == 'r') ADVANCE(249);
+      if (lookahead == 'r') ADVANCE(255);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
-    case 248:
+    case 254:
       ACCEPT_TOKEN(sym_preprocessor_directive_argument);
-      if (lookahead == 'r') ADVANCE(241);
+      if (lookahead == 'r') ADVANCE(247);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
-    case 249:
+    case 255:
       ACCEPT_TOKEN(sym_preprocessor_directive_argument);
       if (lookahead == 't') ADVANCE(82);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
-    case 250:
+    case 256:
       ACCEPT_TOKEN(sym_preprocessor_directive_argument);
       if (lookahead == 'w') ADVANCE(84);
       if (lookahead != 0 &&
           lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
-      END_STATE();
-    case 251:
-      ACCEPT_TOKEN(sym_preprocessor_directive_argument);
-      if (lookahead == '}') ADVANCE(208);
-      if (lookahead != 0 &&
-          lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(251);
-      END_STATE();
-    case 252:
-      ACCEPT_TOKEN(sym_preprocessor_directive_argument);
-      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(182);
-      if (lookahead != 0 &&
-          lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
-      END_STATE();
-    case 253:
-      ACCEPT_TOKEN(sym_preprocessor_directive_argument);
-      if (lookahead != 0 &&
-          lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(253);
-      END_STATE();
-    case 254:
-      ACCEPT_TOKEN(sym_line_comment);
-      if (lookahead == '*' ||
-          lookahead == '?') ADVANCE(201);
-      if (lookahead == '[' ||
-          lookahead == ']' ||
-          lookahead == '~') ADVANCE(255);
-      if (('-' <= lookahead && lookahead <= '9') ||
-          ('A' <= lookahead && lookahead <= 'Z') ||
-          lookahead == '_' ||
-          ('a' <= lookahead && lookahead <= 'z')) ADVANCE(254);
-      if (lookahead != 0 &&
-          lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(257);
-      END_STATE();
-    case 255:
-      ACCEPT_TOKEN(sym_line_comment);
-      if (lookahead == '*' ||
-          lookahead == '?') ADVANCE(201);
-      if (('-' <= lookahead && lookahead <= '9') ||
-          ('A' <= lookahead && lookahead <= '[') ||
-          lookahead == ']' ||
-          lookahead == '_' ||
-          ('a' <= lookahead && lookahead <= 'z') ||
-          lookahead == '~') ADVANCE(255);
-      if (lookahead != 0 &&
-          lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(257);
-      END_STATE();
-    case 256:
-      ACCEPT_TOKEN(sym_line_comment);
-      if (('-' <= lookahead && lookahead <= '9') ||
-          ('A' <= lookahead && lookahead <= 'Z') ||
-          lookahead == '_' ||
-          ('a' <= lookahead && lookahead <= 'z')) ADVANCE(256);
-      if (lookahead != 0 &&
-          lookahead != '\n' &&
-          lookahead != '\r') ADVANCE(257);
+          lookahead != '\r') ADVANCE(259);
       END_STATE();
     case 257:
-      ACCEPT_TOKEN(sym_line_comment);
+      ACCEPT_TOKEN(sym_preprocessor_directive_argument);
+      if (lookahead == '}') ADVANCE(214);
       if (lookahead != 0 &&
           lookahead != '\n' &&
           lookahead != '\r') ADVANCE(257);
       END_STATE();
     case 258:
+      ACCEPT_TOKEN(sym_preprocessor_directive_argument);
+      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(182);
+      if (lookahead != 0 &&
+          lookahead != '\n' &&
+          lookahead != '\r') ADVANCE(259);
+      END_STATE();
+    case 259:
+      ACCEPT_TOKEN(sym_preprocessor_directive_argument);
+      if (lookahead != 0 &&
+          lookahead != '\n' &&
+          lookahead != '\r') ADVANCE(259);
+      END_STATE();
+    case 260:
+      ACCEPT_TOKEN(sym_line_comment);
+      if (lookahead == '*' ||
+          lookahead == '?') ADVANCE(207);
+      if (lookahead == '[' ||
+          lookahead == ']' ||
+          lookahead == '~') ADVANCE(261);
+      if (('-' <= lookahead && lookahead <= '9') ||
+          ('A' <= lookahead && lookahead <= 'Z') ||
+          lookahead == '_' ||
+          ('a' <= lookahead && lookahead <= 'z')) ADVANCE(260);
+      if (lookahead != 0 &&
+          lookahead != '\n' &&
+          lookahead != '\r') ADVANCE(263);
+      END_STATE();
+    case 261:
+      ACCEPT_TOKEN(sym_line_comment);
+      if (lookahead == '*' ||
+          lookahead == '?') ADVANCE(207);
+      if (('-' <= lookahead && lookahead <= '9') ||
+          ('A' <= lookahead && lookahead <= '[') ||
+          lookahead == ']' ||
+          lookahead == '_' ||
+          ('a' <= lookahead && lookahead <= 'z') ||
+          lookahead == '~') ADVANCE(261);
+      if (lookahead != 0 &&
+          lookahead != '\n' &&
+          lookahead != '\r') ADVANCE(263);
+      END_STATE();
+    case 262:
+      ACCEPT_TOKEN(sym_line_comment);
+      if (('-' <= lookahead && lookahead <= '9') ||
+          ('A' <= lookahead && lookahead <= 'Z') ||
+          lookahead == '_' ||
+          ('a' <= lookahead && lookahead <= 'z')) ADVANCE(262);
+      if (lookahead != 0 &&
+          lookahead != '\n' &&
+          lookahead != '\r') ADVANCE(263);
+      END_STATE();
+    case 263:
+      ACCEPT_TOKEN(sym_line_comment);
+      if (lookahead != 0 &&
+          lookahead != '\n' &&
+          lookahead != '\r') ADVANCE(263);
+      END_STATE();
+    case 264:
       ACCEPT_TOKEN(sym_block_comment);
       if (lookahead == '*') ADVANCE(11);
       if (lookahead != 0) ADVANCE(12);
@@ -19213,19 +19249,19 @@ static const uint16_t ts_small_parse_table[] = {
     ACTIONS(808), 2,
       sym_line_comment,
       sym_block_comment,
-    ACTIONS(793), 3,
-      sym_bare_word,
-      sym_number,
-      sym_glob_pattern,
+    ACTIONS(805), 3,
+      sym_string,
+      sym_interpolated_string,
+      sym_interpolated_multiline_string,
     STATE(166), 3,
       sym_shell_capture_expression,
       sym_process_substitution_expression,
       sym_var_ref,
-    ACTIONS(805), 4,
-      sym_string,
-      sym_interpolated_string,
-      sym_interpolated_multiline_string,
+    ACTIONS(793), 4,
+      sym_bare_word,
+      sym_number,
       sym_multiline_string,
+      sym_glob_pattern,
     ACTIONS(791), 14,
       anon_sym_ATif,
       anon_sym_ATelif,
@@ -19289,19 +19325,19 @@ static const uint16_t ts_small_parse_table[] = {
     ACTIONS(818), 2,
       anon_sym_LT_LPAREN,
       anon_sym_GT_LPAREN,
-    ACTIONS(814), 3,
-      sym_bare_word,
-      sym_number,
-      sym_glob_pattern,
+    ACTIONS(822), 3,
+      sym_string,
+      sym_interpolated_string,
+      sym_interpolated_multiline_string,
     STATE(166), 3,
       sym_shell_capture_expression,
       sym_process_substitution_expression,
       sym_var_ref,
-    ACTIONS(822), 4,
-      sym_string,
-      sym_interpolated_string,
-      sym_interpolated_multiline_string,
+    ACTIONS(814), 4,
+      sym_bare_word,
+      sym_number,
       sym_multiline_string,
+      sym_glob_pattern,
     ACTIONS(812), 14,
       anon_sym_ATif,
       anon_sym_ATelif,
@@ -19365,19 +19401,19 @@ static const uint16_t ts_small_parse_table[] = {
     ACTIONS(828), 2,
       anon_sym_LT_LPAREN,
       anon_sym_GT_LPAREN,
-    ACTIONS(824), 3,
-      sym_bare_word,
-      sym_number,
-      sym_glob_pattern,
+    ACTIONS(832), 3,
+      sym_string,
+      sym_interpolated_string,
+      sym_interpolated_multiline_string,
     STATE(216), 3,
       sym_shell_capture_expression,
       sym_process_substitution_expression,
       sym_var_ref,
-    ACTIONS(832), 4,
-      sym_string,
-      sym_interpolated_string,
-      sym_interpolated_multiline_string,
+    ACTIONS(824), 4,
+      sym_bare_word,
+      sym_number,
       sym_multiline_string,
+      sym_glob_pattern,
     ACTIONS(812), 14,
       anon_sym_ATif,
       anon_sym_ATelif,
@@ -19440,19 +19476,19 @@ static const uint16_t ts_small_parse_table[] = {
     ACTIONS(840), 2,
       anon_sym_LT_LPAREN,
       anon_sym_GT_LPAREN,
-    ACTIONS(834), 3,
-      sym_bare_word,
-      sym_number,
-      sym_glob_pattern,
+    ACTIONS(846), 3,
+      sym_string,
+      sym_interpolated_string,
+      sym_interpolated_multiline_string,
     STATE(216), 3,
       sym_shell_capture_expression,
       sym_process_substitution_expression,
       sym_var_ref,
-    ACTIONS(846), 4,
-      sym_string,
-      sym_interpolated_string,
-      sym_interpolated_multiline_string,
+    ACTIONS(834), 4,
+      sym_bare_word,
+      sym_number,
       sym_multiline_string,
+      sym_glob_pattern,
     ACTIONS(791), 14,
       anon_sym_ATif,
       anon_sym_ATelif,
@@ -19515,19 +19551,19 @@ static const uint16_t ts_small_parse_table[] = {
     ACTIONS(853), 2,
       anon_sym_LT_LPAREN,
       anon_sym_GT_LPAREN,
-    ACTIONS(849), 3,
-      sym_bare_word,
-      sym_number,
-      sym_glob_pattern,
+    ACTIONS(857), 3,
+      sym_string,
+      sym_interpolated_string,
+      sym_interpolated_multiline_string,
     STATE(235), 3,
       sym_shell_capture_expression,
       sym_process_substitution_expression,
       sym_var_ref,
-    ACTIONS(857), 4,
-      sym_string,
-      sym_interpolated_string,
-      sym_interpolated_multiline_string,
+    ACTIONS(849), 4,
+      sym_bare_word,
+      sym_number,
       sym_multiline_string,
+      sym_glob_pattern,
     ACTIONS(812), 15,
       ts_builtin_sym_end,
       anon_sym_ATif,
@@ -19589,19 +19625,19 @@ static const uint16_t ts_small_parse_table[] = {
     ACTIONS(865), 2,
       anon_sym_LT_LPAREN,
       anon_sym_GT_LPAREN,
-    ACTIONS(859), 3,
-      sym_bare_word,
-      sym_number,
-      sym_glob_pattern,
+    ACTIONS(871), 3,
+      sym_string,
+      sym_interpolated_string,
+      sym_interpolated_multiline_string,
     STATE(242), 3,
       sym_shell_capture_expression,
       sym_process_substitution_expression,
       sym_var_ref,
-    ACTIONS(871), 4,
-      sym_string,
-      sym_interpolated_string,
-      sym_interpolated_multiline_string,
+    ACTIONS(859), 4,
+      sym_bare_word,
+      sym_number,
       sym_multiline_string,
+      sym_glob_pattern,
     ACTIONS(791), 14,
       anon_sym_ATif,
       anon_sym_ATelif,
@@ -19663,19 +19699,19 @@ static const uint16_t ts_small_parse_table[] = {
     ACTIONS(880), 2,
       anon_sym_LT_LPAREN,
       anon_sym_GT_LPAREN,
-    ACTIONS(874), 3,
-      sym_bare_word,
-      sym_number,
-      sym_glob_pattern,
+    ACTIONS(886), 3,
+      sym_string,
+      sym_interpolated_string,
+      sym_interpolated_multiline_string,
     STATE(235), 3,
       sym_shell_capture_expression,
       sym_process_substitution_expression,
       sym_var_ref,
-    ACTIONS(886), 4,
-      sym_string,
-      sym_interpolated_string,
-      sym_interpolated_multiline_string,
+    ACTIONS(874), 4,
+      sym_bare_word,
+      sym_number,
       sym_multiline_string,
+      sym_glob_pattern,
     ACTIONS(791), 15,
       ts_builtin_sym_end,
       anon_sym_ATif,
@@ -19737,19 +19773,19 @@ static const uint16_t ts_small_parse_table[] = {
     ACTIONS(893), 2,
       anon_sym_LT_LPAREN,
       anon_sym_GT_LPAREN,
-    ACTIONS(889), 3,
-      sym_bare_word,
-      sym_number,
-      sym_glob_pattern,
+    ACTIONS(897), 3,
+      sym_string,
+      sym_interpolated_string,
+      sym_interpolated_multiline_string,
     STATE(242), 3,
       sym_shell_capture_expression,
       sym_process_substitution_expression,
       sym_var_ref,
-    ACTIONS(897), 4,
-      sym_string,
-      sym_interpolated_string,
-      sym_interpolated_multiline_string,
+    ACTIONS(889), 4,
+      sym_bare_word,
+      sym_number,
       sym_multiline_string,
+      sym_glob_pattern,
     ACTIONS(812), 14,
       anon_sym_ATif,
       anon_sym_ATelif,
@@ -19866,7 +19902,7 @@ static const uint16_t ts_small_parse_table[] = {
     ACTIONS(808), 2,
       sym_line_comment,
       sym_block_comment,
-    ACTIONS(571), 21,
+    ACTIONS(571), 20,
       anon_sym_ATif,
       anon_sym_ATelif,
       sym_preprocessor_else_directive,
@@ -19887,8 +19923,7 @@ static const uint16_t ts_small_parse_table[] = {
       sym_string,
       sym_interpolated_string,
       sym_interpolated_multiline_string,
-      sym_multiline_string,
-    ACTIONS(569), 36,
+    ACTIONS(569), 37,
       anon_sym_sh,
       anon_sym_test,
       anon_sym_trap,
@@ -19924,6 +19959,7 @@ static const uint16_t ts_small_parse_table[] = {
       anon_sym_false,
       sym_number,
       sym_identifier,
+      sym_multiline_string,
       sym_glob_pattern,
   [823] = 3,
     ACTIONS(3), 2,
@@ -20376,7 +20412,7 @@ static const uint16_t ts_small_parse_table[] = {
     ACTIONS(808), 2,
       sym_line_comment,
       sym_block_comment,
-    ACTIONS(941), 21,
+    ACTIONS(941), 20,
       anon_sym_ATif,
       anon_sym_ATelif,
       sym_preprocessor_else_directive,
@@ -20397,8 +20433,7 @@ static const uint16_t ts_small_parse_table[] = {
       sym_string,
       sym_interpolated_string,
       sym_interpolated_multiline_string,
-      sym_multiline_string,
-    ACTIONS(939), 36,
+    ACTIONS(939), 37,
       anon_sym_sh,
       anon_sym_test,
       anon_sym_trap,
@@ -20434,12 +20469,13 @@ static const uint16_t ts_small_parse_table[] = {
       anon_sym_false,
       sym_number,
       sym_identifier,
+      sym_multiline_string,
       sym_glob_pattern,
   [1363] = 3,
     ACTIONS(808), 2,
       sym_line_comment,
       sym_block_comment,
-    ACTIONS(945), 21,
+    ACTIONS(945), 20,
       anon_sym_ATif,
       anon_sym_ATelif,
       sym_preprocessor_else_directive,
@@ -20460,8 +20496,7 @@ static const uint16_t ts_small_parse_table[] = {
       sym_string,
       sym_interpolated_string,
       sym_interpolated_multiline_string,
-      sym_multiline_string,
-    ACTIONS(943), 36,
+    ACTIONS(943), 37,
       anon_sym_sh,
       anon_sym_test,
       anon_sym_trap,
@@ -20497,12 +20532,13 @@ static const uint16_t ts_small_parse_table[] = {
       anon_sym_false,
       sym_number,
       sym_identifier,
+      sym_multiline_string,
       sym_glob_pattern,
   [1429] = 3,
     ACTIONS(808), 2,
       sym_line_comment,
       sym_block_comment,
-    ACTIONS(642), 21,
+    ACTIONS(642), 20,
       anon_sym_ATif,
       anon_sym_ATelif,
       sym_preprocessor_else_directive,
@@ -20523,8 +20559,7 @@ static const uint16_t ts_small_parse_table[] = {
       sym_string,
       sym_interpolated_string,
       sym_interpolated_multiline_string,
-      sym_multiline_string,
-    ACTIONS(640), 36,
+    ACTIONS(640), 37,
       anon_sym_sh,
       anon_sym_test,
       anon_sym_trap,
@@ -20560,12 +20595,13 @@ static const uint16_t ts_small_parse_table[] = {
       anon_sym_false,
       sym_number,
       sym_identifier,
+      sym_multiline_string,
       sym_glob_pattern,
   [1495] = 3,
     ACTIONS(808), 2,
       sym_line_comment,
       sym_block_comment,
-    ACTIONS(646), 21,
+    ACTIONS(646), 20,
       anon_sym_ATif,
       anon_sym_ATelif,
       sym_preprocessor_else_directive,
@@ -20586,8 +20622,7 @@ static const uint16_t ts_small_parse_table[] = {
       sym_string,
       sym_interpolated_string,
       sym_interpolated_multiline_string,
-      sym_multiline_string,
-    ACTIONS(644), 36,
+    ACTIONS(644), 37,
       anon_sym_sh,
       anon_sym_test,
       anon_sym_trap,
@@ -20623,6 +20658,7 @@ static const uint16_t ts_small_parse_table[] = {
       anon_sym_false,
       sym_number,
       sym_identifier,
+      sym_multiline_string,
       sym_glob_pattern,
   [1561] = 3,
     ACTIONS(3), 2,
@@ -23480,7 +23516,7 @@ static const uint16_t ts_small_parse_table[] = {
     ACTIONS(808), 2,
       sym_line_comment,
       sym_block_comment,
-    ACTIONS(941), 21,
+    ACTIONS(941), 20,
       anon_sym_ATif,
       anon_sym_ATelif,
       sym_preprocessor_else_directive,
@@ -23501,8 +23537,7 @@ static const uint16_t ts_small_parse_table[] = {
       sym_string,
       sym_interpolated_string,
       sym_interpolated_multiline_string,
-      sym_multiline_string,
-    ACTIONS(939), 35,
+    ACTIONS(939), 36,
       anon_sym_sh,
       anon_sym_test,
       anon_sym_trap,
@@ -23537,12 +23572,13 @@ static const uint16_t ts_small_parse_table[] = {
       anon_sym_false,
       sym_number,
       sym_identifier,
+      sym_multiline_string,
       sym_glob_pattern,
   [4616] = 3,
     ACTIONS(808), 2,
       sym_line_comment,
       sym_block_comment,
-    ACTIONS(945), 21,
+    ACTIONS(945), 20,
       anon_sym_ATif,
       anon_sym_ATelif,
       sym_preprocessor_else_directive,
@@ -23563,8 +23599,7 @@ static const uint16_t ts_small_parse_table[] = {
       sym_string,
       sym_interpolated_string,
       sym_interpolated_multiline_string,
-      sym_multiline_string,
-    ACTIONS(943), 35,
+    ACTIONS(943), 36,
       anon_sym_sh,
       anon_sym_test,
       anon_sym_trap,
@@ -23599,6 +23634,7 @@ static const uint16_t ts_small_parse_table[] = {
       anon_sym_false,
       sym_number,
       sym_identifier,
+      sym_multiline_string,
       sym_glob_pattern,
   [4681] = 3,
     ACTIONS(3), 2,
@@ -23852,7 +23888,7 @@ static const uint16_t ts_small_parse_table[] = {
     ACTIONS(808), 2,
       sym_line_comment,
       sym_block_comment,
-    ACTIONS(642), 21,
+    ACTIONS(642), 20,
       anon_sym_ATif,
       anon_sym_ATelif,
       sym_preprocessor_else_directive,
@@ -23873,8 +23909,7 @@ static const uint16_t ts_small_parse_table[] = {
       sym_string,
       sym_interpolated_string,
       sym_interpolated_multiline_string,
-      sym_multiline_string,
-    ACTIONS(640), 35,
+    ACTIONS(640), 36,
       anon_sym_sh,
       anon_sym_test,
       anon_sym_trap,
@@ -23909,12 +23944,13 @@ static const uint16_t ts_small_parse_table[] = {
       anon_sym_false,
       sym_number,
       sym_identifier,
+      sym_multiline_string,
       sym_glob_pattern,
   [5006] = 3,
     ACTIONS(808), 2,
       sym_line_comment,
       sym_block_comment,
-    ACTIONS(646), 21,
+    ACTIONS(646), 20,
       anon_sym_ATif,
       anon_sym_ATelif,
       sym_preprocessor_else_directive,
@@ -23935,8 +23971,7 @@ static const uint16_t ts_small_parse_table[] = {
       sym_string,
       sym_interpolated_string,
       sym_interpolated_multiline_string,
-      sym_multiline_string,
-    ACTIONS(644), 35,
+    ACTIONS(644), 36,
       anon_sym_sh,
       anon_sym_test,
       anon_sym_trap,
@@ -23971,6 +24006,7 @@ static const uint16_t ts_small_parse_table[] = {
       anon_sym_false,
       sym_number,
       sym_identifier,
+      sym_multiline_string,
       sym_glob_pattern,
   [5071] = 3,
     ACTIONS(3), 2,
@@ -24038,7 +24074,7 @@ static const uint16_t ts_small_parse_table[] = {
     ACTIONS(808), 2,
       sym_line_comment,
       sym_block_comment,
-    ACTIONS(571), 21,
+    ACTIONS(571), 20,
       anon_sym_ATif,
       anon_sym_ATelif,
       sym_preprocessor_else_directive,
@@ -24059,8 +24095,7 @@ static const uint16_t ts_small_parse_table[] = {
       sym_string,
       sym_interpolated_string,
       sym_interpolated_multiline_string,
-      sym_multiline_string,
-    ACTIONS(569), 35,
+    ACTIONS(569), 36,
       anon_sym_sh,
       anon_sym_test,
       anon_sym_trap,
@@ -24095,6 +24130,7 @@ static const uint16_t ts_small_parse_table[] = {
       anon_sym_false,
       sym_number,
       sym_identifier,
+      sym_multiline_string,
       sym_glob_pattern,
   [5201] = 3,
     ACTIONS(3), 2,
@@ -24224,7 +24260,7 @@ static const uint16_t ts_small_parse_table[] = {
     ACTIONS(808), 2,
       sym_line_comment,
       sym_block_comment,
-    ACTIONS(646), 22,
+    ACTIONS(646), 21,
       ts_builtin_sym_end,
       anon_sym_ATif,
       anon_sym_ATelif,
@@ -24246,8 +24282,7 @@ static const uint16_t ts_small_parse_table[] = {
       sym_string,
       sym_interpolated_string,
       sym_interpolated_multiline_string,
-      sym_multiline_string,
-    ACTIONS(644), 33,
+    ACTIONS(644), 34,
       anon_sym_sh,
       anon_sym_test,
       anon_sym_trap,
@@ -24280,12 +24315,13 @@ static const uint16_t ts_small_parse_table[] = {
       anon_sym_false,
       sym_number,
       sym_identifier,
+      sym_multiline_string,
       sym_glob_pattern,
   [5395] = 3,
     ACTIONS(808), 2,
       sym_line_comment,
       sym_block_comment,
-    ACTIONS(945), 21,
+    ACTIONS(945), 20,
       anon_sym_ATif,
       anon_sym_ATelif,
       sym_preprocessor_else_directive,
@@ -24306,8 +24342,7 @@ static const uint16_t ts_small_parse_table[] = {
       sym_string,
       sym_interpolated_string,
       sym_interpolated_multiline_string,
-      sym_multiline_string,
-    ACTIONS(943), 34,
+    ACTIONS(943), 35,
       anon_sym_sh,
       anon_sym_test,
       anon_sym_trap,
@@ -24341,6 +24376,7 @@ static const uint16_t ts_small_parse_table[] = {
       anon_sym_false,
       sym_number,
       sym_identifier,
+      sym_multiline_string,
       sym_glob_pattern,
   [5459] = 3,
     ACTIONS(3), 2,
@@ -24468,7 +24504,7 @@ static const uint16_t ts_small_parse_table[] = {
     ACTIONS(808), 2,
       sym_line_comment,
       sym_block_comment,
-    ACTIONS(642), 22,
+    ACTIONS(642), 21,
       ts_builtin_sym_end,
       anon_sym_ATif,
       anon_sym_ATelif,
@@ -24490,8 +24526,7 @@ static const uint16_t ts_small_parse_table[] = {
       sym_string,
       sym_interpolated_string,
       sym_interpolated_multiline_string,
-      sym_multiline_string,
-    ACTIONS(640), 33,
+    ACTIONS(640), 34,
       anon_sym_sh,
       anon_sym_test,
       anon_sym_trap,
@@ -24524,6 +24559,7 @@ static const uint16_t ts_small_parse_table[] = {
       anon_sym_false,
       sym_number,
       sym_identifier,
+      sym_multiline_string,
       sym_glob_pattern,
   [5651] = 3,
     ACTIONS(1113), 1,
@@ -24651,7 +24687,7 @@ static const uint16_t ts_small_parse_table[] = {
     ACTIONS(808), 2,
       sym_line_comment,
       sym_block_comment,
-    ACTIONS(941), 22,
+    ACTIONS(941), 21,
       ts_builtin_sym_end,
       anon_sym_ATif,
       anon_sym_ATelif,
@@ -24673,8 +24709,7 @@ static const uint16_t ts_small_parse_table[] = {
       sym_string,
       sym_interpolated_string,
       sym_interpolated_multiline_string,
-      sym_multiline_string,
-    ACTIONS(939), 33,
+    ACTIONS(939), 34,
       anon_sym_sh,
       anon_sym_test,
       anon_sym_trap,
@@ -24707,6 +24742,7 @@ static const uint16_t ts_small_parse_table[] = {
       anon_sym_false,
       sym_number,
       sym_identifier,
+      sym_multiline_string,
       sym_glob_pattern,
   [5843] = 5,
     ACTIONS(722), 1,
@@ -24775,7 +24811,7 @@ static const uint16_t ts_small_parse_table[] = {
     ACTIONS(808), 2,
       sym_line_comment,
       sym_block_comment,
-    ACTIONS(642), 21,
+    ACTIONS(642), 20,
       anon_sym_ATif,
       anon_sym_ATelif,
       sym_preprocessor_else_directive,
@@ -24796,8 +24832,7 @@ static const uint16_t ts_small_parse_table[] = {
       sym_string,
       sym_interpolated_string,
       sym_interpolated_multiline_string,
-      sym_multiline_string,
-    ACTIONS(640), 34,
+    ACTIONS(640), 35,
       anon_sym_sh,
       anon_sym_test,
       anon_sym_trap,
@@ -24831,12 +24866,13 @@ static const uint16_t ts_small_parse_table[] = {
       anon_sym_false,
       sym_number,
       sym_identifier,
+      sym_multiline_string,
       sym_glob_pattern,
   [5975] = 3,
     ACTIONS(808), 2,
       sym_line_comment,
       sym_block_comment,
-    ACTIONS(646), 21,
+    ACTIONS(646), 20,
       anon_sym_ATif,
       anon_sym_ATelif,
       sym_preprocessor_else_directive,
@@ -24857,8 +24893,7 @@ static const uint16_t ts_small_parse_table[] = {
       sym_string,
       sym_interpolated_string,
       sym_interpolated_multiline_string,
-      sym_multiline_string,
-    ACTIONS(644), 34,
+    ACTIONS(644), 35,
       anon_sym_sh,
       anon_sym_test,
       anon_sym_trap,
@@ -24892,12 +24927,13 @@ static const uint16_t ts_small_parse_table[] = {
       anon_sym_false,
       sym_number,
       sym_identifier,
+      sym_multiline_string,
       sym_glob_pattern,
   [6039] = 3,
     ACTIONS(808), 2,
       sym_line_comment,
       sym_block_comment,
-    ACTIONS(571), 21,
+    ACTIONS(571), 20,
       anon_sym_ATif,
       anon_sym_ATelif,
       sym_preprocessor_else_directive,
@@ -24918,7 +24954,68 @@ static const uint16_t ts_small_parse_table[] = {
       sym_string,
       sym_interpolated_string,
       sym_interpolated_multiline_string,
+    ACTIONS(569), 35,
+      anon_sym_sh,
+      anon_sym_test,
+      anon_sym_trap,
+      anon_sym_untrap,
+      anon_sym_global,
+      anon_sym_let,
+      anon_sym_const,
+      anon_sym_readonly,
+      anon_sym_fn,
+      anon_sym_end,
+      anon_sym_if,
+      anon_sym_switch,
+      anon_sym_for,
+      anon_sym_select,
+      anon_sym_while,
+      anon_sym_until,
+      anon_sym_subshell,
+      anon_sym_coproc,
+      anon_sym_wait,
+      anon_sym_return,
+      anon_sym_shift,
+      sym_break_statement,
+      sym_continue_statement,
+      sym_bare_word,
+      anon_sym_DASH,
+      anon_sym_LBRACK,
+      anon_sym_argv,
+      anon_sym_DOLLAR,
+      anon_sym_enum,
+      anon_sym_true,
+      anon_sym_false,
+      sym_number,
+      sym_identifier,
       sym_multiline_string,
+      sym_glob_pattern,
+  [6103] = 3,
+    ACTIONS(808), 2,
+      sym_line_comment,
+      sym_block_comment,
+    ACTIONS(571), 21,
+      ts_builtin_sym_end,
+      anon_sym_ATif,
+      anon_sym_ATelif,
+      sym_preprocessor_else_directive,
+      sym_preprocessor_end_directive,
+      anon_sym_ATimport,
+      sym_preprocessor_raw_directive,
+      anon_sym_ATdefine,
+      anon_sym_ATundef,
+      anon_sym_ATerror,
+      anon_sym_ATwarning,
+      anon_sym_LPAREN,
+      anon_sym_PLUS,
+      anon_sym_BANG,
+      anon_sym_POUND,
+      anon_sym_DOLLAR_LPAREN,
+      anon_sym_LT_LPAREN,
+      anon_sym_GT_LPAREN,
+      sym_string,
+      sym_interpolated_string,
+      sym_interpolated_multiline_string,
     ACTIONS(569), 34,
       anon_sym_sh,
       anon_sym_test,
@@ -24929,7 +25026,6 @@ static const uint16_t ts_small_parse_table[] = {
       anon_sym_const,
       anon_sym_readonly,
       anon_sym_fn,
-      anon_sym_end,
       anon_sym_if,
       anon_sym_switch,
       anon_sym_for,
@@ -24953,73 +25049,13 @@ static const uint16_t ts_small_parse_table[] = {
       anon_sym_false,
       sym_number,
       sym_identifier,
-      sym_glob_pattern,
-  [6103] = 3,
-    ACTIONS(808), 2,
-      sym_line_comment,
-      sym_block_comment,
-    ACTIONS(571), 22,
-      ts_builtin_sym_end,
-      anon_sym_ATif,
-      anon_sym_ATelif,
-      sym_preprocessor_else_directive,
-      sym_preprocessor_end_directive,
-      anon_sym_ATimport,
-      sym_preprocessor_raw_directive,
-      anon_sym_ATdefine,
-      anon_sym_ATundef,
-      anon_sym_ATerror,
-      anon_sym_ATwarning,
-      anon_sym_LPAREN,
-      anon_sym_PLUS,
-      anon_sym_BANG,
-      anon_sym_POUND,
-      anon_sym_DOLLAR_LPAREN,
-      anon_sym_LT_LPAREN,
-      anon_sym_GT_LPAREN,
-      sym_string,
-      sym_interpolated_string,
-      sym_interpolated_multiline_string,
       sym_multiline_string,
-    ACTIONS(569), 33,
-      anon_sym_sh,
-      anon_sym_test,
-      anon_sym_trap,
-      anon_sym_untrap,
-      anon_sym_global,
-      anon_sym_let,
-      anon_sym_const,
-      anon_sym_readonly,
-      anon_sym_fn,
-      anon_sym_if,
-      anon_sym_switch,
-      anon_sym_for,
-      anon_sym_select,
-      anon_sym_while,
-      anon_sym_until,
-      anon_sym_subshell,
-      anon_sym_coproc,
-      anon_sym_wait,
-      anon_sym_return,
-      anon_sym_shift,
-      sym_break_statement,
-      sym_continue_statement,
-      sym_bare_word,
-      anon_sym_DASH,
-      anon_sym_LBRACK,
-      anon_sym_argv,
-      anon_sym_DOLLAR,
-      anon_sym_enum,
-      anon_sym_true,
-      anon_sym_false,
-      sym_number,
-      sym_identifier,
       sym_glob_pattern,
   [6167] = 3,
     ACTIONS(808), 2,
       sym_line_comment,
       sym_block_comment,
-    ACTIONS(945), 22,
+    ACTIONS(945), 21,
       ts_builtin_sym_end,
       anon_sym_ATif,
       anon_sym_ATelif,
@@ -25041,8 +25077,7 @@ static const uint16_t ts_small_parse_table[] = {
       sym_string,
       sym_interpolated_string,
       sym_interpolated_multiline_string,
-      sym_multiline_string,
-    ACTIONS(943), 33,
+    ACTIONS(943), 34,
       anon_sym_sh,
       anon_sym_test,
       anon_sym_trap,
@@ -25075,12 +25110,13 @@ static const uint16_t ts_small_parse_table[] = {
       anon_sym_false,
       sym_number,
       sym_identifier,
+      sym_multiline_string,
       sym_glob_pattern,
   [6231] = 3,
     ACTIONS(808), 2,
       sym_line_comment,
       sym_block_comment,
-    ACTIONS(941), 21,
+    ACTIONS(941), 20,
       anon_sym_ATif,
       anon_sym_ATelif,
       sym_preprocessor_else_directive,
@@ -25101,8 +25137,7 @@ static const uint16_t ts_small_parse_table[] = {
       sym_string,
       sym_interpolated_string,
       sym_interpolated_multiline_string,
-      sym_multiline_string,
-    ACTIONS(939), 34,
+    ACTIONS(939), 35,
       anon_sym_sh,
       anon_sym_test,
       anon_sym_trap,
@@ -25136,6 +25171,7 @@ static const uint16_t ts_small_parse_table[] = {
       anon_sym_false,
       sym_number,
       sym_identifier,
+      sym_multiline_string,
       sym_glob_pattern,
   [6295] = 4,
     ACTIONS(1147), 1,
@@ -29345,8 +29381,6 @@ static const uint16_t ts_small_parse_table[] = {
       anon_sym_DOLLAR_LPAREN,
     ACTIONS(187), 1,
       anon_sym_argv,
-    ACTIONS(195), 1,
-      sym_number,
     ACTIONS(225), 1,
       anon_sym_LBRACK,
     ACTIONS(587), 1,
@@ -29363,6 +29397,9 @@ static const uint16_t ts_small_parse_table[] = {
     ACTIONS(193), 2,
       anon_sym_true,
       anon_sym_false,
+    ACTIONS(195), 2,
+      sym_number,
+      sym_multiline_string,
     ACTIONS(223), 2,
       anon_sym_PLUS,
       anon_sym_BANG,
@@ -29372,11 +29409,10 @@ static const uint16_t ts_small_parse_table[] = {
     STATE(69), 2,
       sym_argv_index_expression,
       sym_argv_length_expression,
-    ACTIONS(197), 4,
+    ACTIONS(197), 3,
       sym_string,
       sym_interpolated_string,
       sym_interpolated_multiline_string,
-      sym_multiline_string,
     STATE(64), 8,
       sym_shell_capture_expression,
       sym_process_substitution_expression,
@@ -29719,8 +29755,6 @@ static const uint16_t ts_small_parse_table[] = {
       anon_sym_DOLLAR_LPAREN,
     ACTIONS(187), 1,
       anon_sym_argv,
-    ACTIONS(195), 1,
-      sym_number,
     ACTIONS(225), 1,
       anon_sym_LBRACK,
     ACTIONS(587), 1,
@@ -29737,6 +29771,9 @@ static const uint16_t ts_small_parse_table[] = {
     ACTIONS(193), 2,
       anon_sym_true,
       anon_sym_false,
+    ACTIONS(195), 2,
+      sym_number,
+      sym_multiline_string,
     ACTIONS(223), 2,
       anon_sym_PLUS,
       anon_sym_BANG,
@@ -29746,11 +29783,10 @@ static const uint16_t ts_small_parse_table[] = {
     STATE(69), 2,
       sym_argv_index_expression,
       sym_argv_length_expression,
-    ACTIONS(197), 4,
+    ACTIONS(197), 3,
       sym_string,
       sym_interpolated_string,
       sym_interpolated_multiline_string,
-      sym_multiline_string,
     STATE(64), 8,
       sym_shell_capture_expression,
       sym_process_substitution_expression,
@@ -29783,8 +29819,6 @@ static const uint16_t ts_small_parse_table[] = {
       anon_sym_DOLLAR_LPAREN,
     ACTIONS(187), 1,
       anon_sym_argv,
-    ACTIONS(195), 1,
-      sym_number,
     ACTIONS(225), 1,
       anon_sym_LBRACK,
     ACTIONS(587), 1,
@@ -29801,6 +29835,9 @@ static const uint16_t ts_small_parse_table[] = {
     ACTIONS(193), 2,
       anon_sym_true,
       anon_sym_false,
+    ACTIONS(195), 2,
+      sym_number,
+      sym_multiline_string,
     ACTIONS(223), 2,
       anon_sym_PLUS,
       anon_sym_BANG,
@@ -29810,11 +29847,10 @@ static const uint16_t ts_small_parse_table[] = {
     STATE(69), 2,
       sym_argv_index_expression,
       sym_argv_length_expression,
-    ACTIONS(197), 4,
+    ACTIONS(197), 3,
       sym_string,
       sym_interpolated_string,
       sym_interpolated_multiline_string,
-      sym_multiline_string,
     STATE(64), 8,
       sym_shell_capture_expression,
       sym_process_substitution_expression,
@@ -29847,8 +29883,6 @@ static const uint16_t ts_small_parse_table[] = {
       anon_sym_DOLLAR_LPAREN,
     ACTIONS(187), 1,
       anon_sym_argv,
-    ACTIONS(195), 1,
-      sym_number,
     ACTIONS(225), 1,
       anon_sym_LBRACK,
     ACTIONS(587), 1,
@@ -29865,6 +29899,9 @@ static const uint16_t ts_small_parse_table[] = {
     ACTIONS(193), 2,
       anon_sym_true,
       anon_sym_false,
+    ACTIONS(195), 2,
+      sym_number,
+      sym_multiline_string,
     ACTIONS(223), 2,
       anon_sym_PLUS,
       anon_sym_BANG,
@@ -29874,11 +29911,10 @@ static const uint16_t ts_small_parse_table[] = {
     STATE(69), 2,
       sym_argv_index_expression,
       sym_argv_length_expression,
-    ACTIONS(197), 4,
+    ACTIONS(197), 3,
       sym_string,
       sym_interpolated_string,
       sym_interpolated_multiline_string,
-      sym_multiline_string,
     STATE(64), 8,
       sym_shell_capture_expression,
       sym_process_substitution_expression,
@@ -36255,19 +36291,19 @@ static const uint16_t ts_small_parse_table[] = {
     ACTIONS(818), 2,
       anon_sym_LT_LPAREN,
       anon_sym_GT_LPAREN,
-    ACTIONS(814), 3,
-      sym_bare_word,
-      sym_number,
-      sym_glob_pattern,
+    ACTIONS(822), 3,
+      sym_string,
+      sym_interpolated_string,
+      sym_interpolated_multiline_string,
     STATE(166), 3,
       sym_shell_capture_expression,
       sym_process_substitution_expression,
       sym_var_ref,
-    ACTIONS(822), 4,
-      sym_string,
-      sym_interpolated_string,
-      sym_interpolated_multiline_string,
+    ACTIONS(814), 4,
+      sym_bare_word,
+      sym_number,
       sym_multiline_string,
+      sym_glob_pattern,
   [19527] = 11,
     ACTIONS(891), 1,
       anon_sym_DOLLAR_LPAREN,
@@ -36287,19 +36323,19 @@ static const uint16_t ts_small_parse_table[] = {
     ACTIONS(893), 2,
       anon_sym_LT_LPAREN,
       anon_sym_GT_LPAREN,
-    ACTIONS(889), 3,
-      sym_bare_word,
-      sym_number,
-      sym_glob_pattern,
+    ACTIONS(897), 3,
+      sym_string,
+      sym_interpolated_string,
+      sym_interpolated_multiline_string,
     STATE(242), 3,
       sym_shell_capture_expression,
       sym_process_substitution_expression,
       sym_var_ref,
-    ACTIONS(897), 4,
-      sym_string,
-      sym_interpolated_string,
-      sym_interpolated_multiline_string,
+    ACTIONS(889), 4,
+      sym_bare_word,
+      sym_number,
       sym_multiline_string,
+      sym_glob_pattern,
   [19570] = 11,
     ACTIONS(851), 1,
       anon_sym_DOLLAR_LPAREN,
@@ -36319,19 +36355,19 @@ static const uint16_t ts_small_parse_table[] = {
     ACTIONS(853), 2,
       anon_sym_LT_LPAREN,
       anon_sym_GT_LPAREN,
-    ACTIONS(849), 3,
-      sym_bare_word,
-      sym_number,
-      sym_glob_pattern,
+    ACTIONS(857), 3,
+      sym_string,
+      sym_interpolated_string,
+      sym_interpolated_multiline_string,
     STATE(235), 3,
       sym_shell_capture_expression,
       sym_process_substitution_expression,
       sym_var_ref,
-    ACTIONS(857), 4,
-      sym_string,
-      sym_interpolated_string,
-      sym_interpolated_multiline_string,
+    ACTIONS(849), 4,
+      sym_bare_word,
+      sym_number,
       sym_multiline_string,
+      sym_glob_pattern,
   [19613] = 11,
     ACTIONS(826), 1,
       anon_sym_DOLLAR_LPAREN,
@@ -36351,19 +36387,19 @@ static const uint16_t ts_small_parse_table[] = {
     ACTIONS(828), 2,
       anon_sym_LT_LPAREN,
       anon_sym_GT_LPAREN,
-    ACTIONS(824), 3,
-      sym_bare_word,
-      sym_number,
-      sym_glob_pattern,
+    ACTIONS(832), 3,
+      sym_string,
+      sym_interpolated_string,
+      sym_interpolated_multiline_string,
     STATE(216), 3,
       sym_shell_capture_expression,
       sym_process_substitution_expression,
       sym_var_ref,
-    ACTIONS(832), 4,
-      sym_string,
-      sym_interpolated_string,
-      sym_interpolated_multiline_string,
+    ACTIONS(824), 4,
+      sym_bare_word,
+      sym_number,
       sym_multiline_string,
+      sym_glob_pattern,
   [19656] = 7,
     ACTIONS(1326), 1,
       anon_sym_end,

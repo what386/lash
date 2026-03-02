@@ -1,11 +1,53 @@
 ; ============================================================
-; Shebang
+; Punctuation / operators (bash-style baseline)
+; ============================================================
+[
+  "("
+  ")"
+  "["
+  "]"
+] @punctuation.bracket
+
+[
+  ","
+  ":"
+] @punctuation.delimiter
+
+[
+  ">"
+  ">>"
+  "<"
+  "<<"
+  "<<-"
+  "&&"
+  "|"
+  "||"
+  "="
+  "+="
+  "-="
+  "*="
+  "/="
+  "%="
+  "=="
+  "!="
+  "&>"
+  "&>>"
+  "2>"
+  "2>>"
+  "<>"
+  ".."
+  "!"
+  "++"
+  "--"
+  "::"
+  "#"
+] @operator
+
+; ============================================================
+; Shebang / preprocessor
 ; ============================================================
 (shebang) @keyword.directive
 
-; ============================================================
-; Preprocessor directives
-; ============================================================
 (preprocessor_if_directive) @keyword.directive
 (preprocessor_elif_directive) @keyword.directive
 (preprocessor_else_directive) @keyword.directive
@@ -80,39 +122,42 @@
 (continue_statement) @keyword
 
 ; ============================================================
-; Booleans / Numbers / Strings
+; Literals
 ; ============================================================
 (boolean) @boolean
-(number)  @number
+(number) @number
 
-(string) @string
-(interpolated_string) @string.special
-(interpolated_multiline_string) @string.special
-(multiline_string) @string
+[
+  (string)
+  (multiline_string)
+] @string
+
+[
+  (interpolated_string)
+  (interpolated_multiline_string)
+] @string.special
+
 (glob_pattern) @string.special
+(shell_payload) @string.special
 
 ; ============================================================
-; Variables / argv
+; Variables / sigils
 ; ============================================================
-(var_ref "$" @operator)
+(var_ref "$" @punctuation.special)
+(shell_capture_expression "$(" @punctuation.special)
+(process_substitution_expression
+  operator: _ @punctuation.special)
+
 (var_ref name: (identifier) @variable)
-(argv_length_expression "#" @operator)
+
+((var_ref name: (identifier) @constant)
+  (#lua-match? @constant "^[A-Z][A-Z_0-9]*$"))
+
 (argv_index_expression "argv" @variable.builtin)
 (argv_length_expression "argv" @variable.builtin)
 
 ; ============================================================
-; Shell capture / process substitution
-; ============================================================
-(shell_capture_expression "$(" @operator)
-(shell_capture_expression
-  payload: (shell_payload) @string.special)
-(process_substitution_expression
-  operator: _ @operator)
-(process_substitution_expression
-  payload: (shell_payload) @string.special)
-
-; ============================================================
-; Functions / parameters / commands
+; Functions / commands
 ; ============================================================
 (function_declaration
   name: (identifier) @function)
@@ -122,9 +167,21 @@
   name: (identifier) @function.call)
 
 (command_statement
-  name: (identifier) @function.call)
+  name: (identifier) @function.builtin
+  (#any-of? @function.builtin
+    "." ":" "alias" "bg" "bind" "break" "builtin" "caller" "cd" "command" "compgen" "complete"
+    "compopt" "continue" "coproc" "declare" "dirs" "disown" "echo" "enable" "eval" "exec" "exit"
+    "export" "false" "fc" "fg" "getopts" "hash" "help" "history" "jobs" "kill" "local" "mapfile"
+    "popd" "printf" "pushd" "pwd" "read" "readarray" "readonly" "return" "set" "shift" "shopt"
+    "source" "suspend" "test" "time" "times" "trap" "true" "type" "typeset" "ulimit" "umask"
+    "unalias" "unset" "wait"))
+
 (command_statement
-  argument: (bare_word) @string.special)
+  name: (identifier) @function.call)
+
+(command_statement
+  argument: (command_argument
+    (bare_word) @variable.parameter))
 
 ; ============================================================
 ; Declarations / bindings
@@ -155,7 +212,7 @@
 (wildcard_pattern) @constant.builtin
 
 ; ============================================================
-; Operators
+; Expression operator fields
 ; ============================================================
 (assignment operator: _ @operator)
 (update_statement operator: _ @operator)
@@ -163,7 +220,6 @@
 (multiplicative_expression operator: _ @operator)
 (additive_expression operator: _ @operator)
 (comparison_expression operator: _ @operator)
-
 (logical_expression "&&" @operator)
 (logical_expression "||" @operator)
 (range_expression ".." @operator)

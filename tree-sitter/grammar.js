@@ -581,13 +581,21 @@ module.exports = grammar({
 
     interpolated_multiline_string: _ => token(seq(
       "$[[",
-      /[\s\S]*?/,
+      repeat(choice(
+        /[^\]]+/,
+        /\][^\]]/,
+      )),
+      optional(/\]/),
       "]]",
     )),
 
     multiline_string: _ => token(seq(
       "[[",
-      /[\s\S]*?/,
+      repeat(choice(
+        /[^\]]+/,
+        /\][^\]]/,
+      )),
+      optional(/\]/),
       "]]",
     )),
 

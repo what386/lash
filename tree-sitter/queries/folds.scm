@@ -1,0 +1,16 @@
+[
+  (function_declaration)
+  (if_statement)
+  (switch_statement)
+  (case_clause)
+  (for_loop)
+  (select_loop)
+  (while_loop)
+  (until_loop)
+  (subshell_statement)
+  (coproc_statement)
+  (enum_declaration)
+  (multiline_string)
+  (interpolated_multiline_string)
+  (block_comment)
+] @fold
