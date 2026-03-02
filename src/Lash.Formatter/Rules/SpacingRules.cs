@@ -473,7 +473,7 @@ internal static class SpacingRules
             return true;
 
         var threeChar = index + 2 < line.Length ? line.Substring(index, 3) : string.Empty;
-        if (threeChar is "&>>" or "2>>" or "<<<")
+        if (threeChar is "&>>" or "2>>" or "<<-")
         {
             op = threeChar;
             consume = 3;
@@ -481,7 +481,7 @@ internal static class SpacingRules
         }
 
         var twoChar = index + 1 < line.Length ? line.Substring(index, 2) : string.Empty;
-        if (twoChar is ">>" or "2>" or "&>" or "<>" or "::")
+        if (twoChar is ">>" or "2>" or "&>" or "<>" or "::" or "<<")
         {
             op = twoChar;
             consume = 2;

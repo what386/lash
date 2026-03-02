@@ -776,7 +776,6 @@ public sealed class WarningAnalyzer {
     case RedirectExpression redirect:
       AnalyzeExpression(redirect.Left);
       AnalyzeExpression(redirect.Right);
-      WarnSuspiciousHeredocPayload(redirect);
       break;
 
     case UnaryExpression unary:
@@ -894,24 +893,6 @@ public sealed class WarningAnalyzer {
     AddWarning(
         $"Suspicious shell expansion in {context}: '${{...}}' appears to be missing a closing '}}'.",
         line, column, DiagnosticCodes.MalformedShellExpansion);
-  }
-
-  private void WarnSuspiciousHeredocPayload(RedirectExpression redirect) {
-    if (!string.Equals(redirect.Operator, "<<", StringComparison.Ordinal))
-      return;
-
-    if (redirect.Right is LiteralExpression
-        {
-          IsInterpolated: false,
-          LiteralType: PrimitiveType {
-            PrimitiveKind: PrimitiveType.Kind.String
-          }
-        })
-      return;
-
-    AddWarning(
-        "Heredoc payload should be a non-interpolated string literal.",
-        redirect.Line, redirect.Column, DiagnosticCodes.SuspiciousHeredocPayload);
   }
 
   private static bool HasUnclosedBracedExpansion(string script) {
@@ -1528,8 +1509,6 @@ public sealed class WarningAnalyzer {
           "Simplify or remove the constant branch condition.",
       DiagnosticCodes.MalformedShellExpansion =>
           "Close braced expansions like '${name}'.",
-      DiagnosticCodes.SuspiciousHeredocPayload =>
-          "Use a non-interpolated multiline literal: << [[...]].",
       DiagnosticCodes.UnusedCaptureResult =>
           "Remove the capture or prefix the variable with '_' to mark it intentionally unused.",
       DiagnosticCodes.SwitchWithoutMatchingCase =>

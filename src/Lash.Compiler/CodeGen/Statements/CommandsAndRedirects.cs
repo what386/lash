@@ -74,9 +74,9 @@ internal sealed partial class StatementGenerator
                 return;
 
             case RedirectExpression redirectExpression:
-                if (string.Equals(redirectExpression.Operator, "<<", StringComparison.Ordinal))
+                if (IsStdinRedirectOperator(redirectExpression.Operator))
                 {
-                    GenerateHeredocStatement(redirectExpression);
+                    GenerateStdinRedirectStatement(redirectExpression);
                 }
                 else
                 {
@@ -239,15 +239,46 @@ internal sealed partial class StatementGenerator
         };
     }
 
-    private void GenerateHeredocStatement(RedirectExpression redirect)
+    private void GenerateStdinRedirectStatement(RedirectExpression redirect)
     {
-        if (!TryGetHeredocPayload(redirect.Right, out var payload))
+        var stripTabs = string.Equals(redirect.Operator, "<<-", StringComparison.Ordinal);
+        if (TryGetMultilineLiteralPayload(
+                redirect.Right,
+                out var payload,
+                out var interpolated))
         {
-            owner.EmitComment("Unsupported heredoc payload; expected non-interpolated string literal.");
-            owner.ReportUnsupported("heredoc payload");
+            if (interpolated)
+                payload = RenderInterpolatedHeredocPayload(payload);
+
+            GenerateHeredocStatement(redirect, payload, interpolated, stripTabs);
             return;
         }
 
+        if (stripTabs)
+        {
+            owner.EmitComment("Unsupported stdin payload; '<<-' requires a multiline string literal.");
+            owner.ReportUnsupported("stdin payload for <<-");
+            return;
+        }
+
+        var normalized = new RedirectExpression
+        {
+            Line = redirect.Line,
+            Column = redirect.Column,
+            Left = redirect.Left,
+            Operator = "<<<",
+            Right = redirect.Right,
+            Type = redirect.Type
+        };
+        owner.Emit(GenerateRedirectStatement(normalized));
+    }
+
+    private void GenerateHeredocStatement(
+        RedirectExpression redirect,
+        string payload,
+        bool interpolated,
+        bool stripTabs)
+    {
         var command = redirect.Left switch
         {
             FunctionCallExpression call => GenerateFunctionCallStatement(call),
@@ -255,8 +286,10 @@ internal sealed partial class StatementGenerator
             _ => $"echo {GenerateSingleShellArg(string.Empty, redirect.Left, -1)}"
         };
 
-        var delimiter = ChooseHeredocDelimiter(payload);
-        owner.Emit($"{command} <<'{delimiter}'");
+        var delimiter = ChooseHeredocDelimiter(payload, stripTabs);
+        var heredocOp = stripTabs ? "<<-" : "<<";
+        var delimiterToken = interpolated ? delimiter : $"'{delimiter}'";
+        owner.Emit($"{command} {heredocOp}{delimiterToken}");
         owner.EmitLine();
 
         var lines = payload.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n').Split('\n');
@@ -269,34 +302,159 @@ internal sealed partial class StatementGenerator
         owner.Emit(delimiter);
     }
 
-    private static bool TryGetHeredocPayload(Expression expression, out string payload)
+    private static bool TryGetMultilineLiteralPayload(
+        Expression expression,
+        out string payload,
+        out bool interpolated)
     {
         payload = string.Empty;
+        interpolated = false;
         if (expression is not LiteralExpression literal ||
             literal.LiteralType is not PrimitiveType { PrimitiveKind: PrimitiveType.Kind.String } ||
-            literal.IsInterpolated)
+            !literal.IsMultiline)
         {
             return false;
         }
 
         payload = literal.Value?.ToString() ?? string.Empty;
+        interpolated = literal.IsInterpolated;
         return true;
     }
 
-    private static string ChooseHeredocDelimiter(string payload)
+    private static string ChooseHeredocDelimiter(string payload, bool stripTabs)
     {
         var normalized = payload.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n');
         var lines = normalized.Split('\n');
-        var delimiter = "LASH_HEREDOC";
+        var delimiter = "EOF";
         var suffix = 0;
 
-        while (lines.Any(line => string.Equals(line, delimiter, StringComparison.Ordinal)))
+        while (ContainsDelimiterLine(lines, delimiter, stripTabs))
         {
+            delimiter = $"EOF_{suffix}";
             suffix++;
-            delimiter = $"LASH_HEREDOC_{suffix}";
         }
 
         return delimiter;
+    }
+
+    private static bool ContainsDelimiterLine(IEnumerable<string> lines, string delimiter, bool stripTabs)
+    {
+        foreach (var line in lines)
+        {
+            if (string.Equals(line, delimiter, StringComparison.Ordinal))
+                return true;
+
+            if (stripTabs && string.Equals(line.TrimStart('\t'), delimiter, StringComparison.Ordinal))
+                return true;
+        }
+
+        return false;
+    }
+
+    private static bool IsStdinRedirectOperator(string op)
+    {
+        return op is "<<" or "<<-";
+    }
+
+    private static string RenderInterpolatedHeredocPayload(string template)
+    {
+        if (!template.Contains('{', StringComparison.Ordinal))
+            return template;
+
+        var builder = new System.Text.StringBuilder(template.Length + 16);
+        int cursor = 0;
+        while (cursor < template.Length)
+        {
+            var openBrace = FindNextUnescaped(template, '{', cursor);
+            if (openBrace < 0)
+            {
+                builder.Append(template[cursor..]);
+                break;
+            }
+
+            builder.Append(template[cursor..openBrace]);
+            var closeBrace = FindNextUnescaped(template, '}', openBrace + 1);
+            if (closeBrace < 0)
+            {
+                builder.Append(template[openBrace..]);
+                break;
+            }
+
+            var placeholder = template[(openBrace + 1)..closeBrace].Trim();
+            if (TryGetIdentifierPath(placeholder, out var path))
+            {
+                builder.Append("${");
+                builder.Append(path);
+                builder.Append('}');
+            }
+            else
+            {
+                builder.Append(template[openBrace..(closeBrace + 1)]);
+            }
+
+            cursor = closeBrace + 1;
+        }
+
+        return builder.ToString();
+    }
+
+    private static int FindNextUnescaped(string text, char needle, int start)
+    {
+        for (int i = start; i < text.Length; i++)
+        {
+            if (text[i] == needle && (i == 0 || text[i - 1] != '\\'))
+                return i;
+        }
+
+        return -1;
+    }
+
+    private static bool TryGetIdentifierPath(string input, out string path)
+    {
+        path = string.Empty;
+        if (string.IsNullOrWhiteSpace(input))
+            return false;
+
+        var parts = input.Split(
+            '.',
+            StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (parts.Length == 0)
+            return false;
+
+        foreach (var part in parts)
+        {
+            if (!IsIdentifier(part))
+                return false;
+        }
+
+        path = string.Join("_", parts);
+        return true;
+    }
+
+    private static bool IsIdentifier(string value)
+    {
+        if (string.IsNullOrEmpty(value))
+            return false;
+        if (!IsIdentifierStart(value[0]))
+            return false;
+
+        for (int i = 1; i < value.Length; i++)
+        {
+            if (!IsIdentifierPart(value[i]))
+                return false;
+        }
+
+        return true;
+    }
+
+    private static bool IsIdentifierStart(char c)
+    {
+        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
+    }
+
+    private static bool IsIdentifierPart(char c)
+    {
+        return IsIdentifierStart(c) || (c >= '0' && c <= '9');
     }
 
     private static bool IsFdDupOperator(string op)

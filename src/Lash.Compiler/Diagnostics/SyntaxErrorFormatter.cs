@@ -16,6 +16,11 @@ internal static class SyntaxErrorFormatter {
     if (string.Equals(offendingText, "<EOF>", StringComparison.Ordinal))
       return FormatUnexpectedEndOfFile(rawMessage, unclosedBlockHint);
 
+    if (string.Equals(offendingText, "<<<", StringComparison.Ordinal))
+      return DiagnosticMessage.WithTip(
+          "Operator '<<<' is no longer supported.",
+          "Use '<<' for stdin string redirection.");
+
     if (IsPreprocessorLike(offendingText) ||
         rawMessage.Contains("'#", StringComparison.Ordinal))
       return DiagnosticMessage.WithTip(

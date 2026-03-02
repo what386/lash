@@ -184,7 +184,7 @@ expression
     : primaryExpression                                          # PrimaryExpr
     | expression '|' expression                                  # PipeExpr
     | expression FD_DUP                                          # FdDupExpr
-    | expression (APPEND | ERR_APPEND | BOTH_APPEND | HERE_STRING | HEREDOC | ERR_REDIRECT | BOTH_REDIRECT | READ_WRITE_REDIRECT) expression  # RedirectExpr
+    | expression (APPEND | ERR_APPEND | BOTH_APPEND | STDIN_REDIRECT_TABSTRIP | STDIN_REDIRECT | ERR_REDIRECT | BOTH_REDIRECT | READ_WRITE_REDIRECT) expression  # RedirectExpr
     | expression '[' expression ']'                              # IndexAccessExpr
     | ('!' | '-' | '+' | '#') expression                         # UnaryExpr
     | expression ('*' | '/' | '%') expression                    # MultiplicativeExpr
@@ -281,12 +281,16 @@ ERR_APPEND
     : '2>>'
     ;
 
-HERE_STRING
-    : '<<<'
+STDIN_REDIRECT_TABSTRIP
+    : '<<-'
     ;
 
-HEREDOC
+STDIN_REDIRECT
     : '<<'
+    ;
+
+DEPRECATED_HERE_STRING
+    : '<<<'
     ;
 
 BOTH_REDIRECT

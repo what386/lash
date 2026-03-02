@@ -196,12 +196,12 @@ public sealed class CodegenFeasibilityAnalyzer
                 if (redirect.Right is not NullLiteral)
                     ValidateValueExpression(redirect.Right, ValueContext.GeneralValue);
 
-                if (string.Equals(redirect.Operator, "<<", StringComparison.Ordinal) &&
-                    !IsSupportedHeredocPayload(redirect.Right))
+                if (string.Equals(redirect.Operator, "<<-", StringComparison.Ordinal) &&
+                    !IsMultilineStringLiteral(redirect.Right))
                 {
                     Report(
                         redirect.Right,
-                        "Heredoc redirection ('<<') requires a non-interpolated string literal payload.",
+                        "Tab-stripping stdin redirection ('<<-') requires a multiline string literal payload.",
                         DiagnosticCodes.UnsupportedStatementForCodegen);
                 }
 
@@ -442,7 +442,7 @@ public sealed class CodegenFeasibilityAnalyzer
         diagnostics.AddError(DiagnosticMessage.WithTip(message, tip), node.Line, node.Column, code);
     }
 
-    private static bool IsSupportedHeredocPayload(Expression expression)
+    private static bool IsMultilineStringLiteral(Expression expression)
     {
         if (expression is not LiteralExpression literal ||
             literal.LiteralType is not PrimitiveType { PrimitiveKind: PrimitiveType.Kind.String })
@@ -450,7 +450,7 @@ public sealed class CodegenFeasibilityAnalyzer
             return false;
         }
 
-        return !literal.IsInterpolated;
+        return literal.IsMultiline;
     }
 
     private enum ValueContext
