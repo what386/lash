@@ -2,8 +2,6 @@
 
 set -euo pipefail
 
-cd ../..
-
 const INPUT_ROOT = "./target/release"
 const OUTPUT_DIR = "./dist"
 
