@@ -188,6 +188,10 @@
       "required": true,
       "types": [
         {
+          "type": "interpolated_multiline_string",
+          "named": true
+        },
+        {
           "type": "interpolated_string",
           "named": true
         },
@@ -1092,6 +1096,10 @@
           "named": true
         },
         {
+          "type": "interpolated_multiline_string",
+          "named": true
+        },
+        {
           "type": "interpolated_string",
           "named": true
         },
@@ -1243,7 +1251,7 @@
             "named": false
           },
           {
-            "type": "<<<",
+            "type": "<<-",
             "named": false
           },
           {
@@ -1946,7 +1954,7 @@
     "named": false
   },
   {
-    "type": "<<<",
+    "type": "<<-",
     "named": false
   },
   {
@@ -2093,6 +2101,10 @@
   {
     "type": "in",
     "named": false
+  },
+  {
+    "type": "interpolated_multiline_string",
+    "named": true
   },
   {
     "type": "interpolated_string",

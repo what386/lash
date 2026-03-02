@@ -1468,6 +1468,10 @@
         },
         {
           "type": "SYMBOL",
+          "name": "interpolated_multiline_string"
+        },
+        {
+          "type": "SYMBOL",
           "name": "multiline_string"
         },
         {
@@ -1656,7 +1660,7 @@
                 },
                 {
                   "type": "STRING",
-                  "value": "<<<"
+                  "value": "<<-"
                 },
                 {
                   "type": "STRING",
@@ -2031,6 +2035,10 @@
         {
           "type": "SYMBOL",
           "name": "interpolated_string"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "interpolated_multiline_string"
         },
         {
           "type": "SYMBOL",
@@ -2436,6 +2444,26 @@
           {
             "type": "STRING",
             "value": "\""
+          }
+        ]
+      }
+    },
+    "interpolated_multiline_string": {
+      "type": "TOKEN",
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "STRING",
+            "value": "$[["
+          },
+          {
+            "type": "PATTERN",
+            "value": "(.|\\n|\\r)*?"
+          },
+          {
+            "type": "STRING",
+            "value": "]]"
           }
         ]
       }
