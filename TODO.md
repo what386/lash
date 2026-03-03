@@ -5,9 +5,6 @@
 
 ## Tasks
 
-- [ ] Add non-mutating let warning with const suggestion #feature #compiler #diagnostics
-      @created 2026-03-03 01:44
-
 
 ## Completed
 
@@ -52,6 +49,11 @@
       @completed_version 0.11.2
 
 - [x] Add shebang diagnostics for missing or malformed shebangs #feature #compiler #diagnostics
+      @created 2026-03-03 01:44
+      @completed 2026-03-03 01:44
+      @completed_version 0.11.2
+
+- [x] Add non-mutating let warning with const suggestion #feature #compiler #diagnostics
       @created 2026-03-03 01:44
       @completed 2026-03-03 01:44
       @completed_version 0.11.2
