@@ -5,6 +5,9 @@
 
 ## Tasks
 
+- [ ] Add fuzzy diagnostic suggestions for mistyped shell command options and similar typos #feature #compiler #diagnostics
+      @created 2026-03-03 01:44
+
 
 ## Completed
 
