@@ -348,5 +348,24 @@
       "patch": 1,
       "is_prerelease": false
     }
+  },
+  {
+    "change": {
+      "description": "Split compile-time const from runtime readonly declarations",
+      "priority": "High",
+      "tags": [
+        "feature",
+        "language",
+        "compiler"
+      ],
+      "commit": null,
+      "completed_at": "2026-03-03T01:44:28.738240849Z"
+    },
+    "version": {
+      "major": 0,
+      "minor": 11,
+      "patch": 2,
+      "is_prerelease": false
+    }
   }
 ]
