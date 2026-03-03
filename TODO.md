@@ -5,6 +5,9 @@
 
 ## Tasks
 
+- [ ] Add arithmetic update and assignment operators (++, --, +=, -=, *=, /=, %=) (high) #feature #language #compiler
+      @created 2026-03-03 01:44
+
 
 ## Completed
 
