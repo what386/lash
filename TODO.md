@@ -5,6 +5,9 @@
 
 ## Tasks
 
+- [ ] Split compile-time const from runtime readonly declarations (high) #feature #language #compiler
+      @created 2026-03-03 01:44
+
 
 ## Completed
 
