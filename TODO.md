@@ -5,9 +5,6 @@
 
 ## Tasks
 
-- [ ] Add interpolated multiline strings with compiler and parser support #feature #language #compiler
-      @created 2026-03-03 01:44
-
 
 ## Completed
 
@@ -42,6 +39,11 @@
       @completed_version 0.11.2
 
 - [x] Add arithmetic update and assignment operators (++, --, +=, -=, *=, /=, %=) (high) #feature #language #compiler
+      @created 2026-03-03 01:44
+      @completed 2026-03-03 01:44
+      @completed_version 0.11.2
+
+- [x] Add interpolated multiline strings with compiler and parser support #feature #language #compiler
       @created 2026-03-03 01:44
       @completed 2026-03-03 01:44
       @completed_version 0.11.2

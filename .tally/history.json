@@ -424,5 +424,24 @@
       "patch": 2,
       "is_prerelease": false
     }
+  },
+  {
+    "change": {
+      "description": "Add interpolated multiline strings with compiler and parser support",
+      "priority": "Medium",
+      "tags": [
+        "feature",
+        "language",
+        "compiler"
+      ],
+      "commit": null,
+      "completed_at": "2026-03-03T01:44:28.915187164Z"
+    },
+    "version": {
+      "major": 0,
+      "minor": 11,
+      "patch": 2,
+      "is_prerelease": false
+    }
   }
 ]
