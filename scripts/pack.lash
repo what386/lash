@@ -20,5 +20,5 @@ end
 if $packed == 0
     echo "No directories found under ./target/release"
 else
-    echo $"Packed {$packed} directories."
+    echo $"Packed {packed} directories."
 end
