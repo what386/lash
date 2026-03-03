@@ -291,5 +291,24 @@
       "patch": 0,
       "is_prerelease": false
     }
+  },
+  {
+    "change": {
+      "description": "Improve warning name resolution to reduce false unused-symbol diagnostics",
+      "priority": "Medium",
+      "tags": [
+        "bug",
+        "compiler",
+        "diagnostics"
+      ],
+      "commit": null,
+      "completed_at": "2026-03-03T01:44:28.556153708Z"
+    },
+    "version": {
+      "major": 0,
+      "minor": 10,
+      "patch": 1,
+      "is_prerelease": false
+    }
   }
 ]

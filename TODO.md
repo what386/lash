@@ -5,6 +5,11 @@
 
 ## Tasks
 
-- [ ] Improve warning name resolution to reduce false unused-symbol diagnostics #bug #compiler #diagnostics
+
+## Completed
+
+- [x] Improve warning name resolution to reduce false unused-symbol diagnostics #bug #compiler #diagnostics
       @created 2026-03-03 01:44
+      @completed 2026-03-03 01:44
+      @completed_version 0.10.1
 
