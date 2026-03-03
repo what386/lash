@@ -310,5 +310,24 @@
       "patch": 1,
       "is_prerelease": false
     }
+  },
+  {
+    "change": {
+      "description": "Add fuzzy diagnostic suggestions for mistyped shell command options and similar typos",
+      "priority": "Medium",
+      "tags": [
+        "feature",
+        "compiler",
+        "diagnostics"
+      ],
+      "commit": null,
+      "completed_at": "2026-03-03T01:44:28.616886879Z"
+    },
+    "version": {
+      "major": 0,
+      "minor": 10,
+      "patch": 1,
+      "is_prerelease": false
+    }
   }
 ]
