@@ -3,7 +3,10 @@
     "change": {
       "description": "Add Lash LSP server with diagnostics, hover, and go-to-definition",
       "priority": "Medium",
-      "tags": ["feature", "lsp"],
+      "tags": [
+        "feature",
+        "lsp"
+      ],
       "commit": null,
       "completed_at": "2026-02-27T03:07:36.602385163Z"
     },
@@ -18,7 +21,11 @@
     "change": {
       "description": "Refactor compiler analysis into a reusable API for editor tooling",
       "priority": "Medium",
-      "tags": ["feature", "compiler", "lsp"],
+      "tags": [
+        "feature",
+        "compiler",
+        "lsp"
+      ],
       "commit": null,
       "completed_at": "2026-02-27T03:07:36.607321006Z"
     },
@@ -33,7 +40,10 @@
     "change": {
       "description": "Add Lash LSP completion with keywords, symbols, directives, and core snippets",
       "priority": "Medium",
-      "tags": ["feature", "lsp"],
+      "tags": [
+        "feature",
+        "lsp"
+      ],
       "commit": null,
       "completed_at": "2026-02-27T20:17:23.982489772Z"
     },
@@ -48,7 +58,10 @@
     "change": {
       "description": "Add safe rename and prepare-rename support to Lash LSP",
       "priority": "Medium",
-      "tags": ["feature", "lsp"],
+      "tags": [
+        "feature",
+        "lsp"
+      ],
       "commit": null,
       "completed_at": "2026-02-27T20:17:24.025029680Z"
     },
@@ -63,7 +76,10 @@
     "change": {
       "description": "Improve Lash LSP hover docs for language tokens and symbols",
       "priority": "Medium",
-      "tags": ["feature", "lsp"],
+      "tags": [
+        "feature",
+        "lsp"
+      ],
       "commit": null,
       "completed_at": "2026-02-27T20:17:24.080358597Z"
     },
@@ -78,7 +94,10 @@
     "change": {
       "description": "Harden Lash LSP local symbol resolution and add LSP test suite",
       "priority": "Medium",
-      "tags": ["feature", "lsp"],
+      "tags": [
+        "feature",
+        "lsp"
+      ],
       "commit": null,
       "completed_at": "2026-02-27T20:17:24.123437834Z"
     },
@@ -93,7 +112,10 @@
     "change": {
       "description": "Add heredoc redirection and until loops to Lash with direct Bash lowering",
       "priority": "Medium",
-      "tags": ["feature", "language"],
+      "tags": [
+        "feature",
+        "language"
+      ],
       "commit": null,
       "completed_at": "2026-02-28T19:15:11.163890809Z"
     },
@@ -108,7 +130,10 @@
     "change": {
       "description": "Make into bindings explicit: 'into ' assigns existing vars, 'into let/const name' creates vars",
       "priority": "High",
-      "tags": ["feature", "language"],
+      "tags": [
+        "feature",
+        "language"
+      ],
       "commit": null,
       "completed_at": "2026-02-28T23:28:04.203288347Z"
     },
@@ -123,7 +148,10 @@
     "change": {
       "description": "Use captured test expressions for file/dir checks in scripts/build/build.lash",
       "priority": "Medium",
-      "tags": ["bug", "tooling"],
+      "tags": [
+        "bug",
+        "tooling"
+      ],
       "commit": null,
       "completed_at": "2026-02-28T23:28:14.161486262Z"
     },
@@ -138,7 +166,11 @@
     "change": {
       "description": "Add shell-command registry for set/export/shopt/alias/source with AST-backed validation diagnostics",
       "priority": "High",
-      "tags": ["feature", "language", "compiler"],
+      "tags": [
+        "feature",
+        "language",
+        "compiler"
+      ],
       "commit": null,
       "completed_at": "2026-03-01T00:32:39.808288763Z"
     },
@@ -153,9 +185,105 @@
     "change": {
       "description": "Rename registered-command terminology to shell-command across AST, frontend registry, and tests",
       "priority": "Medium",
-      "tags": ["feature", "compiler"],
+      "tags": [
+        "feature",
+        "compiler"
+      ],
       "commit": null,
       "completed_at": "2026-03-01T00:32:39.818966329Z"
+    },
+    "version": {
+      "major": 0,
+      "minor": 9,
+      "patch": 0,
+      "is_prerelease": false
+    }
+  },
+  {
+    "change": {
+      "description": "Add Bash bootstrap build script (scripts/build/build.sh) mirroring Lash build flags and output layout",
+      "priority": "Medium",
+      "tags": [
+        "feature",
+        "tooling"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-28T23:28:00Z"
+    },
+    "version": {
+      "major": 0,
+      "minor": 8,
+      "patch": 0,
+      "is_prerelease": false
+    }
+  },
+  {
+    "change": {
+      "description": "Add Bash bootstrap pack script (scripts/build/pack.sh) to archive release bundles into dist/*.tar.gz",
+      "priority": "Medium",
+      "tags": [
+        "feature",
+        "tooling"
+      ],
+      "commit": null,
+      "completed_at": "2026-02-28T23:28:00Z"
+    },
+    "version": {
+      "major": 0,
+      "minor": 8,
+      "patch": 0,
+      "is_prerelease": false
+    }
+  },
+  {
+    "change": {
+      "description": "Add @allow directive for next-statement warning suppression (Wxxx only)",
+      "priority": "High",
+      "tags": [
+        "feature",
+        "language",
+        "compiler"
+      ],
+      "commit": null,
+      "completed_at": "2026-03-01T01:13:00Z"
+    },
+    "version": {
+      "major": 0,
+      "minor": 9,
+      "patch": 0,
+      "is_prerelease": false
+    }
+  },
+  {
+    "change": {
+      "description": "Emit unused @allow warning (W509) when no targeted warning is matched",
+      "priority": "Medium",
+      "tags": [
+        "feature",
+        "compiler",
+        "diagnostics"
+      ],
+      "commit": null,
+      "completed_at": "2026-03-01T01:13:00Z"
+    },
+    "version": {
+      "major": 0,
+      "minor": 9,
+      "patch": 0,
+      "is_prerelease": false
+    }
+  },
+  {
+    "change": {
+      "description": "Skip internal @allow compiler marker commands during Bash codegen",
+      "priority": "Medium",
+      "tags": [
+        "bug",
+        "compiler",
+        "codegen"
+      ],
+      "commit": null,
+      "completed_at": "2026-03-01T01:13:00Z"
     },
     "version": {
       "major": 0,
