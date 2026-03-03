@@ -5,9 +5,6 @@
 
 ## Tasks
 
-- [ ] Redesign here-string syntax to use << and <<- with automatic heredoc lowering for multiline input (high) #feature #language #compiler
-      @created 2026-03-03 01:44
-
 
 ## Completed
 
@@ -60,4 +57,9 @@
       @created 2026-03-03 01:44
       @completed 2026-03-03 01:44
       @completed_version 0.11.2
+
+- [x] Redesign here-string syntax to use << and <<- with automatic heredoc lowering for multiline input (high) #feature #language #compiler
+      @created 2026-03-03 01:44
+      @completed 2026-03-03 01:44
+      @completed_version 0.12.0
 
