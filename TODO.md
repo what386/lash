@@ -5,6 +5,9 @@
 
 ## Tasks
 
+- [ ] Add non-mutating let warning with const suggestion #feature #compiler #diagnostics
+      @created 2026-03-03 01:44
+
 
 ## Completed
 
