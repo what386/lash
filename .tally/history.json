@@ -329,5 +329,24 @@
       "patch": 1,
       "is_prerelease": false
     }
+  },
+  {
+    "change": {
+      "description": "Add discard identifier '_' support for bindings and loop variables",
+      "priority": "Medium",
+      "tags": [
+        "feature",
+        "language",
+        "compiler"
+      ],
+      "commit": null,
+      "completed_at": "2026-03-03T01:44:28.677549081Z"
+    },
+    "version": {
+      "major": 0,
+      "minor": 10,
+      "patch": 1,
+      "is_prerelease": false
+    }
   }
 ]
