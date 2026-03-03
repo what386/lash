@@ -5,6 +5,9 @@
 
 ## Tasks
 
+- [ ] Add process substitution operators <(...) and >(...) with direct Bash lowering (high) #feature #language #compiler
+      @created 2026-03-03 01:44
+
 
 ## Completed
 
