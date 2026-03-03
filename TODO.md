@@ -5,6 +5,9 @@
 
 ## Tasks
 
+- [ ] Add wildcard switch case '_' pattern support #feature #language #compiler
+      @created 2026-03-03 01:44
+
 
 ## Completed
 
