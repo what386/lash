@@ -367,5 +367,24 @@
       "patch": 2,
       "is_prerelease": false
     }
+  },
+  {
+    "change": {
+      "description": "Add process substitution operators <(...) and >(...) with direct Bash lowering",
+      "priority": "High",
+      "tags": [
+        "feature",
+        "language",
+        "compiler"
+      ],
+      "commit": null,
+      "completed_at": "2026-03-03T01:44:28.795396568Z"
+    },
+    "version": {
+      "major": 0,
+      "minor": 11,
+      "patch": 2,
+      "is_prerelease": false
+    }
   }
 ]

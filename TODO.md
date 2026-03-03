@@ -5,9 +5,6 @@
 
 ## Tasks
 
-- [ ] Add process substitution operators <(...) and >(...) with direct Bash lowering (high) #feature #language #compiler
-      @created 2026-03-03 01:44
-
 
 ## Completed
 
@@ -27,6 +24,11 @@
       @completed_version 0.10.1
 
 - [x] Split compile-time const from runtime readonly declarations (high) #feature #language #compiler
+      @created 2026-03-03 01:44
+      @completed 2026-03-03 01:44
+      @completed_version 0.11.2
+
+- [x] Add process substitution operators <(...) and >(...) with direct Bash lowering (high) #feature #language #compiler
       @created 2026-03-03 01:44
       @completed 2026-03-03 01:44
       @completed_version 0.11.2
