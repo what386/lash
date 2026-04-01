@@ -35,8 +35,14 @@
     (identifier) @local.definition.var))
 
 ; References
-(var_ref
-  name: (identifier) @local.reference)
+(primary_expression
+  (identifier) @local.reference)
+
+(assignment
+  target: (identifier) @local.reference)
+
+(update_statement
+  target: (identifier) @local.reference)
 
 (function_call
   name: (identifier) @local.reference)

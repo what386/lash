@@ -88,8 +88,8 @@
 "fn"       @keyword.function
 "return"   @keyword.return
 "end"      @keyword
+"var"      @keyword
 "let"      @keyword
-"const"    @keyword
 "readonly" @keyword
 "global"   @keyword
 
@@ -153,6 +153,13 @@
 ((var_ref name: (identifier) @constant)
   (#lua-match? @constant "^[A-Z][A-Z_0-9]*$"))
 
+(primary_expression
+  (identifier) @variable)
+
+((primary_expression
+   (identifier) @constant)
+  (#lua-match? @constant "^[A-Z][A-Z_0-9]*$"))
+
 (argv_index_expression "argv" @variable.builtin)
 (argv_length_expression "argv" @variable.builtin)
 
@@ -196,9 +203,16 @@
   variable: (binding_name) @variable)
 (into_binding
   name: (binding_name) @variable)
-(into_binding
-  target: (var_ref
-    name: (identifier) @variable))
+
+(assignment
+  target: (identifier) @variable)
+
+((assignment
+   target: (identifier) @constant)
+  (#lua-match? @constant "^[A-Z][A-Z_0-9]*$"))
+
+(update_statement
+  target: (identifier) @variable)
 
 ; ============================================================
 ; Enums

@@ -39,7 +39,6 @@ Lash is a lua-like language that transpiles directly to Bash with minimal runtim
 - Repeated imports are allowed; each `@import` pastes the target file again.
 - Import recursion/cycles are currently not detected by the preprocessor.
 - `@import <path> into <name>` imports file text into a variable by emitting an assignment to a multiline string literal.
-- `@import <path> into [let|const] <name>` controls the create-kind when the target does not already exist.
 - `@import` (both forms) is only valid at file/preprocessor scope, not inside runtime Lash blocks (`if/fn/for/while/until/switch/enum/subshell`).
 - `@raw` copies enclosed lines literally into generated Bash, and directives inside `@raw` are not evaluated.
 - Directives are line-based: they must begin a logical line (indentation allowed).
@@ -48,10 +47,10 @@ Lash is a lua-like language that transpiles directly to Bash with minimal runtim
 ### Top-level statements
 
 - Variable declaration:
+- `var name = expr`
   - `let name = expr`
-  - `const name = expr`
+  - `global var name = expr`
   - `global let name = expr`
-  - `global const name = expr`
 - Assignment:
   - `name = expr`
   - `name += expr` (array/list concatenation)
@@ -72,8 +71,8 @@ Lash is a lua-like language that transpiles directly to Bash with minimal runtim
   - `continue`
   - `return [expr]`
   - `shift [n]` (mutates current `argv` frame)
-  - `subshell [into [let|const] name] ... end [&]`
-  - `wait [expr|jobs] [into [let|const] name]`
+  - `subshell [into name] ... end [&]`
+  - `wait [expr|jobs] [into name]`
 - Shell passthrough statement:
   - `sh $"...{var}..."` (emit the rendered command directly into generated bash)
 - Command statement:
@@ -91,7 +90,8 @@ Lash is a lua-like language that transpiles directly to Bash with minimal runtim
     - interpolated: `$"hello {name}"`
     - interpolated multiline: `$[[hello {name}\nmore]]`
     - multiline/raw: `[[...]]`
-- Variable reference: `$name` — the `$` sigil is exclusively for referencing variables
+- Variable reference: `name`
+- `$` is reserved for expansion-oriented syntax such as interpolated strings, shell capture, process substitution, and shell-style command expansion
 - Built-in args:
   - `argv[index]` (0-based)
   - `#argv`
@@ -121,7 +121,7 @@ Lash is a lua-like language that transpiles directly to Bash with minimal runtim
 ### Semantic rules
 
 - Variables must be declared before use.
-- `const` variables cannot be reassigned.
+- `let` variables cannot be reassigned.
 - Function arity is checked, including required vs default parameters.
 - `break` and `continue` are valid only inside `for`/`while` loops.
 - Enum accesses are validated (`EnumName::Member` must exist).

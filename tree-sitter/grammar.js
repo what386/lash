@@ -145,7 +145,7 @@ module.exports = grammar({
     // -------------------------------------------------------------------------
     variable_declaration: $ => seq(
       optional("global"),
-      field("kind", choice("let", "const")),
+      field("kind", choice("var", "let")),
       field("name", $.binding_name),
       optional(seq("=", field("value", $.expression))),
     ),
@@ -163,14 +163,14 @@ module.exports = grammar({
     // -------------------------------------------------------------------------
     assignment: $ => seq(
       optional("global"),
-      field("target", choice($.var_ref, $.index_access)),
+      field("target", choice($.identifier, $.index_access)),
       field("operator", choice("=", "+=", "-=", "*=", "/=", "%=")),
       field("value", $.expression),
     ),
 
     update_statement: $ => seq(
       optional("global"),
-      field("target", $.var_ref),
+      field("target", $.identifier),
       field("operator", choice("++", "--")),
     ),
 
@@ -302,8 +302,7 @@ module.exports = grammar({
     )),
 
     into_binding: $ => choice(
-      seq("into", field("target", $.var_ref)),
-      seq("into", field("mode", choice("let", "const")), field("name", $.binding_name)),
+      seq("into", field("name", $.binding_name)),
     ),
 
     // -------------------------------------------------------------------------
@@ -459,7 +458,7 @@ module.exports = grammar({
       $.shell_capture_expression,
       $.process_substitution_expression,
       $.argv_expression,
-      $.var_ref,
+      $.identifier,
       $.boolean,
       $.number,
       $.string,
@@ -507,7 +506,7 @@ module.exports = grammar({
 
     argv_length_expression: _ => seq("#", "argv"),
 
-    // $name — variable reference ($ sigil is exclusive)
+    // $name — shell-style variable expansion in command contexts
     var_ref: $ => seq("$", field("name", $.identifier)),
 
     array_literal: $ => seq(

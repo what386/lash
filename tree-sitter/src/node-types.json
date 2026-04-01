@@ -148,11 +148,11 @@
         "required": true,
         "types": [
           {
-            "type": "index_access",
+            "type": "identifier",
             "named": true
           },
           {
-            "type": "var_ref",
+            "type": "index_access",
             "named": true
           }
         ]
@@ -792,36 +792,12 @@
     "type": "into_binding",
     "named": true,
     "fields": {
-      "mode": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "const",
-            "named": false
-          },
-          {
-            "type": "let",
-            "named": false
-          }
-        ]
-      },
       "name": {
         "multiple": false,
-        "required": false,
+        "required": true,
         "types": [
           {
             "type": "binding_name",
-            "named": true
-          }
-        ]
-      },
-      "target": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "var_ref",
             "named": true
           }
         ]
@@ -1171,6 +1147,10 @@
           "named": true
         },
         {
+          "type": "identifier",
+          "named": true
+        },
+        {
           "type": "interpolated_multiline_string",
           "named": true
         },
@@ -1196,10 +1176,6 @@
         },
         {
           "type": "string",
-          "named": true
-        },
-        {
-          "type": "var_ref",
           "named": true
         }
       ]
@@ -1803,7 +1779,7 @@
         "required": true,
         "types": [
           {
-            "type": "var_ref",
+            "type": "identifier",
             "named": true
           }
         ]
@@ -1835,11 +1811,11 @@
         "required": true,
         "types": [
           {
-            "type": "const",
+            "type": "let",
             "named": false
           },
           {
-            "type": "let",
+            "type": "var",
             "named": false
           }
         ]
@@ -2153,10 +2129,6 @@
     "named": false
   },
   {
-    "type": "const",
-    "named": false
-  },
-  {
     "type": "continue_statement",
     "named": true
   },
@@ -2327,6 +2299,10 @@
   },
   {
     "type": "untrap",
+    "named": false
+  },
+  {
+    "type": "var",
     "named": false
   },
   {

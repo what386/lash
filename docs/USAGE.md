@@ -20,36 +20,36 @@ lash run hello.lash
 ## 2. Variables and Constants
 
 ```lash
-let name = "Lash"
-const version = "0.1"
+var name = "Lash"
+let version = "0.1"
 readonly channel = "stable"
 
 echo $"{name} {version} {channel}"
 ```
 
-- `let` is mutable.
-- `const` is compile-time immutable (no runtime `readonly` is emitted).
+- `var` is mutable.
+- `let` is compile-time immutable (no runtime `readonly` is emitted).
 - `readonly` is runtime shell-immutable and must include an initializer.
 
 ## 3. Arithmetic
 
 ```lash
-let a = 7
-let b = 3
+var a = 7
+var b = 3
 
 let sum = a + b
 let product = a * b
 let remainder = a % b
 
-echo "sum:" $sum
-echo "product:" $product
-echo "remainder:" $remainder
+echo $"sum: {sum}"
+echo $"product: {product}"
+echo $"remainder: {remainder}"
 ```
 
 ## 4. Conditionals
 
 ```lash
-let score = 82
+var score = 82
 
 if score >= 90
     echo "A"
@@ -76,7 +76,7 @@ until i == 0
 end
 
 for item in items
-    echo "item:" $item
+    echo $"item: {item}"
 end
 ```
 
@@ -135,7 +135,7 @@ Capture shell output into a Lash value:
 
 ```lash
 let branch = $(git rev-parse --abbrev-ref HEAD)
-echo "branch:" $branch
+echo $"branch: {branch}"
 
 fn feed()
     cat
@@ -148,7 +148,7 @@ feed() <<- [[	line1
 	line2]]
 
 fn show(path)
-    cat($path)
+    cat $path
 end
 show(<(printf "ok\n"))
 ```
@@ -162,8 +162,8 @@ subshell into pid
     sh "sleep 1"
 end &
 
-wait $pid into status
-echo "exit:" $status
+wait pid into status
+echo $"exit: {status}"
 ```
 
 ## 10. Preprocessor Directives
@@ -179,8 +179,8 @@ echo "compiled with message enabled"
 You can also import text at compile time:
 
 ```lash
-@import "notes.txt" into const notes
-echo $notes
+@import "notes.txt" into notes
+echo $"{notes}"
 ```
 
 ## 11. Running, Checking, Compiling
