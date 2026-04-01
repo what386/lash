@@ -1,9 +1,18 @@
 # TODO — lash-lang v0.9.0
 
 @created: 2026-02-24
-@modified: 2026-03-03
+@modified: 2026-04-01
 
 ## Tasks
+
+- [ ] Rename mutable/immutable bindings from let/const to var/let and simplify into bindings to bare names (high) #feature #language #compiler
+      @created 2026-04-01 22:31
+
+- [ ] Make expression variable references use bare identifiers and reserve $ for expansion syntax (high) #feature #language #compiler
+      @created 2026-04-01 22:31
+
+- [ ] Rename mutable/immutable bindings from let/const to var/let and simplify into bindings to bare names (high) #feature #language #compiler
+      @created 2026-04-01 22:32
 
 
 ## Completed
