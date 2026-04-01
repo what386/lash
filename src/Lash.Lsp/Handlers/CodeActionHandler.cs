@@ -41,7 +41,7 @@ internal sealed class CodeActionHandler : CodeActionHandlerBase
 
         var actions = new List<CommandOrCodeAction>();
 
-        foreach (var action in CreateLetToConstQuickFixes(request, snapshot))
+        foreach (var action in CreateVarToLetQuickFixes(request, snapshot))
             actions.Add(new CommandOrCodeAction(action));
 
         return Task.FromResult<CommandOrCodeActionContainer?>(
@@ -53,7 +53,7 @@ internal sealed class CodeActionHandler : CodeActionHandlerBase
         return Task.FromResult(request);
     }
 
-    private IEnumerable<CodeAction> CreateLetToConstQuickFixes(CodeActionParams request, DocumentSnapshot snapshot)
+    private IEnumerable<CodeAction> CreateVarToLetQuickFixes(CodeActionParams request, DocumentSnapshot snapshot)
     {
         var emittedLines = new HashSet<long>();
         foreach (var diagnostic in request.Context.Diagnostics)
@@ -66,12 +66,12 @@ internal sealed class CodeActionHandler : CodeActionHandlerBase
             if (!emittedLines.Add(line))
                 continue;
 
-            if (!TryCreateLetToConstEdit(snapshot, line, out var edit))
+            if (!TryCreateVarToLetEdit(snapshot, line, out var edit))
                 continue;
 
             yield return new CodeAction
             {
-                Title = "Change 'let' to 'const'",
+                Title = "Change 'var' to 'let'",
                 Kind = CodeActionKind.QuickFix,
                 Edit = new WorkspaceEdit
                 {
@@ -84,7 +84,7 @@ internal sealed class CodeActionHandler : CodeActionHandlerBase
         }
     }
 
-    private bool TryCreateLetToConstEdit(DocumentSnapshot snapshot, long zeroBasedLine, out TextEdit edit)
+    private bool TryCreateVarToLetEdit(DocumentSnapshot snapshot, long zeroBasedLine, out TextEdit edit)
     {
         edit = new TextEdit();
         if (!snapshotText.TryGetLine(snapshot, (int)zeroBasedLine, out var lineText))
@@ -101,7 +101,7 @@ internal sealed class CodeActionHandler : CodeActionHandlerBase
                 index++;
         }
 
-        if (index + 3 > lineText.Length || !lineText.AsSpan(index, 3).SequenceEqual("let".AsSpan()))
+        if (index + 3 > lineText.Length || !lineText.AsSpan(index, 3).SequenceEqual("var".AsSpan()))
             return false;
 
         if (index + 3 < lineText.Length && IsIdentifierPart(lineText[index + 3]))
@@ -112,7 +112,7 @@ internal sealed class CodeActionHandler : CodeActionHandlerBase
             Range = new Range(
                 new Position((int)zeroBasedLine, index),
                 new Position((int)zeroBasedLine, index + 3)),
-            NewText = "const"
+            NewText = "let"
         };
         return true;
     }

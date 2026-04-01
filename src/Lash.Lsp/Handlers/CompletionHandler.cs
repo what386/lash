@@ -13,7 +13,7 @@ internal sealed class CompletionHandler : CompletionHandlerBase
     [
         "if", "elif", "else", "end", "fn", "for", "while", "switch", "case",
         "until",
-        "let", "const", "readonly", "global", "return", "break", "continue", "shift",
+        "var", "let", "readonly", "global", "return", "break", "continue", "shift",
         "subshell", "wait", "in", "step", "into", "jobs", "sh", "test", "trap", "untrap", "enum"
     ];
 
