@@ -5,9 +5,6 @@
 
 ## Tasks
 
-- [ ] Make expression variable references use bare identifiers and reserve $ for expansion syntax (high) #feature #language #compiler
-      @created 2026-04-01 22:32
-
 
 ## Completed
 
@@ -77,6 +74,11 @@
       @completed_version 0.13.0
 
 - [x] Rename mutable/immutable bindings from let/const to var/let and simplify into bindings to bare names (high) #feature #language #compiler
+      @created 2026-04-01 22:32
+      @completed 2026-04-01 22:33
+      @completed_version 0.13.0
+
+- [x] Make expression variable references use bare identifiers and reserve $ for expansion syntax (high) #feature #language #compiler
       @created 2026-04-01 22:32
       @completed 2026-04-01 22:33
       @completed_version 0.13.0
