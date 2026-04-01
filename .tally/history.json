@@ -519,5 +519,24 @@
       "patch": 0,
       "is_prerelease": false
     }
+  },
+  {
+    "change": {
+      "description": "Make expression variable references use bare identifiers and reserve $ for expansion syntax",
+      "priority": "High",
+      "tags": [
+        "feature",
+        "language",
+        "compiler"
+      ],
+      "commit": null,
+      "completed_at": "2026-04-01T22:32:48.205861063Z"
+    },
+    "version": {
+      "major": 0,
+      "minor": 13,
+      "patch": 0,
+      "is_prerelease": false
+    }
   }
 ]
