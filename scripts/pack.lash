@@ -2,22 +2,22 @@
 
 set -euo pipefail
 
-const INPUT_ROOT = "./target/release"
-const OUTPUT_DIR = "./dist"
+let INPUT_ROOT = "./target/release"
+let OUTPUT_DIR = "./dist"
 
 mkdir -p "$OUTPUT_DIR"
 cd "$INPUT_ROOT"
 
-let packed = 0
+var packed = 0
 for dir in ./*
-    const archive = "../../dist/" + $dir + ".tar.gz"
+    let archive = "../../dist/" + dir + ".tar.gz"
 
     echo "Packing:" $dir "->" $archive
     tar -czf "$archive" "$dir"
-    $packed = $packed + 1
+    packed = packed + 1
 end
 
-if $packed == 0
+if packed == 0
     echo "No directories found under ./target/release"
 else
     echo $"Packed {packed} directories."

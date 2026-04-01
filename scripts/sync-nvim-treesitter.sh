@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd -- "${SCRIPT_DIR}/../.." && pwd)"
+REPO_ROOT="/home/bmorin/dev/lash-lang"
 
 SOURCE_DIR="${REPO_ROOT}/tree-sitter"
 TARGET_DIR="${HOME}/.config/nvim/treesitter/lash"
