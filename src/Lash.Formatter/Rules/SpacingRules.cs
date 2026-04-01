@@ -9,6 +9,9 @@ internal static class SpacingRules
         if (line.StartsWith("//", StringComparison.Ordinal))
             return line;
 
+        if (TryNormalizeLoopGlobHeader(line, out var normalizedLoopGlob))
+            return normalizedLoopGlob;
+
         // Raw command statements should preserve Bash syntax exactly.
         if (IsRawCommandPassthrough(line))
             return line;
@@ -132,6 +135,80 @@ internal static class SpacingRules
         return sb.ToString().TrimEnd();
     }
 
+    private static bool TryNormalizeLoopGlobHeader(string line, out string normalized)
+    {
+        normalized = string.Empty;
+        if (!TryParseLoopHeader(line, out var keyword, out var binding, out var remainder))
+            return false;
+
+        var trimmedRemainder = remainder.Trim();
+        if (!LooksLikeGlobPattern(trimmedRemainder))
+            return false;
+
+        normalized = $"{keyword} {binding} in {trimmedRemainder}";
+        return true;
+    }
+
+    private static bool TryParseLoopHeader(string line, out string keyword, out string binding, out string remainder)
+    {
+        keyword = string.Empty;
+        binding = string.Empty;
+        remainder = string.Empty;
+
+        var trimmed = line.Trim();
+        if (trimmed.StartsWith("for ", StringComparison.Ordinal))
+            keyword = "for";
+        else if (trimmed.StartsWith("select ", StringComparison.Ordinal))
+            keyword = "select";
+        else
+            return false;
+
+        var cursor = keyword.Length;
+        while (cursor < trimmed.Length && char.IsWhiteSpace(trimmed[cursor]))
+            cursor++;
+
+        var bindingStart = cursor;
+        while (cursor < trimmed.Length && (char.IsLetterOrDigit(trimmed[cursor]) || trimmed[cursor] == '_'))
+            cursor++;
+
+        if (cursor == bindingStart)
+            return false;
+
+        binding = trimmed[bindingStart..cursor];
+
+        while (cursor < trimmed.Length && char.IsWhiteSpace(trimmed[cursor]))
+            cursor++;
+
+        if (cursor + 2 > trimmed.Length || !trimmed.AsSpan(cursor, 2).SequenceEqual("in".AsSpan()))
+            return false;
+
+        cursor += 2;
+        if (cursor < trimmed.Length && !char.IsWhiteSpace(trimmed[cursor]))
+            return false;
+
+        while (cursor < trimmed.Length && char.IsWhiteSpace(trimmed[cursor]))
+            cursor++;
+
+        if (cursor >= trimmed.Length)
+            return false;
+
+        remainder = trimmed[cursor..];
+        return true;
+    }
+
+    private static bool LooksLikeGlobPattern(string value)
+    {
+        if (value.Length == 0 || value.Contains(' '))
+            return false;
+
+        if (value.StartsWith("[", StringComparison.Ordinal)
+            || value.StartsWith("\"", StringComparison.Ordinal)
+            || value.StartsWith("$", StringComparison.Ordinal))
+            return false;
+
+        return value.IndexOfAny(['*', '?', '[']) >= 0;
+    }
+
     private static bool IsRawCommandPassthrough(string line)
     {
         var trimmed = line.TrimStart();
@@ -173,8 +250,8 @@ internal static class SpacingRules
                || line.StartsWith("wait ", StringComparison.Ordinal)
                || line.StartsWith("switch ", StringComparison.Ordinal)
                || line.StartsWith("case ", StringComparison.Ordinal)
+               || line.StartsWith("var ", StringComparison.Ordinal)
                || line.StartsWith("let ", StringComparison.Ordinal)
-               || line.StartsWith("const ", StringComparison.Ordinal)
                || line.StartsWith("readonly ", StringComparison.Ordinal)
                || line.StartsWith("enum ", StringComparison.Ordinal)
                || line.StartsWith("global ", StringComparison.Ordinal)
