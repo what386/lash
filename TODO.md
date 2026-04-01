@@ -14,6 +14,9 @@
 - [ ] Rename mutable/immutable bindings from let/const to var/let and simplify into bindings to bare names (high) #feature #language #compiler
       @created 2026-04-01 22:32
 
+- [ ] Make expression variable references use bare identifiers and reserve $ for expansion syntax (high) #feature #language #compiler
+      @created 2026-04-01 22:32
+
 
 ## Completed
 
