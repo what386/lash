@@ -80,11 +80,11 @@ public class HandlerTests
     }
 
     [Fact]
-    public async Task CodeActionHandler_OffersLetToConstQuickFixForNeverReassignedWarning()
+    public async Task CodeActionHandler_OffersVarToLetQuickFixForNeverReassignedWarning()
     {
         var snapshot = TestHelpers.CreateSnapshot(
             """
-            let greeting = "hello"
+            var greeting = "hello"
             echo $greeting
             """);
 
@@ -106,7 +106,7 @@ public class HandlerTests
                             Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(new Position(0, 0), new Position(0, 3)),
                             Code = "W509",
                             Source = "lash",
-                            Message = "Variable 'greeting' is declared with 'let' but never reassigned; use 'const'."
+                            Message = "Variable 'greeting' is declared with 'var' but never reassigned; use 'let'."
                         })
                 }
             },
@@ -115,7 +115,7 @@ public class HandlerTests
         Assert.NotNull(result);
         Assert.NotEmpty(result!);
         var action = Assert.IsType<CodeAction>(result!.First().CodeAction);
-        Assert.Equal("Change 'let' to 'const'", action.Title);
+        Assert.Equal("Change 'var' to 'let'", action.Title);
     }
 
     [Fact]

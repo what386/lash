@@ -107,6 +107,27 @@ public class FormatterRulesTests
     }
 
     [Fact]
+    public void Formatter_PreservesGlobPatternsInLoopHeaders()
+    {
+        const string input =
+            """
+            for   dir   in   ./*
+                echo "$dir"
+            end
+            """;
+
+        const string expected =
+            """
+            for dir in ./*
+                echo "$dir"
+            end
+            """;
+
+        var formatted = LashFormatter.Format(input);
+        Assert.Equal(expected.Replace("\r\n", "\n") + "\n", formatted);
+    }
+
+    [Fact]
     public void Formatter_FormatsPipeExpressionWithFunctionStage()
     {
         const string input = "word|greet()|greeting";
@@ -160,14 +181,14 @@ public class FormatterRulesTests
     {
         const string input =
             """
-            const known = $(printf '%s' $entry | cut -d: -f1)
-            const size = $(du -h "$dest" | cut -f1)
+            let known = $(printf '%s' $entry | cut -d: -f1)
+            let size = $(du -h "$dest" | cut -f1)
             """;
 
         const string expected =
             """
-            const known = $(printf '%s' $entry | cut -d: -f1)
-            const size = $(du -h "$dest" | cut -f1)
+            let known = $(printf '%s' $entry | cut -d: -f1)
+            let size = $(du -h "$dest" | cut -f1)
             """;
 
         var formatted = LashFormatter.Format(input);
@@ -177,8 +198,8 @@ public class FormatterRulesTests
     [Fact]
     public void Formatter_NormalizesOutsideCaptureButKeepsCaptureRaw()
     {
-        const string input = "const value=$(printf '%s' $entry | cut -d: -f1)";
-        const string expected = "const value = $(printf '%s' $entry | cut -d: -f1)\n";
+        const string input = "let value=$(printf '%s' $entry | cut -d: -f1)";
+        const string expected = "let value = $(printf '%s' $entry | cut -d: -f1)\n";
 
         var formatted = LashFormatter.Format(input);
         Assert.Equal(expected, formatted);
