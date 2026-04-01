@@ -14,7 +14,7 @@ public class NameResolverTests
         var program = TestCompiler.ParseOrThrow(
             """
             const x = 1
-            $x = 2
+            x = 2
             """);
 
         var diagnostics = new DiagnosticBag();
@@ -31,7 +31,7 @@ public class NameResolverTests
             """
             global const x = 1
             fn mutate()
-                global $x = 2
+                global x = 2
             end
             """);
 
@@ -48,7 +48,7 @@ public class NameResolverTests
             """
             global let x = 1
             fn mutate()
-                global $x = 2
+                global x = 2
             end
             """);
 
@@ -64,7 +64,7 @@ public class NameResolverTests
         var program = TestCompiler.ParseOrThrow(
             """
             readonly x = 1
-            $x = 2
+            x = 2
             """);
 
         var diagnostics = new DiagnosticBag();
@@ -112,7 +112,7 @@ public class NameResolverTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            let x = $y + 1
+            let x = y + 1
             """);
 
         var diagnostics = new DiagnosticBag();
@@ -127,7 +127,7 @@ public class NameResolverTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            $y = 2
+            y = 2
             """);
 
         var diagnostics = new DiagnosticBag();
@@ -142,7 +142,7 @@ public class NameResolverTests
         var program = TestCompiler.ParseOrThrow(
             """
             fn greet(name, greeting = "Hello")
-                return $greeting + ", " + $name
+                return greeting + ", " + name
             end
 
             greet()
@@ -176,8 +176,8 @@ public class NameResolverTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            let first = $argv[0]
-            let count = #$argv
+            let first = argv[0]
+            let count = #argv
             """);
 
         var diagnostics = new DiagnosticBag();
@@ -270,7 +270,7 @@ public class NameResolverTests
             subshell into let pid
                 echo "hi"
             end &
-            let next = $pid + 1
+            let next = pid + 1
             """);
 
         var diagnostics = new DiagnosticBag();
@@ -287,7 +287,7 @@ public class NameResolverTests
             subshell into const status
                 echo "hi"
             end
-            $status = 1
+            status = 1
             """);
 
         var diagnostics = new DiagnosticBag();
@@ -302,7 +302,7 @@ public class NameResolverTests
         var program = TestCompiler.ParseOrThrow(
             """
             const status = 0
-            wait into $status
+            wait into status
             """);
 
         var diagnostics = new DiagnosticBag();
@@ -317,7 +317,7 @@ public class NameResolverTests
         var program = TestCompiler.ParseOrThrow(
             """
             wait into let status
-            let next = $status + 1
+            let next = status + 1
             """);
 
         var diagnostics = new DiagnosticBag();
@@ -379,7 +379,7 @@ public class NameResolverTests
         var program = TestCompiler.ParseOrThrow(
             """
             fn greet(a, a)
-                return $a
+                return a
             end
             """);
 
@@ -395,7 +395,7 @@ public class NameResolverTests
         var program = TestCompiler.ParseOrThrow(
             """
             fn greet(a = "hi", b)
-                return $b
+                return b
             end
             """);
 

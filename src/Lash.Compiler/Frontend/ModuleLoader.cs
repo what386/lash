@@ -1038,7 +1038,7 @@ public static class ModuleLoader
             if (left.StartsWith(globalPrefix, StringComparison.Ordinal))
                 left = left[globalPrefix.Length..].TrimStart();
 
-            if (IsVariableReference(left))
+            if (IsIdentifier(left))
                 return true;
 
             if (LooksLikeIndexTarget(left))
@@ -1057,14 +1057,10 @@ public static class ModuleLoader
         if (trimmed.StartsWith(globalPrefix, StringComparison.Ordinal))
             trimmed = trimmed[globalPrefix.Length..].TrimStart();
 
-        if (!trimmed.StartsWith("$", StringComparison.Ordinal))
+        if (trimmed.Length == 0 || !(char.IsLetter(trimmed[0]) || trimmed[0] == '_'))
             return false;
 
         var cursor = 1;
-        if (cursor >= trimmed.Length || !(char.IsLetter(trimmed[cursor]) || trimmed[cursor] == '_'))
-            return false;
-
-        cursor++;
         while (cursor < trimmed.Length && (char.IsLetterOrDigit(trimmed[cursor]) || trimmed[cursor] == '_'))
             cursor++;
 
@@ -1101,13 +1097,6 @@ public static class ModuleLoader
         return true;
     }
 
-    private static bool IsVariableReference(string value)
-    {
-        return value.Length > 1
-               && value[0] == '$'
-               && IsIdentifier(value[1..]);
-    }
-
     private static bool LooksLikeIndexTarget(string value)
     {
         if (!value.EndsWith("]", StringComparison.Ordinal))
@@ -1118,7 +1107,7 @@ public static class ModuleLoader
             return false;
 
         var baseName = value[..bracket].Trim();
-        return IsVariableReference(baseName);
+        return IsIdentifier(baseName);
     }
 }
 

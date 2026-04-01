@@ -816,6 +816,8 @@ public sealed class WarningAnalyzer {
 
   private void AnalyzeCommandScript(string script, int line, int column,
                                     string context) {
+    AnalyzeInterpolatedCommandSegments(script);
+
     foreach (Match match in BracedCommandVariableRegex.Matches(script))
       MarkVariableRead(match.Groups[1].Value);
 
@@ -836,10 +838,50 @@ public sealed class WarningAnalyzer {
     if (!literal.IsInterpolated || literal.Value is not string template)
       return;
 
+    AnalyzeInterpolatedTemplate(template);
+  }
+
+  private void AnalyzeInterpolatedTemplate(string template) {
     foreach (Match match in InterpolationPlaceholderRegex.Matches(template)) {
       if (TryGetInterpolationSymbolName(match.Groups[1].Value,
                                         out var symbolName))
         MarkVariableRead(symbolName);
+    }
+  }
+
+  private void AnalyzeInterpolatedCommandSegments(string script) {
+    for (var i = 0; i < script.Length - 1; i++) {
+      if (script[i] != '$' || script[i + 1] != '"')
+        continue;
+
+      var start = i + 2;
+      var end = start;
+      var escaped = false;
+      while (end < script.Length) {
+        var ch = script[end];
+        if (escaped) {
+          escaped = false;
+          end++;
+          continue;
+        }
+
+        if (ch == '\\') {
+          escaped = true;
+          end++;
+          continue;
+        }
+
+        if (ch == '"')
+          break;
+
+        end++;
+      }
+
+      if (end >= script.Length)
+        break;
+
+      AnalyzeInterpolatedTemplate(script[start..end]);
+      i = end;
     }
   }
 

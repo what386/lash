@@ -196,15 +196,15 @@ expression
 
 primaryExpression
     : literal
+    | functionCall
     | enumAccess
     | variableReference
-    | functionCall
     | arrayLiteral
     | '(' expression ')'
     ;
 
 variableReference
-    : '$' IDENTIFIER
+    : IDENTIFIER
     ;
 
 arrayLiteral

@@ -13,7 +13,7 @@ public class AdditionalAnalyzerTests
         var program = TestCompiler.ParseOrThrow(
             """
             let x
-            let y = $x + 1
+            let y = x + 1
             """);
 
         var diagnostics = new DiagnosticBag();
@@ -30,7 +30,7 @@ public class AdditionalAnalyzerTests
         var program = TestCompiler.ParseOrThrow(
             """
             const z = 0
-            let x = 10 / $z
+            let x = 10 / z
             """);
 
         var diagnostics = new DiagnosticBag();
@@ -87,7 +87,7 @@ public class AdditionalAnalyzerTests
             end
 
             let payload = "text"
-            feed() <<- $payload
+            feed() <<- payload
             """);
 
         var diagnostics = new DiagnosticBag();
@@ -108,7 +108,7 @@ public class AdditionalAnalyzerTests
             let x = 1
             fn demo()
                 let x = 2
-                return $x
+                return x
                 echo "never"
             end
             wait jobs
@@ -192,7 +192,7 @@ public class AdditionalAnalyzerTests
         var program = TestCompiler.ParseOrThrow(
             """
             let x = 1
-            if false && $x > 0
+            if false && x > 0
                 echo "never"
             else
                 echo "ok"
@@ -213,7 +213,7 @@ public class AdditionalAnalyzerTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            if $flag
+            if flag
                 echo "same"
             else
                 echo "same"
@@ -235,10 +235,10 @@ public class AdditionalAnalyzerTests
         var program = TestCompiler.ParseOrThrow(
             """
             let out = ""
-            if $flag
-                $out = "same"
+            if flag
+                out = "same"
             else
-                $out = "same"
+                out = "same"
             end
             """);
 
@@ -256,7 +256,7 @@ public class AdditionalAnalyzerTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            switch $mode
+            switch mode
                 case "a":
                     echo "same"
                 case "b":
@@ -278,7 +278,7 @@ public class AdditionalAnalyzerTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            switch $mode
+            switch mode
                 case _:
                     echo "default"
                 case "a":
@@ -346,7 +346,7 @@ public class AdditionalAnalyzerTests
         var program = TestCompiler.ParseOrThrow(
             """
             let count = 0
-            $count = $count + 1
+            count = count + 1
             echo $count
             """);
 
@@ -365,7 +365,7 @@ public class AdditionalAnalyzerTests
             """
             fn exists(path)
                 let ok = $(test $"-f {path}")
-                return $ok == "1"
+                return ok == "1"
             end
 
             exists("README.md")
@@ -386,7 +386,7 @@ public class AdditionalAnalyzerTests
         var program = TestCompiler.ParseOrThrow(
             """
             let projects = ["a:b"]
-            for entry in $projects
+            for entry in projects
                 let known = $(printf '%s' "$entry" | cut -d: -f1)
                 echo $known
             end
@@ -422,16 +422,44 @@ public class AdditionalAnalyzerTests
     }
 
     [Fact]
+    public void WarningAnalyzer_TreatsBareCommandInterpolatedStringsAsReads()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            let BLUE = "blue"
+            let NC = "reset"
+            let truly_unused = "nope"
+            let arg = "demo"
+            printf $"{BLUE}Building {arg}{NC}\n"
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new WarningAnalyzer(diagnostics).Analyze(program);
+
+        Assert.DoesNotContain(
+            diagnostics.GetWarnings(),
+            w => w.Code == DiagnosticCodes.UnusedVariable
+                 && (w.Message.Contains("BLUE", StringComparison.Ordinal)
+                     || w.Message.Contains("NC", StringComparison.Ordinal)
+                     || w.Message.Contains("arg", StringComparison.Ordinal)));
+
+        Assert.Contains(
+            diagnostics.GetWarnings(),
+            w => w.Code == DiagnosticCodes.UnusedVariable
+                 && w.Message.Contains("truly_unused", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void WarningAnalyzer_TreatsWhileAndUntilConditionsAsVariableReads()
     {
         var program = TestCompiler.ParseOrThrow(
             """
             let limit = 20
             let n = 1
-            while $n <= $limit
-                $n += 1
+            while n <= limit
+                n += 1
             end
-            until $n > $limit
+            until n > limit
                 break
             end
             """);
@@ -451,7 +479,7 @@ public class AdditionalAnalyzerTests
         var program = TestCompiler.ParseOrThrow(
             """
             fn parse(value)
-                switch $value
+                switch value
                     case "ok":
                         return 1
                 end
@@ -574,7 +602,7 @@ public class AdditionalAnalyzerTests
             end
 
             let payload = "text"
-            feed() << $payload
+            feed() << payload
             """);
 
         var diagnostics = new DiagnosticBag();

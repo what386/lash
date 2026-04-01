@@ -14,7 +14,7 @@ public class HandlerTests
         var snapshot = TestHelpers.CreateSnapshot(
             """
             let alpha = 1
-            let beta = $alpha
+            let beta = alpha
 
             """);
 
@@ -37,11 +37,11 @@ public class HandlerTests
         Assert.Contains("if-else", labels);
 
         var alphaItem = result.Items.First(i => i.Label == "alpha");
-        Assert.Equal("$alpha", alphaItem.InsertText);
+        Assert.Equal("alpha", alphaItem.InsertText);
     }
 
     [Fact]
-    public async Task CodeActionHandler_OffersPrefixDollarQuickFixForParseErrorIdentifier()
+    public async Task CodeActionHandler_DoesNotOfferLegacyPrefixDollarQuickFix()
     {
         var snapshot = TestHelpers.CreateSnapshot(
             """
@@ -76,9 +76,7 @@ public class HandlerTests
             CancellationToken.None);
 
         Assert.NotNull(result);
-        Assert.NotEmpty(result!);
-        var action = Assert.IsType<CodeAction>(result!.First().CodeAction);
-        Assert.Contains("Prefix 'value' with '$'", action.Title, StringComparison.Ordinal);
+        Assert.Empty(result!);
     }
 
     [Fact]
@@ -123,7 +121,7 @@ public class HandlerTests
     [Fact]
     public async Task PrepareRenameHandler_ReturnsRangeForRenameableSymbol()
     {
-        var snapshot = TestHelpers.CreateSnapshot("let value = 1\nlet x = $value\n");
+        var snapshot = TestHelpers.CreateSnapshot("let value = 1\nlet x = value\n");
 
         var store = new DocumentStore();
         var tracked = store.Upsert(snapshot.Uri, snapshot.Text);
@@ -145,7 +143,7 @@ public class HandlerTests
     [Fact]
     public async Task RenameHandler_RejectsInvalidIdentifierNames()
     {
-        var snapshot = TestHelpers.CreateSnapshot("let value = 1\nlet x = $value\n");
+        var snapshot = TestHelpers.CreateSnapshot("let value = 1\nlet x = value\n");
 
         var store = new DocumentStore();
         var tracked = store.Upsert(snapshot.Uri, snapshot.Text);

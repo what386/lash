@@ -41,10 +41,6 @@ internal sealed class CodeActionHandler : CodeActionHandlerBase
 
         var actions = new List<CommandOrCodeAction>();
 
-        var dollarFix = TryCreatePrefixDollarQuickFix(request, snapshot);
-        if (dollarFix is not null)
-            actions.Add(new CommandOrCodeAction(dollarFix));
-
         foreach (var action in CreateLetToConstQuickFixes(request, snapshot))
             actions.Add(new CommandOrCodeAction(action));
 
@@ -55,59 +51,6 @@ internal sealed class CodeActionHandler : CodeActionHandlerBase
     public override Task<CodeAction> Handle(CodeAction request, CancellationToken cancellationToken)
     {
         return Task.FromResult(request);
-    }
-
-    private CodeAction? TryCreatePrefixDollarQuickFix(CodeActionParams request, DocumentSnapshot snapshot)
-    {
-        if (!HasParseErrorOnLine(request, request.Range.Start.Line))
-            return null;
-
-        if (!snapshotText.TryGetTokenAt(snapshot, request.Range.Start, out var token))
-            return null;
-
-        if (token.Text.StartsWith("@", StringComparison.Ordinal) || !IdentifierRules.IsValidIdentifier(token.Text))
-            return null;
-
-        if (!snapshotText.TryGetLine(snapshot, (int)request.Range.Start.Line, out var lineText))
-            return null;
-
-        var tokenStart = (int)token.Range.Start.Character;
-        if (tokenStart > 0 && lineText[tokenStart - 1] == '$')
-            return null;
-
-        var edit = new TextEdit
-        {
-            Range = new Range(token.Range.Start, token.Range.Start),
-            NewText = "$"
-        };
-
-        return new CodeAction
-        {
-            Title = $"Prefix '{token.Text}' with '$'",
-            Kind = CodeActionKind.QuickFix,
-            Edit = new WorkspaceEdit
-            {
-                Changes = new Dictionary<DocumentUri, IEnumerable<TextEdit>>
-                {
-                    [request.TextDocument.Uri] = new[] { edit }
-                }
-            }
-        };
-    }
-
-    private static bool HasParseErrorOnLine(CodeActionParams request, long line)
-    {
-        foreach (var diagnostic in request.Context.Diagnostics)
-        {
-            if (diagnostic.Range.Start.Line != line)
-                continue;
-
-            var code = diagnostic.Code?.String ?? diagnostic.Code?.Long.ToString() ?? string.Empty;
-            if (string.Equals(code, "E001", StringComparison.Ordinal))
-                return true;
-        }
-
-        return false;
     }
 
     private IEnumerable<CodeAction> CreateLetToConstQuickFixes(CodeActionParams request, DocumentSnapshot snapshot)

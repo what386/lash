@@ -483,14 +483,14 @@ public class AstBuilder : LashBaseVisitor<AstNode>
         if (context.literal() != null)
             return Visit(context.literal());
 
+        if (context.functionCall() != null)
+            return Visit(context.functionCall());
+
         if (context.enumAccess() != null)
             return Visit(context.enumAccess());
 
         if (context.variableReference() != null)
             return Visit(context.variableReference());
-
-        if (context.functionCall() != null)
-            return Visit(context.functionCall());
 
         if (context.arrayLiteral() != null)
             return Visit(context.arrayLiteral());

@@ -14,15 +14,15 @@ public class GrammarTests
         var program = TestCompiler.ParseOrThrow(
             """
             fn greet(name, greeting = "Hello")
-                return $greeting + ", " + $name
+                return greeting + ", " + name
             end
 
             let items = ["a", "b"]
-            const first = $items[0]
+            const first = items[0]
             readonly stable = 42
             let count = 2 + 3
 
-            switch $first
+            switch first
                 case "a":
                     echo ok
             end
@@ -43,7 +43,7 @@ public class GrammarTests
             """
             global let counter = 0
             fn bump()
-                global $counter = $counter + 1
+                global counter = counter + 1
             end
             """);
 
@@ -150,8 +150,8 @@ public class GrammarTests
             let argv = ["--no-trim", "lashlsp"]
             let no_trim_tools = []
 
-            if #$argv > 1
-                $no_trim_tools += [$argv[1]]
+            if #argv > 1
+                no_trim_tools += [argv[1]]
             end
 
             echo -e "ok"
@@ -216,7 +216,7 @@ public class GrammarTests
             """
             let word = "Rob"
             let greeting = ""
-            $word | greet() | $greeting
+            word | greet() | greeting
             """);
 
         var statement = Assert.IsType<ExpressionStatement>(program.Statements[2]);
@@ -231,7 +231,7 @@ public class GrammarTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            switch $x
+            switch x
                 case 1: echo "one"
             end
             """);
@@ -247,7 +247,7 @@ public class GrammarTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            switch $x
+            switch x
                 case _:
                     echo "default"
             end
@@ -265,15 +265,15 @@ public class GrammarTests
             """
             let items = ["a", "b", "c"]
             for i in 0 .. 2 step 1
-                $items[$i] = "x"
+                items[i] = "x"
             end
             select choice in ["a", "b"]
                 break
             end
-            while #$items > 0
+            while #items > 0
                 break
             end
-            until #$items == 0
+            until #items == 0
                 continue
             end
             """);
@@ -326,7 +326,7 @@ public class GrammarTests
         var program = TestCompiler.ParseOrThrow(
             """
             fn diff_files(left, right)
-                diff($left, $right)
+                diff(left, right)
             end
 
             diff_files(<(sort "a.txt"), <(sort "b.txt"))
@@ -343,9 +343,9 @@ public class GrammarTests
         var program = TestCompiler.ParseOrThrow(
             """
             let x = 5
-            if $x > 10
+            if x > 10
                 echo high
-            elif $x > 0
+            elif x > 0
                 echo mid
             else
                 echo low
@@ -505,10 +505,10 @@ public class GrammarTests
                 sh $"echo {size}"
                 test "-n \"${size}\""
                 let items = []
-                $items += ["x"]
+                items += ["x"]
                 let i = 0
-                $i++
-                $i -= 1
+                i++
+                i -= 1
             end
             """);
 
@@ -563,13 +563,13 @@ public class GrammarTests
             """
             let pid = 0
             let status = 0
-            subshell into $pid
+            subshell into pid
                 echo "hi"
             end &
-            wait $pid into $status
+            wait pid into status
             wait jobs
-            wait into $status
-            coproc into $pid
+            wait into status
+            coproc into pid
                 echo "stream"
             end
             subshell into const const_pid
@@ -619,7 +619,7 @@ public class GrammarTests
         var program = TestCompiler.ParseOrThrow(
             """
             let values = []
-            $values["name"] = "lash"
+            values["name"] = "lash"
             """);
 
         var assignment = Assert.IsType<Assignment>(program.Statements[1]);

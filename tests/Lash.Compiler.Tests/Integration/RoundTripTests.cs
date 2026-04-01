@@ -13,7 +13,7 @@ public class RoundTripTests
             let name = "Rob"
             let greeting = $"Hi {name}"
             let items = ["a", "b", "c"]
-            let count = #$items
+            let count = #items
             echo "$greeting"
             echo "$count"
             """);
@@ -33,7 +33,7 @@ public class RoundTripTests
             """
             global let counter = 0
             fn bump()
-                global $counter = $counter + 1
+                global counter = counter + 1
             end
             bump()
             bump()
@@ -55,7 +55,7 @@ public class RoundTripTests
             """
             global let sum = 0
             for i in 1 .. 3
-                global $sum = $sum + $i
+                global sum = sum + i
             end
             echo "$sum"
             """);
@@ -380,12 +380,12 @@ public class RoundTripTests
         var result = CompilerPipeline.Compile(
             """
             let i = 0
-            while $i < 5
-                $i = $i + 1
-                if $i == 2
+            while i < 5
+                i = i + 1
+                if i == 2
                     continue
                 end
-                if $i == 4
+                if i == 4
                     break
                 end
                 echo "$i"
@@ -406,8 +406,8 @@ public class RoundTripTests
         var result = CompilerPipeline.Compile(
             """
             let i = 0
-            until $i >= 3
-                $i = $i + 1
+            until i >= 3
+                i = i + 1
             end
             echo "$i"
             """);
@@ -425,9 +425,9 @@ public class RoundTripTests
     {
         var result = CompilerPipeline.Compile(
             """
-            let first = $argv[0]
+            let first = argv[0]
             shift
-            let remaining = #$argv
+            let remaining = #argv
             echo "$first"
             echo "$remaining"
             """);
@@ -483,7 +483,7 @@ public class RoundTripTests
             """
             let value = "ok"
             let is_ok = $(test "-n \"${value}\"")
-            if $is_ok
+            if is_ok
                 echo "pass"
             end
             test "-n \"${value}\""
@@ -545,12 +545,12 @@ public class RoundTripTests
         var result = CompilerPipeline.Compile(
             """
             fn greet(word)
-                return "hello-" + $word
+                return "hello-" + word
             end
 
             let word = "Rob"
             let greeting = ""
-            $word | greet() | $greeting
+            word | greet() | greeting
             echo "$greeting"
             """);
 
@@ -568,8 +568,8 @@ public class RoundTripTests
         var result = CompilerPipeline.Compile(
             """
             let meta = []
-            $meta["name"] = "lash"
-            let selected = $meta["name"]
+            meta["name"] = "lash"
+            let selected = meta["name"]
             echo "$selected"
             """);
 
@@ -587,7 +587,7 @@ public class RoundTripTests
         var result = CompilerPipeline.Compile(
             """
             let os = "win-11"
-            switch $os
+            switch os
                 case "win-*":
                     echo match
                 case "linux-*":
@@ -609,7 +609,7 @@ public class RoundTripTests
         var result = CompilerPipeline.Compile(
             """
             let os = "unknown"
-            switch $os
+            switch os
                 case "linux-*":
                     echo linux
                 case _:
@@ -652,10 +652,10 @@ public class RoundTripTests
             """
             let pid = 0
             let status = 0
-            subshell into $pid
+            subshell into pid
                 sh "sleep 0.05"
             end &
-            wait $pid into $status
+            wait pid into status
             echo "$status"
             """);
 
@@ -679,7 +679,7 @@ public class RoundTripTests
             subshell
                 sh "sleep 0.01"
             end &
-            wait jobs into $status
+            wait jobs into status
             echo "$status"
             """);
 
@@ -697,13 +697,13 @@ public class RoundTripTests
         var result = CompilerPipeline.Compile(
             """
             let n = 10
-            $n += 2
-            $n -= 3
-            $n *= 4
-            $n /= 3
-            $n %= 4
-            $n++
-            $n--
+            n += 2
+            n -= 3
+            n *= 4
+            n /= 3
+            n %= 4
+            n++
+            n--
             echo "$n"
             """);
 

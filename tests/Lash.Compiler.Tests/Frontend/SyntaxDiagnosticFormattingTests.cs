@@ -79,11 +79,11 @@ public class SyntaxDiagnosticFormattingTests {
   }
 
   [Fact]
-  public void ParserErrors_AcceptsDollarPrefixedVariableReferences() {
+  public void ParserErrors_AcceptsBareVariableReferences() {
         var diagnostics = Parse(
             """
             let x = 1
-            if $x == 1
+            if x == 1
                 echo "ok"
             end
             """);

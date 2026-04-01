@@ -38,8 +38,8 @@ public class BashGeneratorTests
         var program = TestCompiler.ParseOrThrow(
             """
             let items = ["zero", "one"]
-            let first = $items[0]
-            $items[1] = "updated"
+            let first = items[0]
+            items[1] = "updated"
             """);
 
         var generator = new BashGenerator();
@@ -107,7 +107,7 @@ public class BashGeneratorTests
             """
             fn demo()
                 readonly settings = []
-                let value = $settings["name"]
+                let value = settings["name"]
             end
             """);
 
@@ -140,7 +140,7 @@ public class BashGeneratorTests
         var program = TestCompiler.ParseOrThrow(
             """
             let items = ["zero", "one"]
-            let count = #$items
+            let count = #items
             """);
 
         var bash = new BashGenerator().Generate(program);
@@ -152,7 +152,7 @@ public class BashGeneratorTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            switch $value
+            switch value
                 case "a":
                     echo A
                 case "b":
@@ -175,7 +175,7 @@ public class BashGeneratorTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            switch $value
+            switch value
                 case _:
                     echo "default"
             end
@@ -234,12 +234,12 @@ public class BashGeneratorTests
             let items = ["a", "b"]
 
             fn join(values)
-                for value in $values
+                for value in values
                     echo $value
                 end
             end
 
-            join($items)
+            join(items)
             """);
 
         var bash = new BashGenerator().Generate(program);
@@ -267,9 +267,9 @@ public class BashGeneratorTests
         var program = TestCompiler.ParseOrThrow(
             """
             let x = 5
-            if $x > 10
+            if x > 10
                 echo high
-            elif $x > 0
+            elif x > 0
                 echo mid
             else
                 echo low
@@ -292,12 +292,12 @@ public class BashGeneratorTests
         var program = TestCompiler.ParseOrThrow(
             """
             fn greet(word)
-                return "hello-" + $word
+                return "hello-" + word
             end
 
             let word = "Rob"
             let greeting = ""
-            $word | greet() | $greeting
+            word | greet() | greeting
             """);
 
         var bash = new BashGenerator().Generate(program);
@@ -311,7 +311,7 @@ public class BashGeneratorTests
         var program = TestCompiler.ParseOrThrow(
             """
             fn greet(name, greeting = "Hello")
-                return $greeting + ", " + $name
+                return greeting + ", " + name
             end
             """);
 
@@ -328,7 +328,7 @@ public class BashGeneratorTests
             """
             global let counter = 0
             fn bump()
-                global $counter = 1
+                global counter = 1
             end
             """);
 
@@ -440,7 +440,7 @@ public class BashGeneratorTests
         var program = TestCompiler.ParseOrThrow(
             """
             fn diff_files(left, right)
-                diff($left, $right)
+                diff(left, right)
             end
 
             diff_files(<(sort "a.txt"), >(cat))
@@ -494,7 +494,7 @@ public class BashGeneratorTests
             """
             let keep_looping = true
             while true
-                if $keep_looping
+            if keep_looping
                     continue
                 end
                 break
@@ -515,8 +515,8 @@ public class BashGeneratorTests
         var program = TestCompiler.ParseOrThrow(
             """
             let i = 0
-            until $i >= 3
-                i = $i + 1
+            until i >= 3
+                i = i + 1
             end
             """);
 
@@ -570,8 +570,8 @@ public class BashGeneratorTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            let first = $argv[0]
-            let count = #$argv
+            let first = argv[0]
+            let count = #argv
             """);
 
         var bash = new BashGenerator().Generate(program);
@@ -732,8 +732,8 @@ public class BashGeneratorTests
         var program = TestCompiler.ParseOrThrow(
             """
             let meta = []
-            $meta["name"] = "lash"
-            let selected = $meta["name"]
+            meta["name"] = "lash"
+            let selected = meta["name"]
             """);
 
         var bash = new BashGenerator().Generate(program);
@@ -748,12 +748,12 @@ public class BashGeneratorTests
         var program = TestCompiler.ParseOrThrow(
             """
             let meta = []
-            if $flag
-                $meta["name"] = "alpha"
+            if flag
+                meta["name"] = "alpha"
             else
-                $meta["name"] = "beta"
+                meta["name"] = "beta"
             end
-            let selected = $meta["name"]
+            let selected = meta["name"]
             """);
 
         var bash = new BashGenerator().Generate(program);
@@ -781,7 +781,7 @@ public class BashGeneratorTests
         var program = TestCompiler.ParseOrThrow(
             """
             let items = ["a"]
-            $items += ["b", "c"]
+            items += ["b", "c"]
             """);
 
         var bash = new BashGenerator().Generate(program);
@@ -794,13 +794,13 @@ public class BashGeneratorTests
         var program = TestCompiler.ParseOrThrow(
             """
             let n = 10
-            $n += 2
-            $n -= 3
-            $n *= 4
-            $n /= 5
-            $n %= 6
-            $n++
-            $n--
+            n += 2
+            n -= 3
+            n *= 4
+            n /= 5
+            n %= 6
+            n++
+            n--
             """);
 
         var bash = new BashGenerator().Generate(program);
@@ -820,11 +820,11 @@ public class BashGeneratorTests
             """
             let pid = 0
             let status = 0
-            subshell into $pid
+            subshell into pid
                 echo hi
             end &
-            wait $pid into $status
-            wait jobs into $status
+            wait pid into status
+            wait jobs into status
             wait
             """);
 
@@ -846,10 +846,10 @@ public class BashGeneratorTests
             """
             let status = 0
             let pid = 0
-            coproc into $pid
+            coproc into pid
                 echo hi
             end
-            wait jobs into $status
+            wait jobs into status
             """);
 
         var bash = new BashGenerator().Generate(program);
@@ -865,7 +865,7 @@ public class BashGeneratorTests
         var program = TestCompiler.ParseOrThrow(
             """
             let status = 0
-            subshell into $status
+            subshell into status
                 echo hi
             end
             """);
