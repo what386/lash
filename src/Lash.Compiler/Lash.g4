@@ -53,7 +53,7 @@ commandStatement
     ;
 
 variableDeclaration
-    : 'global'? ('let' | 'const') bindingName ('=' expression)?
+    : 'global'? ('var' | 'let') bindingName ('=' expression)?
     ;
 
 readonlyDeclaration
@@ -158,9 +158,7 @@ waitTarget
     ;
 
 intoBinding
-    : 'into' variableReference
-    | 'into' 'let' bindingName
-    | 'into' 'const' bindingName
+    : 'into' bindingName
     ;
 
 bindingName

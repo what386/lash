@@ -37,7 +37,7 @@ public class BashGeneratorTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            let items = ["zero", "one"]
+            var items = ["zero", "one"]
             let first = items[0]
             items[1] = "updated"
             """);
@@ -56,7 +56,7 @@ public class BashGeneratorTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            const name = "lash"
+            let name = "lash"
             """);
 
         var bash = new BashGenerator().Generate(program);
@@ -71,7 +71,7 @@ public class BashGeneratorTests
             """
             fn demo()
                 let x = 1
-                const y = 2
+                let y = 2
             end
             """);
 
@@ -87,8 +87,8 @@ public class BashGeneratorTests
         var program = TestCompiler.ParseOrThrow(
             """
             fn demo()
-                global let x = 1
-                global const y = 2
+                global var x = 1
+                global var y = 2
             end
             """);
 
@@ -139,7 +139,7 @@ public class BashGeneratorTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            let items = ["zero", "one"]
+            var items = ["zero", "one"]
             let count = #items
             """);
 
@@ -266,7 +266,7 @@ public class BashGeneratorTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            let x = 5
+            var x = 5
             if x > 10
                 echo high
             elif x > 0
@@ -296,7 +296,7 @@ public class BashGeneratorTests
             end
 
             let word = "Rob"
-            let greeting = ""
+            var greeting = ""
             word | greet() | greeting
             """);
 
@@ -326,7 +326,7 @@ public class BashGeneratorTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            global let counter = 0
+            global var counter = 0
             fn bump()
                 global counter = 1
             end
@@ -343,7 +343,7 @@ public class BashGeneratorTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            let name = "Rob"
+            var name = "Rob"
             let greeting = $"Hello {name}!"
             """);
 
@@ -356,7 +356,7 @@ public class BashGeneratorTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            const name = "Rob"
+            let name = "Rob"
             let greeting = $"Hello {name}!"
             """);
 
@@ -459,7 +459,7 @@ public class BashGeneratorTests
                 cat
             end
 
-            let name = "world"
+            var name = "world"
             feed() << $[[hello
             {name}
             ]]
@@ -492,7 +492,7 @@ public class BashGeneratorTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            let keep_looping = true
+            var keep_looping = true
             while true
             if keep_looping
                     continue
@@ -514,7 +514,7 @@ public class BashGeneratorTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            let i = 0
+            var i = 0
             until i >= 3
                 i = i + 1
             end
@@ -677,7 +677,7 @@ public class BashGeneratorTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            let name = "ok"
+            var name = "ok"
             let value = $(echo $"$name")
             sh $"echo {name}"
             """);
@@ -692,7 +692,7 @@ public class BashGeneratorTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            let name = "World"
+            var name = "World"
             let greeting = $(printf $"Hello, {name}")
             """);
 
@@ -705,7 +705,7 @@ public class BashGeneratorTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            let values = ["a", "b", "c"]
+            var values = ["a", "b", "c"]
             let csv = $(printf '%s,' $values... | sed 's/,$//')
             """);
 
@@ -731,7 +731,7 @@ public class BashGeneratorTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            let meta = []
+            var meta = []
             meta["name"] = "lash"
             let selected = meta["name"]
             """);
@@ -747,7 +747,7 @@ public class BashGeneratorTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            let meta = []
+            var meta = []
             if flag
                 meta["name"] = "alpha"
             else
@@ -765,7 +765,7 @@ public class BashGeneratorTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            const greeting = "Hello"
+            let greeting = "Hello"
             let name = $(echo who)
             let message = $"[{greeting}] {name}"
             """);
@@ -780,7 +780,7 @@ public class BashGeneratorTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            let items = ["a"]
+            var items = ["a"]
             items += ["b", "c"]
             """);
 
@@ -793,7 +793,7 @@ public class BashGeneratorTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            let n = 10
+            var n = 10
             n += 2
             n -= 3
             n *= 4
@@ -818,8 +818,8 @@ public class BashGeneratorTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            let pid = 0
-            let status = 0
+            var pid = 0
+            var status = 0
             subshell into pid
                 echo hi
             end &
@@ -844,8 +844,8 @@ public class BashGeneratorTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            let status = 0
-            let pid = 0
+            var status = 0
+            var pid = 0
             coproc into pid
                 echo hi
             end
@@ -864,7 +864,7 @@ public class BashGeneratorTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            let status = 0
+            var status = 0
             subshell into status
                 echo hi
             end

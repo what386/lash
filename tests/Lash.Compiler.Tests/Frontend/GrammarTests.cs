@@ -18,7 +18,7 @@ public class GrammarTests
             end
 
             let items = ["a", "b"]
-            const first = items[0]
+            let first = items[0]
             readonly stable = 42
             let count = 2 + 3
 
@@ -30,7 +30,7 @@ public class GrammarTests
 
         Assert.Contains(program.Statements, s => s is FunctionDeclaration { Name: "greet" });
         Assert.Contains(program.Statements, s => s is VariableDeclaration { Name: "items", Value: ArrayLiteral });
-        Assert.Contains(program.Statements, s => s is VariableDeclaration { Name: "first", Kind: VariableDeclaration.VarKind.Const });
+        Assert.Contains(program.Statements, s => s is VariableDeclaration { Name: "first", Kind: VariableDeclaration.VarKind.Let });
         Assert.Contains(program.Statements, s => s is VariableDeclaration { Name: "stable", Kind: VariableDeclaration.VarKind.Readonly });
         Assert.Contains(program.Statements, s => s is VariableDeclaration { Name: "count", Value: BinaryExpression { Operator: "+" } });
         Assert.Contains(program.Statements, s => s is SwitchStatement { Cases.Count: 1 });
@@ -41,7 +41,7 @@ public class GrammarTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            global let counter = 0
+            global var counter = 0
             fn bump()
                 global counter = counter + 1
             end
@@ -561,8 +561,8 @@ public class GrammarTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            let pid = 0
-            let status = 0
+            var pid = 0
+            var status = 0
             subshell into pid
                 echo "hi"
             end &
@@ -572,22 +572,22 @@ public class GrammarTests
             coproc into pid
                 echo "stream"
             end
-            subshell into const const_pid
+            subshell into const_pid
                 echo "bye"
             end &
-            wait into let local_status
+            wait into local_status
             """);
 
         var subshell = Assert.IsType<SubshellStatement>(program.Statements[2]);
         Assert.Equal("pid", subshell.IntoVariable);
-        Assert.Equal(IntoBindingMode.Assign, subshell.IntoMode);
+        Assert.Equal(IntoBindingMode.Auto, subshell.IntoMode);
         Assert.True(subshell.RunInBackground);
         Assert.Single(subshell.Body);
 
         var waitPid = Assert.IsType<WaitStatement>(program.Statements[3]);
         Assert.Equal(WaitTargetKind.Target, waitPid.TargetKind);
         Assert.Equal("status", waitPid.IntoVariable);
-        Assert.Equal(IntoBindingMode.Assign, waitPid.IntoMode);
+        Assert.Equal(IntoBindingMode.Auto, waitPid.IntoMode);
         var waitTarget = Assert.IsType<IdentifierExpression>(waitPid.Target);
         Assert.Equal("pid", waitTarget.Name);
 
@@ -601,16 +601,16 @@ public class GrammarTests
 
         var coproc = Assert.IsType<CoprocStatement>(program.Statements[6]);
         Assert.Equal("pid", coproc.IntoVariable);
-        Assert.Equal(IntoBindingMode.Assign, coproc.IntoMode);
+        Assert.Equal(IntoBindingMode.Auto, coproc.IntoMode);
         Assert.Single(coproc.Body);
 
         var constSubshell = Assert.IsType<SubshellStatement>(program.Statements[7]);
         Assert.Equal("const_pid", constSubshell.IntoVariable);
-        Assert.Equal(IntoBindingMode.Const, constSubshell.IntoMode);
+        Assert.Equal(IntoBindingMode.Auto, constSubshell.IntoMode);
 
         var letWait = Assert.IsType<WaitStatement>(program.Statements[8]);
         Assert.Equal("local_status", letWait.IntoVariable);
-        Assert.Equal(IntoBindingMode.Let, letWait.IntoMode);
+        Assert.Equal(IntoBindingMode.Auto, letWait.IntoMode);
     }
 
     [Fact]

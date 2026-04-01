@@ -208,9 +208,7 @@ internal sealed class DirectiveProcessor
         }
 
         var shouldDeclare = !state.IsKnownTopLevelVariable(variableName);
-        var declarationPrefix = shouldDeclare
-            ? importRequest.IntoMode == ImportIntoMode.Const ? "const " : "let "
-            : string.Empty;
+        var declarationPrefix = shouldDeclare ? "let " : string.Empty;
 
         var lines = normalizedContent.Split('\n');
         if (lines.Length == 1)
@@ -379,19 +377,8 @@ internal sealed class DirectiveProcessor
 
         if (parts.Length == 2)
         {
-            if (string.Equals(parts[0], "const", StringComparison.Ordinal))
-                intoMode = ImportIntoMode.Const;
-            else if (string.Equals(parts[0], "let", StringComparison.Ordinal))
-                intoMode = ImportIntoMode.Let;
-            else
-            {
-                error = "expected 'let' or 'const' before variable name";
-                return false;
-            }
-
-            variableName = parts[1];
-            error = string.Empty;
-            return true;
+            error = "explicit binding keywords after 'into' are no longer supported";
+            return false;
         }
 
         error = "invalid tokens after 'into'";

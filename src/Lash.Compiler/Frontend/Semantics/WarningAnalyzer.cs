@@ -66,7 +66,7 @@ public sealed class WarningAnalyzer {
       DeclareVariableSymbol(variable.Name, variable.Line, variable.Column,
                             ignoreUnused: variable.IsPublic,
                             suggestConst: variable.Kind ==
-                                VariableDeclaration.VarKind.Let,
+                                VariableDeclaration.VarKind.Var,
                             isCaptureResult: IsCaptureExpression(variable.Value));
 
       if (IsDiscardBinding(variable.Name)) {
@@ -74,7 +74,7 @@ public sealed class WarningAnalyzer {
         return false;
       }
 
-      if (variable.Kind == VariableDeclaration.VarKind.Const &&
+      if (variable.Kind == VariableDeclaration.VarKind.Let &&
           TryEvaluateConstValue(variable.Value, out var constValue)) {
         constValues.Peek()[variable.Name] = constValue;
       } else {
@@ -1540,7 +1540,7 @@ public sealed class WarningAnalyzer {
       DiagnosticCodes.DuplicateSwitchCaseBody => "Merge duplicate case bodies.",
       DiagnosticCodes.EquivalentBranchAssignment =>
           "Move assignment outside the conditional.",
-      DiagnosticCodes.LetNeverReassigned => "Use 'const' instead of 'let'.",
+      DiagnosticCodes.LetNeverReassigned => "Use 'let' instead of 'var'.",
       DiagnosticCodes.NoEffectLiteralStatement =>
           "Assign it or pass it to a command.",
       DiagnosticCodes.SuspiciousSplitMultilineArgument =>

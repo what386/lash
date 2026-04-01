@@ -29,7 +29,7 @@ public class AdditionalAnalyzerTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            const z = 0
+            let z = 0
             let x = 10 / z
             """);
 
@@ -327,7 +327,7 @@ public class AdditionalAnalyzerTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            let greeting = "hello"
+            var greeting = "hello"
             echo $greeting
             """);
 
@@ -337,7 +337,7 @@ public class AdditionalAnalyzerTests
         Assert.Contains(
             diagnostics.GetWarnings(),
             warning => warning.Code == DiagnosticCodes.LetNeverReassigned
-                       && warning.Message.Contains("const", StringComparison.Ordinal));
+                       && warning.Message.Contains("let", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -345,7 +345,7 @@ public class AdditionalAnalyzerTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            let count = 0
+            var count = 0
             count = count + 1
             echo $count
             """);

@@ -26,7 +26,7 @@ public class SemanticPipelineTests
     {
         var result = CompilerPipeline.Compile(
             """
-            const x = 1
+            let x = 1
             x = 2
             """);
 
@@ -69,7 +69,7 @@ public class SemanticPipelineTests
     {
         var result = CompilerPipeline.Compile(
             """
-            global let x = 1
+            global var x = 1
             fn inc()
                 global x = x + 1
             end

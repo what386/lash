@@ -1023,21 +1023,7 @@ public sealed class NameResolver {
       return;
     }
 
-    if (mode == IntoBindingMode.Const && loopDepth > 0) {
-      Report(node, "'into const' is not allowed inside repeated contexts.",
-             DiagnosticCodes.InvalidIntoConstContext);
-      return;
-    }
-
     if (TryResolveSymbol(targetName, out var resolved)) {
-      if (mode is IntoBindingMode.Let or IntoBindingMode.Const) {
-        // Declaration forms always declare in the current scope.
-        var createConstFromMode = mode == IntoBindingMode.Const;
-        Declare(targetName, createConstFromMode, node, isGlobal: false);
-        setResolution(true, createConstFromMode);
-        return;
-      }
-
       if (resolved.IsConst) {
         Report(node, $"Cannot assign to immutable variable '{targetName}'.",
                DiagnosticCodes.InvalidAssignmentTarget);
@@ -1046,15 +1032,8 @@ public sealed class NameResolver {
       return;
     }
 
-    if (mode == IntoBindingMode.Assign) {
-      Report(node, $"Cannot assign to undeclared variable '{targetName}'.",
-             DiagnosticCodes.UndeclaredVariable);
-      return;
-    }
-
-    var createConst = mode == IntoBindingMode.Const;
-    Declare(targetName, createConst, node, isGlobal: false);
-    setResolution(true, createConst);
+    Declare(targetName, isConst: true, node, isGlobal: false);
+    setResolution(true, true);
   }
 
   private void PushScope() {
@@ -1219,9 +1198,9 @@ public sealed class NameResolver {
   private static string WithTip(string message, string code) {
     var tip = code switch {
       DiagnosticCodes.InvalidAssignmentTarget =>
-          "Use 'let' for mutable variables, or remove this assignment.",
+          "Use 'var' for mutable variables, or remove this assignment.",
       DiagnosticCodes.UndeclaredVariable =>
-          "Declare the symbol before first use with 'let', 'const', or 'readonly'.",
+          "Declare the symbol before first use with 'var', 'let', or 'readonly'.",
       DiagnosticCodes.UnknownFunction =>
           "Declare the function before calling it, or fix the function name.",
       DiagnosticCodes.FunctionArityMismatch =>
@@ -1237,7 +1216,7 @@ public sealed class NameResolver {
       DiagnosticCodes.InvalidCommandUsage =>
           "Use a valid form for this command, or use sh to emit it directly.",
       DiagnosticCodes.InvalidReadonlyContext =>
-          "Use 'const' for compile-time immutability in loops, or hoist 'readonly' outside the repeated block.",
+          "Use 'let' for compile-time immutability in loops, or hoist 'readonly' outside the repeated block.",
       DiagnosticCodes.DuplicateEnumMember =>
           "Remove or rename the duplicate enum member.",
       DiagnosticCodes.EmptyEnumDeclaration =>
@@ -1246,8 +1225,6 @@ public sealed class NameResolver {
           "Remove or change the duplicate case pattern.",
       DiagnosticCodes.DuplicateWildcardCase =>
           "Keep a single wildcard case, typically as the final case.",
-      DiagnosticCodes.InvalidIntoConstContext =>
-          "Use 'into let' in repeated contexts or move 'into const' outside the loop.",
       _ => null
     };
 
@@ -1267,7 +1244,7 @@ public sealed class NameResolver {
       string.Equals(name, "_", StringComparison.Ordinal);
 
   private static bool IsImmutableDeclaration(VariableDeclaration.VarKind kind) =>
-      kind is VariableDeclaration.VarKind.Const or VariableDeclaration.VarKind.Readonly;
+      kind is VariableDeclaration.VarKind.Let or VariableDeclaration.VarKind.Readonly;
 
   private readonly record struct SymbolInfo(bool IsConst);
   private readonly record struct FunctionInfo(int ParameterCount,

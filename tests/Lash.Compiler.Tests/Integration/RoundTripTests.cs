@@ -31,7 +31,7 @@ public class RoundTripTests
     {
         var result = CompilerPipeline.Compile(
             """
-            global let counter = 0
+            global var counter = 0
             fn bump()
                 global counter = counter + 1
             end
@@ -53,7 +53,7 @@ public class RoundTripTests
     {
         var result = CompilerPipeline.Compile(
             """
-            global let sum = 0
+            global var sum = 0
             for i in 1 .. 3
                 global sum = sum + i
             end
@@ -73,7 +73,7 @@ public class RoundTripTests
     {
         var result = CompilerPipeline.Compile(
             """
-            let raw = [[line1
+            var raw = [[line1
             echo "still text"
             line3]]
             sh $"printf '%s\\n' \"{raw}\""
@@ -379,7 +379,7 @@ public class RoundTripTests
     {
         var result = CompilerPipeline.Compile(
             """
-            let i = 0
+            var i = 0
             while i < 5
                 i = i + 1
                 if i == 2
@@ -405,7 +405,7 @@ public class RoundTripTests
     {
         var result = CompilerPipeline.Compile(
             """
-            let i = 0
+            var i = 0
             until i >= 3
                 i = i + 1
             end
@@ -549,7 +549,7 @@ public class RoundTripTests
             end
 
             let word = "Rob"
-            let greeting = ""
+            var greeting = ""
             word | greet() | greeting
             echo "$greeting"
             """);
@@ -567,7 +567,7 @@ public class RoundTripTests
     {
         var result = CompilerPipeline.Compile(
             """
-            let meta = []
+            var meta = []
             meta["name"] = "lash"
             let selected = meta["name"]
             echo "$selected"
@@ -650,8 +650,8 @@ public class RoundTripTests
     {
         var result = CompilerPipeline.Compile(
             """
-            let pid = 0
-            let status = 0
+            var pid = 0
+            var status = 0
             subshell into pid
                 sh "sleep 0.05"
             end &
@@ -672,7 +672,7 @@ public class RoundTripTests
     {
         var result = CompilerPipeline.Compile(
             """
-            let status = 0
+            var status = 0
             subshell
                 sh "sleep 0.03"
             end &
@@ -696,7 +696,7 @@ public class RoundTripTests
     {
         var result = CompilerPipeline.Compile(
             """
-            let n = 10
+            var n = 10
             n += 2
             n -= 3
             n *= 4

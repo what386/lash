@@ -363,8 +363,8 @@ internal sealed class PreprocessorState
         if (TryReadKeyword(line, ref cursor, "global"))
             SkipWhitespace(line, ref cursor);
 
-        if (!TryReadKeyword(line, ref cursor, "let")
-            && !TryReadKeyword(line, ref cursor, "const")
+        if (!TryReadKeyword(line, ref cursor, "var")
+            && !TryReadKeyword(line, ref cursor, "let")
             && !TryReadKeyword(line, ref cursor, "readonly"))
             return false;
 
@@ -445,7 +445,5 @@ internal readonly record struct ImportRequest(
 
 internal enum ImportIntoMode
 {
-    Auto,
-    Let,
-    Const
+    Auto
 }

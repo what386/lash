@@ -331,7 +331,7 @@ public class PreprocessorTests
     }
 
     [Fact]
-    public void Preprocessor_ImportIntoConst_CreatesConstWhenMissing()
+    public void Preprocessor_ImportInto_CreatesLetWhenMissing()
     {
         var tempDir = Path.Combine(Path.GetTempPath(), $"lash-preprocessor-{Guid.NewGuid():N}");
         Directory.CreateDirectory(tempDir);
@@ -341,7 +341,7 @@ public class PreprocessorTests
             var textPath = Path.Combine(tempDir, "doc.txt");
             var entryPath = Path.Combine(tempDir, "main.lash");
             File.WriteAllText(textPath, "hello");
-            File.WriteAllText(entryPath, "@import \"doc.txt\" into const doc\n");
+            File.WriteAllText(entryPath, "@import \"doc.txt\" into doc\n");
 
             var diagnostics = new DiagnosticBag();
             var success = ModuleLoader.TryLoadProgram(entryPath, diagnostics, out var program);
@@ -350,7 +350,7 @@ public class PreprocessorTests
             Assert.NotNull(program);
             var declaration = Assert.IsType<VariableDeclaration>(program!.Statements[0]);
             Assert.Equal("doc", declaration.Name);
-            Assert.Equal(VariableDeclaration.VarKind.Const, declaration.Kind);
+            Assert.Equal(VariableDeclaration.VarKind.Let, declaration.Kind);
         }
         finally
         {

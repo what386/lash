@@ -29,7 +29,7 @@ public sealed class ConstantSafetyAnalyzer
         {
             case VariableDeclaration variable:
                 CheckExpression(variable.Value);
-                if (variable.Kind == VariableDeclaration.VarKind.Const && TryEvaluateInt(variable.Value, out var value))
+                if (variable.Kind == VariableDeclaration.VarKind.Let && TryEvaluateInt(variable.Value, out var value))
                     DeclareConstInt(variable.Name, value, variable.IsGlobal);
                 else
                     RemoveConstInt(variable.Name, variable.IsGlobal);

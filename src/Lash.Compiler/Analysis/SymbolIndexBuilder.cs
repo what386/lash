@@ -289,7 +289,7 @@ internal sealed class SymbolIndexBuilder
 
     private void DeclareVariable(VariableDeclaration variable)
     {
-        var isImmutable = variable.Kind is VariableDeclaration.VarKind.Const or VariableDeclaration.VarKind.Readonly;
+        var isImmutable = variable.Kind is VariableDeclaration.VarKind.Let or VariableDeclaration.VarKind.Readonly;
         Declare(
             variable,
             variable.Name,

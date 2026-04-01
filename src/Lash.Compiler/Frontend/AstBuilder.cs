@@ -30,9 +30,9 @@ public class AstBuilder : LashBaseVisitor<AstNode>
     {
         var hasGlobal = context.GetChild(0).GetText() == "global";
         var keyword = hasGlobal ? context.GetChild(1).GetText() : context.GetChild(0).GetText();
-        var declarationKind = string.Equals(keyword, "const", StringComparison.Ordinal)
-            ? VariableDeclaration.VarKind.Const
-            : VariableDeclaration.VarKind.Let;
+        var declarationKind = string.Equals(keyword, "let", StringComparison.Ordinal)
+            ? VariableDeclaration.VarKind.Let
+            : VariableDeclaration.VarKind.Var;
 
         return new VariableDeclaration
         {
@@ -1015,31 +1015,13 @@ public class AstBuilder : LashBaseVisitor<AstNode>
 
     private static IntoBindingMode GetIntoMode(LashParser.IntoBindingContext? intoBinding)
     {
-        if (intoBinding == null)
-            return IntoBindingMode.Assign;
-
-        if (intoBinding.variableReference() is not null)
-            return IntoBindingMode.Assign;
-
-        if (intoBinding.ChildCount >= 3)
-        {
-            var modeText = intoBinding.GetChild(1).GetText();
-            if (string.Equals(modeText, "const", StringComparison.Ordinal))
-                return IntoBindingMode.Const;
-            if (string.Equals(modeText, "let", StringComparison.Ordinal))
-                return IntoBindingMode.Let;
-        }
-
-        return IntoBindingMode.Assign;
+        return intoBinding == null ? IntoBindingMode.Auto : IntoBindingMode.Auto;
     }
 
     private static string? GetIntoVariable(LashParser.IntoBindingContext? intoBinding)
     {
         if (intoBinding == null)
             return null;
-
-        if (intoBinding.variableReference() is { } variableRef)
-            return variableRef.IDENTIFIER().GetText();
 
         return GetBindingName(intoBinding.bindingName());
     }

@@ -37,7 +37,7 @@ internal static class SyntaxErrorFormatter {
       if (LooksLikeIdentifier(offendingText))
         return DiagnosticMessage.WithTip(
             $"Unexpected token '{offendingText}'",
-            $"Use '${offendingText}' for variable references.");
+            "Check for a missing operator, delimiter, or misplaced keyword.");
 
       return DiagnosticMessage.WithTip(
           $"Unexpected token '{offendingText}'",
@@ -49,7 +49,7 @@ internal static class SyntaxErrorFormatter {
       if (LooksLikeIdentifier(offendingText))
         return DiagnosticMessage.WithTip(
             $"Invalid syntax near '{offendingText}'",
-            $"Use '${offendingText}' for variable references.");
+            "Check expression structure and declaration keywords.");
 
       return DiagnosticMessage.WithTip(
           $"Invalid syntax near '{offendingText}'",

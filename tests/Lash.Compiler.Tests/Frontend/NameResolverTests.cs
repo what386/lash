@@ -13,7 +13,7 @@ public class NameResolverTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            const x = 1
+            let x = 1
             x = 2
             """);
 
@@ -29,7 +29,7 @@ public class NameResolverTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            global const x = 1
+            global let x = 1
             fn mutate()
                 global x = 2
             end
@@ -46,7 +46,7 @@ public class NameResolverTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            global let x = 1
+            global var x = 1
             fn mutate()
                 global x = 2
             end
@@ -267,7 +267,7 @@ public class NameResolverTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            subshell into let pid
+            subshell into pid
                 echo "hi"
             end &
             let next = pid + 1
@@ -280,11 +280,11 @@ public class NameResolverTests
     }
 
     [Fact]
-    public void NameResolver_IntoConstCreatesConstVariable()
+    public void NameResolver_IntoCreatesImmutableVariable()
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            subshell into const status
+            subshell into status
                 echo "hi"
             end
             status = 1
@@ -301,7 +301,7 @@ public class NameResolverTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            const status = 0
+            let status = 0
             wait into status
             """);
 
@@ -316,7 +316,7 @@ public class NameResolverTests
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            wait into let status
+            wait into status
             let next = status + 1
             """);
 
@@ -642,30 +642,29 @@ public class NameResolverTests
     }
 
     [Fact]
-    public void NameResolver_RejectsIntoConstInsideLoops()
+    public void NameResolver_AllowsIntoCreationInsideLoops()
     {
         var program = TestCompiler.ParseOrThrow(
             """
             for i in 1..3
-                wait into const status
+                wait into status
             end
             """);
 
         var diagnostics = new DiagnosticBag();
         new NameResolver(diagnostics).Analyze(program);
 
-        Assert.Contains(
+        Assert.DoesNotContain(
             diagnostics.GetErrors(),
-            e => e.Code == DiagnosticCodes.InvalidIntoConstContext
-                 && e.Message.Contains("not allowed inside repeated contexts", StringComparison.Ordinal));
+            e => e.Code == DiagnosticCodes.InvalidIntoConstContext);
     }
 
     [Fact]
-    public void NameResolver_AllowsIntoConstOutsideRepeatedContexts()
+    public void NameResolver_AllowsIntoCreationOutsideRepeatedContexts()
     {
         var program = TestCompiler.ParseOrThrow(
             """
-            wait into const status
+            wait into status
             """);
 
         var diagnostics = new DiagnosticBag();

@@ -82,7 +82,7 @@ internal sealed class ConstantFolder
         {
             case VariableDeclaration variableDeclaration:
                 variableDeclaration.Value = FoldExpression(variableDeclaration.Value);
-                if (variableDeclaration.Kind == VariableDeclaration.VarKind.Const)
+                if (variableDeclaration.Kind == VariableDeclaration.VarKind.Let)
                     BindConst(variableDeclaration.Name, variableDeclaration.Value);
                 else
                     Unbind(variableDeclaration.Name);
