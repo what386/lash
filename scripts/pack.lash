@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-let INPUT_ROOT = "./target/release"
+let INPUT_ROOT = "./build"
 let OUTPUT_DIR = "./dist"
 
 mkdir -p "$OUTPUT_DIR"

@@ -12,7 +12,7 @@ readonly NC = "\033[0m"
 // Build configuration
 readonly PROJECT_NAME = "Lash"
 readonly CONFIGURATION = "Release"
-readonly OUTPUT_DIR = "./target/release"
+readonly OUTPUT_DIR = "./build"
 readonly PROJECTS = [
     "lash:./src/Lash.Cli/Lash.Cli.csproj",
     "lashc:./src/Lash.Compiler/Lash.Compiler.csproj",
