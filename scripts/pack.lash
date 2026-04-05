@@ -10,7 +10,7 @@ cd "$INPUT_ROOT"
 
 var packed = 0
 for dir in ./*
-    let archive = "../../dist/" + dir + ".tar.gz"
+    let archive = "../dist/" + dir + ".tar.gz"
 
     echo "Packing:" $dir "->" $archive
     tar -czf "$archive" "$dir"
