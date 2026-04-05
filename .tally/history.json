@@ -552,5 +552,19 @@
       "completed_at": "2026-04-05T02:55:05.535667869Z"
     },
     "version": null
+  },
+  {
+    "change": {
+      "description": "Document simplified preprocessor @define/@if syntax",
+      "priority": "Medium",
+      "tags": [
+        "feature",
+        "language",
+        "docs"
+      ],
+      "commit": null,
+      "completed_at": "2026-04-05T02:55:06.491803292Z"
+    },
+    "version": null
   }
 ]
