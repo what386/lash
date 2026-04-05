@@ -108,6 +108,43 @@ internal sealed class DirectiveExpressionEvaluator
                 return true;
             }
 
+            if (Current.Kind == TokenKind.Identifier
+                && !string.Equals(Current.Text, "true", StringComparison.Ordinal)
+                && !string.Equals(Current.Text, "false", StringComparison.Ordinal))
+            {
+                var identifier = Advance().Text;
+
+                if (Match(TokenKind.EqualEqual))
+                {
+                    var leftValue = ResolveIdentifierValue(identifier);
+                    if (!TryParseValue(out var right, out error))
+                    {
+                        value = false;
+                        return false;
+                    }
+
+                    value = leftValue.ValueEquals(right);
+                    return true;
+                }
+
+                if (Match(TokenKind.BangEqual))
+                {
+                    var leftValue = ResolveIdentifierValue(identifier);
+                    if (!TryParseValue(out var right, out error))
+                    {
+                        value = false;
+                        return false;
+                    }
+
+                    value = !leftValue.ValueEquals(right);
+                    return true;
+                }
+
+                value = symbols.ContainsKey(identifier);
+                error = string.Empty;
+                return true;
+            }
+
             if (!TryParseValue(out var left, out error))
             {
                 value = false;
@@ -148,35 +185,6 @@ internal sealed class DirectiveExpressionEvaluator
             if (Current.Kind == TokenKind.Identifier)
             {
                 var identifier = Advance().Text;
-
-                if (string.Equals(identifier, "defined", StringComparison.Ordinal))
-                {
-                    if (!Match(TokenKind.LeftParen))
-                    {
-                        error = "Expected '(' after 'defined'.";
-                        value = default;
-                        return false;
-                    }
-
-                    if (Current.Kind != TokenKind.Identifier)
-                    {
-                        error = "Expected symbol name inside defined(...).";
-                        value = default;
-                        return false;
-                    }
-
-                    var symbol = Advance().Text;
-                    if (!Match(TokenKind.RightParen))
-                    {
-                        error = "Expected ')' after defined(symbol).";
-                        value = default;
-                        return false;
-                    }
-
-                    value = DirectiveValue.FromBool(symbols.ContainsKey(symbol));
-                    error = string.Empty;
-                    return true;
-                }
 
                 if (string.Equals(identifier, "true", StringComparison.Ordinal))
                 {
@@ -229,6 +237,14 @@ internal sealed class DirectiveExpressionEvaluator
             value = default;
             error = $"Unexpected token '{Current.Text}'.";
             return false;
+        }
+
+        private DirectiveValue ResolveIdentifierValue(string identifier)
+        {
+            if (!symbols.TryGetValue(identifier, out var rawSymbolValue))
+                return DirectiveValue.Undefined;
+
+            return DirectiveValue.FromRawSymbol(rawSymbolValue);
         }
 
         private Token Current => index < tokens.Count ? tokens[index] : tokens[^1];

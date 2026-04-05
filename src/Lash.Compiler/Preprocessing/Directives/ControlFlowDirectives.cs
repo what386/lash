@@ -11,7 +11,7 @@ internal sealed class IfDirective : IPreprocessorDirective
         if (string.IsNullOrWhiteSpace(directive.Arguments))
         {
             state.AddError(
-                DiagnosticMessage.WithTip("@if requires a condition expression.", "Example: @if defined(NAME) && NAME == \"true\""),
+                DiagnosticMessage.WithTip("@if requires a condition expression.", "Example: @if NAME && NAME == true"),
                 DiagnosticCodes.PreprocessorDirectiveSyntax);
             state.PushConditional(new ConditionalFrame(state.IsCurrentActive, false, false, false, state.CurrentLine, state.CurrentColumn));
             return;
@@ -20,7 +20,7 @@ internal sealed class IfDirective : IPreprocessorDirective
         if (!state.TryEvaluateCondition(directive.Arguments, out var condition, out var error))
         {
             state.AddError(
-                DiagnosticMessage.WithTip($"Invalid @if expression: {error}", "Use defined(NAME), literals, &&, ||, !, ==, !=, and parentheses."),
+                DiagnosticMessage.WithTip($"Invalid @if expression: {error}", "Use symbol names, literals, &&, ||, !, ==, !=, and parentheses."),
                 DiagnosticCodes.PreprocessorDirectiveSyntax);
             state.PushConditional(new ConditionalFrame(state.IsCurrentActive, false, false, false, state.CurrentLine, state.CurrentColumn));
             return;

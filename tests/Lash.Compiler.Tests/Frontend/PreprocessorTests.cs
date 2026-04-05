@@ -166,18 +166,84 @@ public class PreprocessorTests
     }
 
     [Fact]
-    public void Preprocessor_DirectiveIf_SupportsDefinedWithDefine()
+    public void Preprocessor_DirectiveIf_BareSymbolChecksDefinitionPresence()
     {
         var program = TestCompiler.ParseOrThrow(
             """
             @define TARGET linux
-            @if defined(TARGET) && TARGET == "linux"
+            @if TARGET
             let platform = "ok"
             @end
             """);
 
         var declaration = Assert.IsType<VariableDeclaration>(Assert.Single(program.Statements));
         Assert.Equal("platform", declaration.Name);
+    }
+
+    [Fact]
+    public void Preprocessor_DirectiveIf_BareSymbolDoesNotInspectStoredBooleanValue()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            @define FEATURE false
+            @if FEATURE
+            let enabled = "yes"
+            @end
+            """);
+
+        var declaration = Assert.IsType<VariableDeclaration>(Assert.Single(program.Statements));
+        Assert.Equal("enabled", declaration.Name);
+    }
+
+    [Fact]
+    public void Preprocessor_DirectiveIf_EqualityUsesDefinedSymbolValue()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            @define TARGET linux
+            @if TARGET == "linux"
+            let platform = "ok"
+            @end
+            """);
+
+        var declaration = Assert.IsType<VariableDeclaration>(Assert.Single(program.Statements));
+        Assert.Equal("platform", declaration.Name);
+    }
+
+    [Fact]
+    public void Preprocessor_DirectiveIf_UndefinedSymbolDoesNotMatchEquality()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            @if TARGET == "linux"
+            let platform = "no"
+            @else
+            let platform = "ok"
+            @end
+            """);
+
+        var declaration = Assert.IsType<VariableDeclaration>(Assert.Single(program.Statements));
+        Assert.Equal("platform", declaration.Name);
+        var value = Assert.IsType<LiteralExpression>(declaration.Value);
+        Assert.Equal("ok", Assert.IsType<string>(value.Value));
+    }
+
+    [Fact]
+    public void Preprocessor_DirectiveIf_DefinedSyntaxReportsError()
+    {
+        var result = TestCompiler.LoadProgram(
+            """
+            @define TARGET linux
+            @if defined(TARGET)
+            let platform = "ok"
+            @end
+            """);
+
+        Assert.False(result.Success);
+        Assert.Contains(
+            result.Diagnostics.GetErrors(),
+            e => e.Code == DiagnosticCodes.PreprocessorDirectiveSyntax
+                 && e.Message.Contains("Invalid @if expression", StringComparison.Ordinal));
     }
 
     [Fact]

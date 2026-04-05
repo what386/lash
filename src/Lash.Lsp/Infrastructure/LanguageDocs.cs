@@ -34,7 +34,7 @@ internal sealed class LanguageDocs
         ["untrap"] = "`untrap SIGNAL` removes a trap handler (lowers to `trap - SIGNAL`).",
         ["argv"] = "`argv` is the script argument array.",
 
-        ["@if"] = "Preprocessor conditional start. Evaluated at compile-time.",
+        ["@if"] = "Preprocessor conditional start. Evaluated at compile-time. Bare symbols test whether they are defined; use `==` or `!=` to compare defined values.",
         ["@elif"] = "Preprocessor conditional branch.",
         ["@else"] = "Preprocessor conditional fallback branch.",
         ["@end"] = "Closes preprocessor blocks (`@if`, `@raw`).",

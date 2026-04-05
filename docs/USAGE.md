@@ -171,7 +171,7 @@ echo $"exit: {status}"
 ```lash
 @define SHOW_MESSAGE true
 
-@if defined(SHOW_MESSAGE) && SHOW_MESSAGE == "true"
+@if SHOW_MESSAGE == true
 echo "compiled with message enabled"
 @end
 ```

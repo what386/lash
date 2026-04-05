@@ -25,10 +25,10 @@ Lash is a lua-like language that transpiles directly to Bash with minimal runtim
   - diagnostics: `@error`, `@warning`
 - Directives are compile-time only and do not exist at runtime.
 - `@if`/`@elif` conditions support:
-  - `defined(NAME)`
   - boolean literals (`true`, `false`)
   - numeric/string literals
-  - symbol names from `@define`
+  - symbol names from `@define` as presence checks
+  - symbol comparisons such as `NAME == true` or `NAME == "linux"`
   - operators: `!`, `&&`, `||`, `==`, `!=`, and parentheses
 - `@define` accepts:
   - `@define NAME`
