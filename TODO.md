@@ -35,6 +35,9 @@
 - [ ] Add condition-only regex match operator to Lash (high) #feature #language #compiler
       @created 2026-04-07 21:33
 
+- [ ] Add multi-pattern switch cases to Lash #feature #language #compiler
+      @created 2026-04-07 21:34
+
 
 ## Completed
 
