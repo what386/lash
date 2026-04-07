@@ -675,5 +675,19 @@
       "completed_at": "2026-04-07T21:40:48.692338555Z"
     },
     "version": null
+  },
+  {
+    "change": {
+      "description": "Add multi-pattern switch cases to Lash",
+      "priority": "Medium",
+      "tags": [
+        "feature",
+        "language",
+        "compiler"
+      ],
+      "commit": null,
+      "completed_at": "2026-04-07T21:40:56.152480450Z"
+    },
+    "version": null
   }
 ]
