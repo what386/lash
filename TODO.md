@@ -5,6 +5,9 @@
 
 ## Tasks
 
+- [ ] Serialize per-RID tool publishing in build script to avoid project-output races (high) #bug #build #scripts
+      @created 2026-04-07 22:30
+
 
 ## Completed
 
