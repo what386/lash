@@ -129,7 +129,7 @@ switchStatement
     ;
 
 switchCaseClause
-    : 'case' ('_' | expression) ':' statement*
+    : 'case' ('_' | expression (',' expression)*) ':' statement*
     ;
 
 returnStatement
@@ -167,11 +167,11 @@ bindingName
     ;
 
 breakStatement
-    : 'break'
+    : 'break' INTEGER?
     ;
 
 continueStatement
-    : 'continue'
+    : 'continue' INTEGER?
     ;
 
 expressionStatement
@@ -188,7 +188,7 @@ expression
     | expression ('*' | '/' | '%') expression                    # MultiplicativeExpr
     | expression ('+' | '-') expression                          # AdditiveExpr
     | expression ('..' ) expression                              # RangeExpr
-    | expression ('==' | '!=' | '<' | '>' | '<=' | '>=') expression # ComparisonExpr
+    | expression ('==' | '!=' | '=~' | '<' | '>' | '<=' | '>=') expression # ComparisonExpr
     | expression ('&&' | '||') expression                        # LogicalExpr
     ;
 
@@ -198,6 +198,7 @@ primaryExpression
     | enumAccess
     | variableReference
     | arrayLiteral
+    | mapLiteral
     | '(' expression ')'
     ;
 
@@ -207,6 +208,14 @@ variableReference
 
 arrayLiteral
     : '[' (expression (',' expression)*)? ']'
+    ;
+
+mapLiteral
+    : '{' (mapEntry (',' mapEntry)*)? '}'
+    ;
+
+mapEntry
+    : expression ':' expression
     ;
 
 argumentList
