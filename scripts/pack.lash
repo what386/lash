@@ -4,21 +4,52 @@ set -euo pipefail
 
 let INPUT_ROOT = "./build"
 let OUTPUT_DIR = "./dist"
+let MAX_PARALLEL = 4
+
+fn wait_for_batch(pending)
+    for job in pending
+        let pid = $(printf '%s' $job | cut -d: -f1)
+        let dir = $(printf '%s' $job | cut -d: -f2-)
+
+        set +e
+        wait pid into status
+        set -e
+
+        if status != 0
+            echo "Packing failed:" $dir
+            exit $status
+        end
+    end
+end
 
 mkdir -p "$OUTPUT_DIR"
 cd "$INPUT_ROOT"
 
 var packed = 0
+var active_jobs = []
 for dir in ./*
     let archive = "../dist/" + dir + ".tar.gz"
 
-    echo "Packing:" $dir "->" $archive
-    tar -czf "$archive" "$dir"
+    subshell into pack_pid
+        echo "Packing:" $dir "->" $archive
+        tar -czf "$archive" "$dir"
+    end &
+
+    active_jobs += [pack_pid + ":" + dir]
     packed = packed + 1
+
+    if #active_jobs >= MAX_PARALLEL
+        wait_for_batch(active_jobs)
+        active_jobs = []
+    end
+end
+
+if #active_jobs > 0
+    wait_for_batch(active_jobs)
 end
 
 if packed == 0
-    echo "No directories found under ./target/release"
+    echo "No directories found under ./build"
 else
     echo $"Packed {packed} directories."
 end

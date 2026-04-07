@@ -200,6 +200,12 @@ fn build_tool_for_platform(tool_name, project_path, rid, bundle_dir)
         publish_args += ["-p:PublishReadyToRun=True"]
     end
 
+    if !should_trim_tool(tool_name)
+        if ENABLE_TRIMMING
+            echo -e "${YELLOW}! Skipping trimming for ${tool_name}${NC}"
+        end
+    end
+
     if should_trim_tool(tool_name)
         publish_args += [
             "-p:PublishTrimmed=True",
@@ -239,7 +245,6 @@ end
 
 fn build_platform(rid, description)
     let bundle_dir = OUTPUT_DIR + "/" + get_output_dirname(rid)
-    var publish_jobs = []
 
     echo ""
     echo -e "${YELLOW}Building for $description ($rid)...${NC}"
@@ -247,28 +252,19 @@ fn build_platform(rid, description)
     rm -rf "$bundle_dir"
     mkdir -p "$bundle_dir"
 
+    // Publish tools serially for a given RID. `lashlsp` references
+    // `Lash.Compiler` and `Lash.Formatter`, and parallel `dotnet publish`
+    // processes race on shared project bin/obj outputs.
     for entry in PROJECTS
         let tool_name = $(printf '%s' $entry | cut -d: -f1)
         let project_path = $(printf '%s' $entry | cut -d: -f2-)
-        subshell into publish_pid
+
+        subshell into publish_status
             build_tool_for_platform(tool_name, project_path, rid, bundle_dir)
-        end &
-
-        publish_jobs += [publish_pid + ":" + tool_name]
-    end
-
-    for job in publish_jobs
-        let pid = $(printf '%s' $job | cut -d: -f1)
-        let tool_name = $(printf '%s' $job | cut -d: -f2-)
-
-        // `wait` can return a non-zero child status, so disable errexit around it
-        // and let the explicit status check below decide whether to stop.
-        sh "set +e"
-        wait pid into wait_status
-        sh "set -e"
-        if wait_status != 0
+        end
+        if publish_status != 0
             echo -e "${RED}✗ Build failed for ${tool_name} (${rid})${NC}"
-            exit $wait_status
+            exit $publish_status
         end
     end
 
