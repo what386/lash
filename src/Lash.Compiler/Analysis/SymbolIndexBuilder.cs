@@ -92,7 +92,10 @@ internal sealed class SymbolIndexBuilder
                 foreach (var clause in switchStatement.Cases)
                 {
                     if (!clause.IsWildcard)
-                        VisitExpression(clause.Pattern);
+                    {
+                        foreach (var pattern in clause.Patterns)
+                            VisitExpression(pattern);
+                    }
                     VisitScopedBlock(clause.Body);
                 }
                 break;
@@ -280,6 +283,13 @@ internal sealed class SymbolIndexBuilder
             case ArrayLiteral arrayLiteral:
                 foreach (var element in arrayLiteral.Elements)
                     VisitExpression(element);
+                break;
+            case MapLiteral mapLiteral:
+                foreach (var entry in mapLiteral.Entries)
+                {
+                    VisitExpression(entry.Key);
+                    VisitExpression(entry.Value);
+                }
                 break;
             case LiteralExpression:
             case NullLiteral:
