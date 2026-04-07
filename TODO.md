@@ -5,9 +5,6 @@
 
 ## Tasks
 
-- [ ] Parallelize archive creation in pack script with bounded concurrency #feature #build #scripts
-      @created 2026-04-07 22:50
-
 
 ## Completed
 
