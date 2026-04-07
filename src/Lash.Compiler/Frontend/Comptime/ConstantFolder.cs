@@ -265,7 +265,8 @@ internal sealed class ConstantFolder
             var branchScopes = new List<Dictionary<string, Binding>>();
             foreach (var clause in switchStatement.Cases)
             {
-                clause.Pattern = FoldExpression(clause.Pattern);
+                for (int patternIndex = 0; patternIndex < clause.Patterns.Count; patternIndex++)
+                    clause.Patterns[patternIndex] = FoldExpression(clause.Patterns[patternIndex]);
                 clause.Body = FoldBranchWithBaseline(clause.Body, baseline, out var clauseScope);
                 branchScopes.Add(clauseScope);
             }
@@ -278,17 +279,19 @@ internal sealed class ConstantFolder
         for (int i = 0; i < switchStatement.Cases.Count; i++)
         {
             var clause = switchStatement.Cases[i];
-            clause.Pattern = FoldExpression(clause.Pattern);
+            for (int patternIndex = 0; patternIndex < clause.Patterns.Count; patternIndex++)
+                clause.Patterns[patternIndex] = FoldExpression(clause.Patterns[patternIndex]);
             clause.Body = FoldBranchWithBaseline(clause.Body, baseline, out var clauseScope);
 
-            if (!TryEvaluateLiteral(clause.Pattern, out var patternLiteral) || !IsExactCasePattern(clause.Pattern))
+            if (!TryGetExactCasePatternLiterals(clause.Patterns, out var patternLiterals))
             {
                 var remaining = new List<SwitchCaseClause>();
                 remaining.Add(clause);
                 for (int j = i + 1; j < switchStatement.Cases.Count; j++)
                 {
                     var later = switchStatement.Cases[j];
-                    later.Pattern = FoldExpression(later.Pattern);
+                    for (int patternIndex = 0; patternIndex < later.Patterns.Count; patternIndex++)
+                        later.Patterns[patternIndex] = FoldExpression(later.Patterns[patternIndex]);
                     later.Body = FoldBranchWithBaseline(later.Body, baseline, out _);
                     remaining.Add(later);
                 }
@@ -298,7 +301,7 @@ internal sealed class ConstantFolder
                 return new List<Statement> { switchStatement };
             }
 
-            if (AreLiteralsEqual(switchLiteral, patternLiteral))
+            if (patternLiterals.Any(patternLiteral => AreLiteralsEqual(switchLiteral, patternLiteral)))
             {
                 ReplaceCurrentScope(FilterScopeToBaseline(clauseScope, baseline.Keys));
                 return clause.Body;
@@ -370,6 +373,14 @@ internal sealed class ConstantFolder
                 for (int i = 0; i < arrayLiteral.Elements.Count; i++)
                     arrayLiteral.Elements[i] = FoldExpression(arrayLiteral.Elements[i], pureDepth);
                 return arrayLiteral;
+
+            case MapLiteral mapLiteral:
+                for (int i = 0; i < mapLiteral.Entries.Count; i++)
+                {
+                    mapLiteral.Entries[i].Key = FoldExpression(mapLiteral.Entries[i].Key, pureDepth);
+                    mapLiteral.Entries[i].Value = FoldExpression(mapLiteral.Entries[i].Value, pureDepth);
+                }
+                return mapLiteral;
 
             case FunctionCallExpression functionCall:
                 for (int i = 0; i < functionCall.Arguments.Count; i++)
@@ -896,6 +907,25 @@ internal sealed class ConstantFolder
         return text.IndexOfAny(['*', '?', '[', ']']) < 0;
     }
 
+    private static bool TryGetExactCasePatternLiterals(
+        IReadOnlyList<Expression> patterns,
+        out List<LiteralExpression> literals)
+    {
+        literals = new List<LiteralExpression>(patterns.Count);
+        foreach (var pattern in patterns)
+        {
+            if (!TryEvaluateLiteral(pattern, out var literal) || !IsExactCasePattern(pattern))
+            {
+                literals.Clear();
+                return false;
+            }
+
+            literals.Add(literal);
+        }
+
+        return true;
+    }
+
     private static bool AreLiteralsEqual(LiteralExpression left, LiteralExpression right)
     {
         if (left.LiteralType.PrimitiveKind != right.LiteralType.PrimitiveKind)
@@ -1247,6 +1277,11 @@ internal sealed class ConstantFolder
             case ArrayLiteral array:
                 return array.Elements.All(e => IsPureExpression(e, parameters, knownPureFunctions, currentFunction));
 
+            case MapLiteral map:
+                return map.Entries.All(entry =>
+                    IsPureExpression(entry.Key, parameters, knownPureFunctions, currentFunction)
+                    && IsPureExpression(entry.Value, parameters, knownPureFunctions, currentFunction));
+
             case FunctionCallExpression call:
                 if (string.Equals(call.FunctionName, currentFunction, StringComparison.Ordinal))
                     return false;
@@ -1274,6 +1309,10 @@ internal sealed class ConstantFolder
                                              && GetExpressionPurity(index.Index) == ExpressionPurity.Pure =>
                 ExpressionPurity.Pure,
             ArrayLiteral array when array.Elements.All(element => GetExpressionPurity(element) == ExpressionPurity.Pure) =>
+                ExpressionPurity.Pure,
+            MapLiteral map when map.Entries.All(entry =>
+                                    GetExpressionPurity(entry.Key) == ExpressionPurity.Pure
+                                    && GetExpressionPurity(entry.Value) == ExpressionPurity.Pure) =>
                 ExpressionPurity.Pure,
             FunctionCallExpression call when pureFunctions.ContainsKey(call.FunctionName)
                                             && call.Arguments.All(argument => GetExpressionPurity(argument) == ExpressionPurity.Pure) =>
