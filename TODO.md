@@ -32,6 +32,9 @@
 - [ ] Synchronize Lash docs with implemented language surface (high) #feature #language #docs
       @created 2026-04-07 21:16
 
+- [ ] Add condition-only regex match operator to Lash (high) #feature #language #compiler
+      @created 2026-04-07 21:33
+
 
 ## Completed
 
