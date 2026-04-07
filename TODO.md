@@ -11,9 +11,6 @@
 - [ ] Synchronize Lash docs with implemented language surface (high) #feature #language #docs
       @created 2026-04-07 21:15
 
-- [ ] Add loop-depth operands for break and continue #feature #language #compiler
-      @created 2026-04-07 21:16
-
 - [ ] Add condition-only regex match operator to Lash (high) #feature #language #compiler
       @created 2026-04-07 21:16
 
@@ -52,5 +49,9 @@
 
 - [x] Add loop-depth operands for break and continue #feature #language #compiler
       @created 2026-04-07 21:15
+      @completed 2026-04-07 21:40
+
+- [x] Add loop-depth operands for break and continue #feature #language #compiler
+      @created 2026-04-07 21:16
       @completed 2026-04-07 21:40
 
