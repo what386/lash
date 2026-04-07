@@ -217,7 +217,7 @@ fn build_tool_for_platform(tool_name, project_path, rid, bundle_dir)
     if src_file == "" || !file_exists(src_file)
         echo -e "${RED}✗ Build completed but executable not found for ${tool_name}${NC}"
         rm -rf "$temp_dir"
-        sh "return 1"
+        exit 1
     end
 
     var extension = ""
@@ -268,7 +268,7 @@ fn build_platform(rid, description)
         sh "set -e"
         if wait_status != 0
             echo -e "${RED}✗ Build failed for ${tool_name} (${rid})${NC}"
-            sh $"return {wait_status}"
+            exit $wait_status
         end
     end
 
