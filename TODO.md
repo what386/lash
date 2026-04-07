@@ -5,9 +5,6 @@
 
 ## Tasks
 
-- [ ] Add first-class associative map literals to Lash (high) #feature #language #compiler
-      @created 2026-04-07 21:15
-
 - [ ] Add loop-depth operands for break and continue #feature #language #compiler
       @created 2026-04-07 21:15
 
@@ -50,4 +47,8 @@
       @created 2026-04-05 02:54
       @completed 2026-04-05 02:55
       @completed_version 0.14.0
+
+- [x] Add first-class associative map literals to Lash (high) #feature #language #compiler
+      @created 2026-04-07 21:15
+      @completed 2026-04-07 21:39
 
