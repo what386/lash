@@ -28,6 +28,7 @@ internal sealed partial class ExpressionGenerator
             EnumAccessExpression enumAccess => $"\"{owner.EscapeString(enumAccess.EnumName + enumAccess.MemberName)}\"",
             IndexAccessExpression index => GenerateIndexAccess(index),
             ArrayLiteral array => GenerateArrayLiteral(array),
+            MapLiteral map => GenerateMapLiteral(map),
             PipeExpression pipe => GeneratePipeExpression(pipe),
             RedirectExpression => HandleUnsupportedExpression(expr, "redirect as value"),
             RangeExpression => HandleUnsupportedExpression(expr, "range as value"),
@@ -66,6 +67,15 @@ internal sealed partial class ExpressionGenerator
     {
         var elements = string.Join(" ", array.Elements.Select(GenerateExpression));
         return $"({elements})";
+    }
+
+    internal string GenerateMapLiteral(MapLiteral map)
+    {
+        var entries = string.Join(
+            " ",
+            map.Entries.Select(entry =>
+                $"[{GenerateCollectionIndex(entry.Key, preferString: true)}]={GenerateExpression(entry.Value)}"));
+        return $"({entries})";
     }
 
     internal string GenerateCollectionIndex(Expression index, bool preferString)

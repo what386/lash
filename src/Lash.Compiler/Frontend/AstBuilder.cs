@@ -220,16 +220,23 @@ public class AstBuilder : LashBaseVisitor<AstNode>
             {
                 Line = clause.Start.Line,
                 Column = clause.Start.Column,
-                IsWildcard = isWildcard,
-                Pattern = isWildcard
-                    ? new NullLiteral
-                    {
-                        Line = clause.Start.Line,
-                        Column = clause.Start.Column,
-                        Type = ExpressionTypes.Unknown
-                    }
-                    : Visit(clause.expression()) as Expression ?? new NullLiteral()
+                IsWildcard = isWildcard
             };
+
+            if (!isWildcard)
+            {
+                foreach (var patternContext in clause.expression())
+                {
+                    caseClause.Patterns.Add(
+                        Visit(patternContext) as Expression
+                        ?? new NullLiteral
+                        {
+                            Line = clause.Start.Line,
+                            Column = clause.Start.Column,
+                            Type = ExpressionTypes.Unknown
+                        });
+                }
+            }
 
             foreach (var stmt in clause.statement())
             {
@@ -374,12 +381,22 @@ public class AstBuilder : LashBaseVisitor<AstNode>
 
     public override AstNode VisitBreakStatement(LashParser.BreakStatementContext context)
     {
-        return new BreakStatement { Line = context.Start.Line, Column = context.Start.Column };
+        return new BreakStatement
+        {
+            Line = context.Start.Line,
+            Column = context.Start.Column,
+            Depth = context.INTEGER() != null ? int.Parse(context.INTEGER()!.GetText()) : null
+        };
     }
 
     public override AstNode VisitContinueStatement(LashParser.ContinueStatementContext context)
     {
-        return new ContinueStatement { Line = context.Start.Line, Column = context.Start.Column };
+        return new ContinueStatement
+        {
+            Line = context.Start.Line,
+            Column = context.Start.Column,
+            Depth = context.INTEGER() != null ? int.Parse(context.INTEGER()!.GetText()) : null
+        };
     }
 
     public override AstNode VisitExpressionStatement(LashParser.ExpressionStatementContext context)
@@ -494,6 +511,9 @@ public class AstBuilder : LashBaseVisitor<AstNode>
 
         if (context.arrayLiteral() != null)
             return Visit(context.arrayLiteral());
+
+        if (context.mapLiteral() != null)
+            return Visit(context.mapLiteral());
 
         if (context.expression() != null)
             return Visit(context.expression());
@@ -721,6 +741,28 @@ public class AstBuilder : LashBaseVisitor<AstNode>
         }
 
         return array;
+    }
+
+    public override AstNode VisitMapLiteral(LashParser.MapLiteralContext context)
+    {
+        var map = new MapLiteral
+        {
+            Line = context.Start.Line,
+            Column = context.Start.Column
+        };
+
+        foreach (var entryContext in context.mapEntry())
+        {
+            map.Entries.Add(new MapLiteralEntry
+            {
+                Line = entryContext.Start.Line,
+                Column = entryContext.Start.Column,
+                Key = Visit(entryContext.expression(0)) as Expression ?? new NullLiteral(),
+                Value = Visit(entryContext.expression(1)) as Expression ?? new NullLiteral()
+            });
+        }
+
+        return map;
     }
 
     public override AstNode VisitIndexAccess(LashParser.IndexAccessContext context)

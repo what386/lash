@@ -150,7 +150,7 @@ internal sealed partial class StatementGenerator
         foreach (var caseClause in switchStatement.Cases)
         {
             owner.EmitLine();
-            owner.Emit($"{(caseClause.IsWildcard ? "*" : GenerateSwitchPattern(caseClause.Pattern))})");
+            owner.Emit($"{(caseClause.IsWildcard ? "*" : GenerateSwitchPatterns(caseClause.Patterns))})");
             owner.IndentLevel++;
 
             foreach (var statement in caseClause.Body)
@@ -167,6 +167,11 @@ internal sealed partial class StatementGenerator
         owner.IndentLevel--;
         owner.EmitLine();
         owner.Emit("esac");
+    }
+
+    private string GenerateSwitchPatterns(IReadOnlyList<Expression> patterns)
+    {
+        return string.Join("|", patterns.Select(GenerateSwitchPattern));
     }
 
     private string GenerateSwitchPattern(Expression pattern)
@@ -245,7 +250,7 @@ internal sealed partial class StatementGenerator
 
     private static bool IsComparisonOperator(string op)
     {
-        return op is "==" or "!=" or "<" or ">" or "<=" or ">=";
+        return op is "==" or "!=" or "=~" or "<" or ">" or "<=" or ">=";
     }
 
     private string GenerateComparisonCondition(BinaryExpression comparison)
@@ -257,10 +262,63 @@ internal sealed partial class StatementGenerator
             return $"[[ {leftString} {comparison.Operator} {rightString} ]]";
         }
 
+        if (comparison.Operator == "=~")
+        {
+            var leftString = owner.GenerateExpression(comparison.Left);
+            var rightRegex = GenerateRegexOperand(comparison.Right);
+            return $"[[ {leftString} =~ {rightRegex} ]]";
+        }
+
         var left = owner.GenerateArithmeticExpression(comparison.Left);
         var right = owner.GenerateArithmeticExpression(comparison.Right);
 
         return $"(( {left} {comparison.Operator} {right} ))";
+    }
+
+    private string GenerateRegexOperand(Expression expression)
+    {
+        if (expression is LiteralExpression literal
+            && literal.LiteralType is PrimitiveType { PrimitiveKind: PrimitiveType.Kind.String }
+            && literal.Value is string text)
+        {
+            return EscapeRegexLiteral(text);
+        }
+
+        return owner.GenerateExpression(expression);
+    }
+
+    private static string EscapeRegexLiteral(string pattern)
+    {
+        if (pattern.Length == 0)
+            return "\"\"";
+
+        var builder = new System.Text.StringBuilder(pattern.Length);
+        foreach (var ch in pattern)
+        {
+            switch (ch)
+            {
+                case ' ':
+                    builder.Append("\\ ");
+                    break;
+                case '\t':
+                    builder.Append("\\t");
+                    break;
+                case '\n':
+                    builder.Append("\\n");
+                    break;
+                case '$':
+                case '\\':
+                case '"':
+                case '\'':
+                    builder.Append('\\').Append(ch);
+                    break;
+                default:
+                    builder.Append(ch);
+                    break;
+            }
+        }
+
+        return builder.ToString();
     }
 
     private string GenerateNumericTruthinessCondition(Expression condition)

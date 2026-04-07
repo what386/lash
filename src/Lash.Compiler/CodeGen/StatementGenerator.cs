@@ -81,12 +81,12 @@ internal sealed partial class StatementGenerator
                 GenerateWaitStatement(waitStatement);
                 break;
 
-            case BreakStatement:
-                owner.Emit("break");
+            case BreakStatement breakStatement:
+                owner.Emit(breakStatement.Depth is int breakDepth ? $"break {breakDepth}" : "break");
                 break;
 
-            case ContinueStatement:
-                owner.Emit("continue");
+            case ContinueStatement continueStatement:
+                owner.Emit(continueStatement.Depth is int continueDepth ? $"continue {continueDepth}" : "continue");
                 break;
 
             case ExpressionStatement exprStmt:
