@@ -233,9 +233,17 @@ module.exports = grammar({
 
     case_clause: $ => seq(
       "case",
-      field("pattern", choice($.wildcard_pattern, $.expression)),
+      choice(
+        field("wildcard", $.wildcard_pattern),
+        $.case_pattern_list,
+      ),
       ":",
       field("body", repeat($.statement)),
+    ),
+
+    case_pattern_list: $ => seq(
+      field("pattern", $.expression),
+      repeat(seq(",", field("pattern", $.expression))),
     ),
 
     wildcard_pattern: _ => "_",
@@ -318,8 +326,14 @@ module.exports = grammar({
       optional(field("amount", $.expression)),
     )),
 
-    break_statement:    _ => "break",
-    continue_statement: _ => "continue",
+    break_statement: $ => prec.right(seq(
+      "break",
+      optional(field("depth", $.integer)),
+    )),
+    continue_statement: $ => prec.right(seq(
+      "continue",
+      optional(field("depth", $.integer)),
+    )),
 
     // -------------------------------------------------------------------------
     // Command statement
@@ -420,7 +434,7 @@ module.exports = grammar({
 
     comparison_expression: $ => prec.left(4, seq(
       field("left",     $.expression),
-      field("operator", choice("==", "!=", "<=", ">=", "<", ">")),
+      field("operator", choice("==", "!=", "<=", ">=", "<", ">", "=~")),
       field("right",    $.expression),
     )),
 
@@ -466,6 +480,7 @@ module.exports = grammar({
       $.interpolated_multiline_string,
       $.multiline_string,
       $.array_literal,
+      $.map_literal,
       $.enum_access,
       $.function_call,
       seq("(", $.expression, ")"),
@@ -518,6 +533,21 @@ module.exports = grammar({
       "]",
     ),
 
+    map_literal: $ => seq(
+      "{",
+      optional(seq(
+        $.map_entry,
+        repeat(seq(",", $.map_entry)),
+      )),
+      "}",
+    ),
+
+    map_entry: $ => seq(
+      field("key", $.expression),
+      ":",
+      field("value", $.expression),
+    ),
+
     function_call: $ => prec(10, seq(
       field("name", $.identifier),
       "(",
@@ -563,6 +593,8 @@ module.exports = grammar({
       /[0-9]+\.[0-9]+/,
       /[0-9]+/,
     )),
+
+    integer: _ => token(/[0-9]+/),
 
     identifier: _ => /[a-zA-Z_][a-zA-Z0-9_]*/,
 
