@@ -17,9 +17,6 @@
 - [ ] Synchronize Lash docs with implemented language surface (high) #feature #language #docs
       @created 2026-04-07 21:16
 
-- [ ] Add condition-only regex match operator to Lash (high) #feature #language #compiler
-      @created 2026-04-07 21:33
-
 - [ ] Add multi-pattern switch cases to Lash #feature #language #compiler
       @created 2026-04-07 21:34
 
@@ -54,5 +51,9 @@
 
 - [x] Add condition-only regex match operator to Lash (high) #feature #language #compiler
       @created 2026-04-07 21:16
+      @completed 2026-04-07 21:40
+
+- [x] Add condition-only regex match operator to Lash (high) #feature #language #compiler
+      @created 2026-04-07 21:33
       @completed 2026-04-07 21:40
 
