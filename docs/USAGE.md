@@ -1,12 +1,11 @@
 # Lash Usage Guide
 
-This guide is a practical walkthrough of the language in small steps.
-For runnable full programs, see `examples/`.
+This guide walks through the currently implemented language in practical chunks.
 
 ## 1. Hello World
 
 ```lash
-#!/bin/env -S lash run
+#!/usr/bin/env -S lash run
 
 echo "Hello, Lash!"
 ```
@@ -17,91 +16,118 @@ Run it:
 lash run hello.lash
 ```
 
-## 2. Variables and Constants
+## 2. Variables, Constants, And Globals
 
 ```lash
 var name = "Lash"
-let version = "0.1"
+let version = "0.14"
 readonly channel = "stable"
+global var runs = 0
 
-echo $"{name} {version} {channel}"
+runs += 1
+echo $"{name} {version} {channel} / runs={runs}"
 ```
 
 - `var` is mutable.
-- `let` is compile-time immutable (no runtime `readonly` is emitted).
-- `readonly` is runtime shell-immutable and must include an initializer.
+- `let` is compile-time immutable.
+- `readonly` lowers to runtime shell immutability.
+- `global` forces declaration or assignment in global scope.
 
-## 3. Arithmetic
-
-```lash
-var a = 7
-var b = 3
-
-let sum = a + b
-let product = a * b
-let remainder = a % b
-
-echo $"sum: {sum}"
-echo $"product: {product}"
-echo $"remainder: {remainder}"
-```
-
-## 4. Conditionals
-
-```lash
-var score = 82
-
-if score >= 90
-    echo "A"
-elif score >= 80
-    echo "B"
-else
-    echo "C or below"
-end
-```
-
-## 5. Arrays and Loops
+## 3. Arrays, Maps, And Indexing
 
 ```lash
 let items = ["alpha", "beta", "gamma"]
+let meta = {"name": "lash", "shell": "bash"}
 
-let i = 0
+echo $"{items[0]} / {meta["name"]}"
+echo $"items={#items} meta={#meta}"
+```
+
+String-keyed containers lower to Bash associative arrays.
+
+## 4. Arithmetic And Updates
+
+```lash
+var n = 10
+n += 2
+n -= 1
+n *= 3
+n /= 2
+n %= 4
+n++
+n--
+
+echo "$n"
+```
+
+## 5. Conditionals, Tests, And Regex Matches
+
+```lash
+let branch = $(git rev-parse --abbrev-ref HEAD)
+let has_branch = $(test "-n \"${branch}\"")
+
+if branch =~ "^main$"
+    echo "protected"
+elif has_branch == "1"
+    echo $"other branch: {branch}"
+else
+    echo "detached"
+end
+```
+
+`=~` lowers to Bash regex matching and is currently supported in condition positions.
+
+## 6. Loops And Loop Control
+
+```lash
+let items = ["a", "b", "c"]
+var i = 0
+
 while i < #items
     echo $"{i}: {items[i]}"
-    i = i + 1
+    i++
 end
 
 until i == 0
-    i = i - 1
+    i--
 end
 
 for item in items
-    echo $"item: {item}"
+    echo $"for: {item}"
+end
+
+select choice in ["yes", "no"]
+    echo $"selected: {choice}"
+    break
 end
 ```
 
-## 6. Functions
+Nested loop control supports optional depths:
 
 ```lash
-fn square(n)
-    return n * n
-end
+var outer = 0
+var inner = 0
 
-let value = 12
-echo "square:" square(value)
+while outer < 10
+    outer++
+    inner = 0
+
+    while inner < 10
+        inner++
+        if inner == 3
+            continue 2
+        end
+    end
+end
 ```
 
-Functions support default parameters:
+## 7. Functions, Enums, And Switch
 
 ```lash
 fn greet(name, prefix = "hello")
     return $"{prefix}, {name}"
 end
-```
 
-## 7. Enums and Switch
-
-```lash
 enum Mode
     Dev
     Release
@@ -110,7 +136,7 @@ end
 let mode = Mode::Dev
 
 switch mode
-    case Mode::Dev:
+    case Mode::Dev, "debug":
         echo "debug settings"
     case Mode::Release:
         echo "optimized settings"
@@ -127,16 +153,21 @@ Run shell commands directly as statements:
 pwd
 ls -1
 set -euo pipefail
-declare release_channel=stable
-unset OLD_ENV
+shopt -s nullglob
+export RELEASE_CHANNEL=stable
+source ./env.sh
 ```
 
-Capture shell output into a Lash value:
+Capture shell output into Lash values:
 
 ```lash
 let branch = $(git rev-parse --abbrev-ref HEAD)
 echo $"branch: {branch}"
+```
 
+Use process substitution and stdin-string lowering:
+
+```lash
 fn feed()
     cat
 end
@@ -147,23 +178,35 @@ line2]]
 feed() <<- [[	line1
 	line2]]
 
-fn show(path)
-    cat $path
-end
-show(<(printf "ok\n"))
+diff <(sort left.txt) <(sort right.txt)
 ```
 
-`<<` is the single Lash stdin-string operator. For regular string expressions it lowers to Bash here-string form (`<<< ...`). For multiline literals (`[[...]]` / `$[[...]]`) it lowers to heredoc form (`<<...`). `<<-` is the tab-stripping variant and is intended for multiline literals.
-
-## 9. Subshells and Wait
+## 9. Process Control, Background Work, And Traps
 
 ```lash
+fn cleanup()
+    echo "done"
+end
+
+trap EXIT into cleanup()
+trap INT "echo interrupted"
+
+var pid = 0
+var status = 0
+var copid = 0
+
 subshell into pid
     sh "sleep 1"
 end &
 
+coproc into copid
+    sh "sleep 1"
+end
+
 wait pid into status
-echo $"exit: {status}"
+wait jobs
+untrap INT
+echo $"subshell={pid} coproc={copid} exit={status}"
 ```
 
 ## 10. Preprocessor Directives
@@ -174,16 +217,12 @@ echo $"exit: {status}"
 @if SHOW_MESSAGE == true
 echo "compiled with message enabled"
 @end
-```
 
-You can also import text at compile time:
-
-```lash
 @import "notes.txt" into notes
 echo $"{notes}"
 ```
 
-## 11. Running, Checking, Compiling
+## 11. Running, Checking, And Compiling
 
 Run a Lash file:
 
