@@ -1,62 +1,66 @@
 # Lash
 
-Lash is a Lua-like scripting language that transpiles to Bash.
+Lash is a Lua-like scripting language that lowers directly to Bash.
 
 This repository contains:
 
 - `lash`: CLI entrypoint
 - `lashc`: compiler (`.lash` -> `.sh`)
 - `lashfmt`: formatter
+- `lash-lsp`: language server
 
 ## Status
 
-Lash is under active development. Language details can evolve between versions.
+Lash is under active development. The current implemented surface is documented in:
 
-Current language reference: `language-spec.md`.
+- `docs/language-spec.md`
+- `docs/USAGE.md`
+
+Implemented language features include:
+
+- mutable, immutable, readonly, and global declarations
+- arrays and string-keyed map literals
+- functions, enums, `switch`, and Bash-oriented control flow
+- `for`, `select`, `while`, `until`, `break N`, and `continue N`
+- raw shell command statements, `$(...)`, process substitution, redirections, traps, background jobs, and `coproc`
 
 ## Requirements
 
-- .NET SDK (projects currently target `net10.0`)
-- Bash (for running generated scripts)
+- .NET SDK (`net10.0`)
+- Bash
 
 ## Quick Start
 
-Read the guided usage tour:
+Read the usage guide:
 
 ```bash
-cat USAGE.md
+cat docs/USAGE.md
 ```
 
-Run the fizzbuzz example:
+Run a Lash script:
 
 ```bash
-lash run run examples/fizzbuzz.lash 30
+lash run script.lash arg1 arg2
 ```
 
-Run the prime sieve example with a CLI arg:
+Check a script without emitting Bash:
 
 ```bash
-lash run run examples/prime-sieve.lash 100
+lash check script.lash
 ```
 
-Compile a Lash file to Bash:
+Compile a script to Bash:
 
 ```bash
-lash run compile examples/prime-sieve.lash -o prime-sieve.sh
-bash prime-sieve.sh 100
+lash compile script.lash -o script.sh
+bash script.sh
 ```
 
-Check only (no output file):
+Format Lash files:
 
 ```bash
-lash run check examples/prime-sieve.lash
-```
-
-Format files:
-
-```bash
-lash run format examples
-lash run format examples --check
+lash format .
+lash format . --check
 ```
 
 ## CLI Commands
@@ -68,4 +72,4 @@ From `lash --help`:
 - `format <paths>...`: format files/directories (`--check` supported)
 - `run <file> [args...]`: compile to temp Bash and execute
 
-Use `--verbose` on commands for extra phase/progress logs.
+Use `--verbose` on commands for extra phase and progress logs.
