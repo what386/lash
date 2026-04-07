@@ -1,6 +1,25 @@
 # Changelog — lash-lang
 
-*Generated on 2026-03-03*
+*Generated on 2026-04-05*
+
+## 0.14.0 — 2026-04-05
+
+### High Priority
+
+- Simplify preprocessor @if definition checks by removing defined() `feature`, `language`, `compiler`
+
+### Changes
+
+- Document simplified preprocessor @define/@if syntax `feature`, `language`, `docs`
+
+
+## 0.13.0 — 2026-04-01
+
+### High Priority
+
+- Rename mutable/immutable bindings from let/const to var/let and simplify into bindings to bare names `feature`, `language`, `compiler`
+- Make expression variable references use bare identifiers and reserve $ for expansion syntax `feature`, `language`, `compiler`
+
 
 ## 0.12.0 — 2026-03-03
 
@@ -16,6 +35,7 @@
 - Split compile-time const from runtime readonly declarations `feature`, `language`, `compiler`
 - Add process substitution operators <(...) and >(...) with direct Bash lowering `feature`, `language`, `compiler`
 - Add arithmetic update and assignment operators (++, --, +=, -=, *=, /=, %=) `feature`, `language`, `compiler`
+- Add arithmetic update and assignment operators (++, --, +=, -=, \*=, /=, %=) `feature`, `language`, `compiler`
 
 ### Changes
 
@@ -23,6 +43,7 @@
 - Add interpolated multiline strings with compiler and parser support `feature`, `language`, `compiler`
 - Add shebang diagnostics for missing or malformed shebangs `feature`, `compiler`, `diagnostics`
 - Add non-mutating let warning with const suggestion `feature`, `compiler`, `diagnostics`
+- Add wildcard switch case '\_' pattern support `feature`, `language`, `compiler`
 
 
 ## 0.10.1 — 2026-03-03
@@ -32,6 +53,7 @@
 - Improve warning name resolution to reduce false unused-symbol diagnostics `bug`, `compiler`, `diagnostics`
 - Add fuzzy diagnostic suggestions for mistyped shell command options and similar typos `feature`, `compiler`, `diagnostics`
 - Add discard identifier '_' support for bindings and loop variables `feature`, `language`, `compiler`
+- Add discard identifier '\_' support for bindings and loop variables `feature`, `language`, `compiler`
 
 
 ## 0.9.0 — 2026-03-01
