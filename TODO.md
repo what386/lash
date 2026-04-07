@@ -5,17 +5,11 @@
 
 ## Tasks
 
-- [ ] Add loop-depth operands for break and continue #feature #language #compiler
-      @created 2026-04-07 21:15
-
 - [ ] Add multi-pattern switch cases to Lash #feature #language #compiler
       @created 2026-04-07 21:15
 
 - [ ] Synchronize Lash docs with implemented language surface (high) #feature #language #docs
       @created 2026-04-07 21:15
-
-- [ ] Add first-class associative map literals to Lash (high) #feature #language #compiler
-      @created 2026-04-07 21:16
 
 - [ ] Add loop-depth operands for break and continue #feature #language #compiler
       @created 2026-04-07 21:16
@@ -51,4 +45,12 @@
 - [x] Add first-class associative map literals to Lash (high) #feature #language #compiler
       @created 2026-04-07 21:15
       @completed 2026-04-07 21:39
+
+- [x] Add first-class associative map literals to Lash (high) #feature #language #compiler
+      @created 2026-04-07 21:16
+      @completed 2026-04-07 21:39
+
+- [x] Add loop-depth operands for break and continue #feature #language #compiler
+      @created 2026-04-07 21:15
+      @completed 2026-04-07 21:40
 

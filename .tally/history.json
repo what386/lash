@@ -647,5 +647,19 @@
       "completed_at": "2026-04-07T21:39:49.523915695Z"
     },
     "version": null
+  },
+  {
+    "change": {
+      "description": "Add loop-depth operands for break and continue",
+      "priority": "Medium",
+      "tags": [
+        "feature",
+        "language",
+        "compiler"
+      ],
+      "commit": null,
+      "completed_at": "2026-04-07T21:40:40.715482048Z"
+    },
+    "version": null
   }
 ]
