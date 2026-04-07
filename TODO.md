@@ -1,4 +1,4 @@
-# TODO — lash-lang v0.14.0
+# TODO — lash-lang v0.15.0
 
 @created: 2026-02-24
 @modified: 2026-04-07
@@ -21,44 +21,55 @@
 - [x] Add first-class associative map literals to Lash (high) #feature #language #compiler
       @created 2026-04-07 21:15
       @completed 2026-04-07 21:39
+      @completed_version 0.15.0
 
 - [x] Add first-class associative map literals to Lash (high) #feature #language #compiler
       @created 2026-04-07 21:16
       @completed 2026-04-07 21:39
+      @completed_version 0.15.0
 
 - [x] Add loop-depth operands for break and continue #feature #language #compiler
       @created 2026-04-07 21:15
       @completed 2026-04-07 21:40
+      @completed_version 0.15.0
 
 - [x] Add loop-depth operands for break and continue #feature #language #compiler
       @created 2026-04-07 21:16
       @completed 2026-04-07 21:40
+      @completed_version 0.15.0
 
 - [x] Add condition-only regex match operator to Lash (high) #feature #language #compiler
       @created 2026-04-07 21:16
       @completed 2026-04-07 21:40
+      @completed_version 0.15.0
 
 - [x] Add condition-only regex match operator to Lash (high) #feature #language #compiler
       @created 2026-04-07 21:33
       @completed 2026-04-07 21:40
+      @completed_version 0.15.0
 
 - [x] Add multi-pattern switch cases to Lash #feature #language #compiler
       @created 2026-04-07 21:15
       @completed 2026-04-07 21:40
+      @completed_version 0.15.0
 
 - [x] Add multi-pattern switch cases to Lash #feature #language #compiler
       @created 2026-04-07 21:16
       @completed 2026-04-07 21:41
+      @completed_version 0.15.0
 
 - [x] Add multi-pattern switch cases to Lash #feature #language #compiler
       @created 2026-04-07 21:34
       @completed 2026-04-07 21:41
+      @completed_version 0.15.0
 
 - [x] Synchronize Lash docs with implemented language surface (high) #feature #language #docs
       @created 2026-04-07 21:15
       @completed 2026-04-07 21:41
+      @completed_version 0.15.0
 
 - [x] Synchronize Lash docs with implemented language surface (high) #feature #language #docs
       @created 2026-04-07 21:16
       @completed 2026-04-07 21:41
+      @completed_version 0.15.0
 
