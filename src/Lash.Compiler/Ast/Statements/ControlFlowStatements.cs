@@ -1,3 +1,5 @@
+using Lash.Compiler.Ast.Expressions;
+
 namespace Lash.Compiler.Ast.Statements;
 
 public class IfStatement : Statement
@@ -52,9 +54,24 @@ public class SwitchStatement : Statement
 
 public class SwitchCaseClause : AstNode
 {
-    public Expression Pattern { get; set; } = null!;
+    public List<Expression> Patterns { get; set; } = new();
     public bool IsWildcard { get; set; }
     public List<Statement> Body { get; set; } = new();
+
+    public Expression Pattern
+    {
+        get => Patterns.Count > 0 ? Patterns[0] : new NullLiteral
+        {
+            Line = Line,
+            Column = Column
+        };
+        set
+        {
+            Patterns.Clear();
+            if (value != null)
+                Patterns.Add(value);
+        }
+    }
 }
 
 public class ReturnStatement : Statement
@@ -62,6 +79,12 @@ public class ReturnStatement : Statement
     public Expression? Value { get; set; }
 }
 
-public class BreakStatement : Statement { }
+public class BreakStatement : Statement
+{
+    public int? Depth { get; set; }
+}
 
-public class ContinueStatement : Statement { }
+public class ContinueStatement : Statement
+{
+    public int? Depth { get; set; }
+}
