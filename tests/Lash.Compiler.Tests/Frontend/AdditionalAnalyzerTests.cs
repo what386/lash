@@ -78,6 +78,26 @@ public class AdditionalAnalyzerTests
     }
 
     [Fact]
+    public void CodegenFeasibilityAnalyzer_RejectsRegexMatchOutsideConditionPositions()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            let name = "lash"
+            let matched = name =~ "^la"
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new NameResolver(diagnostics).Analyze(program);
+        new TypeChecker(diagnostics).Analyze(program);
+        new CodegenFeasibilityAnalyzer(diagnostics).Analyze(program);
+
+        Assert.Contains(
+            diagnostics.GetErrors(),
+            e => e.Code == DiagnosticCodes.UnsupportedExpressionForCodegen
+                 && e.Message.Contains("Regex match expressions", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void CodegenFeasibilityAnalyzer_RejectsTabStripStdinRedirectWithNonMultilinePayload()
     {
         var program = TestCompiler.ParseOrThrow(

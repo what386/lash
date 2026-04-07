@@ -124,6 +124,24 @@ public class SemanticPipelineTests
     }
 
     [Fact]
+    public void SemanticPipeline_RejectsNonPositiveLoopControlDepth()
+    {
+        var result = CompilerPipeline.Compile(
+            """
+            while true
+                break 0
+            end
+            """);
+
+        Assert.True(result.Diagnostics.HasErrors);
+        Assert.Contains(
+            result.Diagnostics.GetErrors(),
+            e => e.Code == DiagnosticCodes.InvalidControlFlowContext
+                 && e.Message.Contains("'break' depth must be a positive integer literal", StringComparison.Ordinal));
+        Assert.Null(result.Bash);
+    }
+
+    [Fact]
     public void SemanticPipeline_RejectsMixedArrayKeyKinds()
     {
         var result = CompilerPipeline.Compile(

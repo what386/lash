@@ -582,6 +582,24 @@ public class RoundTripTests
     }
 
     [Fact]
+    public void RoundTrip_MapLiteralReadWorks()
+    {
+        var result = CompilerPipeline.Compile(
+            """
+            let meta = {"name": "lash", "version": "0.14"}
+            let selected = meta["name"]
+            echo "$selected"
+            """);
+
+        Assert.False(result.Diagnostics.HasErrors, string.Join(Environment.NewLine, result.Diagnostics.GetErrors()));
+        var bash = Assert.IsType<string>(result.Bash);
+
+        var run = CompilerPipeline.RunBash(bash);
+        Assert.Equal(0, run.ExitCode);
+        Assert.Equal("lash\n", run.StdOut);
+    }
+
+    [Fact]
     public void RoundTrip_SwitchCaseGlobPatternMatches()
     {
         var result = CompilerPipeline.Compile(
@@ -623,6 +641,47 @@ public class RoundTripTests
         var run = CompilerPipeline.RunBash(bash);
         Assert.Equal(0, run.ExitCode);
         Assert.Equal("fallback\n", run.StdOut);
+    }
+
+    [Fact]
+    public void RoundTrip_SwitchMultiPatternCaseMatches()
+    {
+        var result = CompilerPipeline.Compile(
+            """
+            let answer = "yes"
+            switch answer
+                case "y", "yes":
+                    echo match
+                case _:
+                    echo fallback
+            end
+            """);
+
+        Assert.False(result.Diagnostics.HasErrors, string.Join(Environment.NewLine, result.Diagnostics.GetErrors()));
+        var bash = Assert.IsType<string>(result.Bash);
+
+        var run = CompilerPipeline.RunBash(bash);
+        Assert.Equal(0, run.ExitCode);
+        Assert.Equal("match\n", run.StdOut);
+    }
+
+    [Fact]
+    public void RoundTrip_RegexConditionMatches()
+    {
+        var result = CompilerPipeline.Compile(
+            """
+            let name = "lash"
+            if name =~ "^la"
+                echo match
+            end
+            """);
+
+        Assert.False(result.Diagnostics.HasErrors, string.Join(Environment.NewLine, result.Diagnostics.GetErrors()));
+        var bash = Assert.IsType<string>(result.Bash);
+
+        var run = CompilerPipeline.RunBash(bash);
+        Assert.Equal(0, run.ExitCode);
+        Assert.Equal("match\n", run.StdOut);
     }
 
     [Fact]
@@ -712,5 +771,28 @@ public class RoundTripTests
         var run = CompilerPipeline.RunBash(bash);
         Assert.Equal(0, run.ExitCode);
         Assert.Equal("0\n", run.StdOut);
+    }
+
+    [Fact]
+    public void RoundTrip_BreakDepthExitsNestedLoops()
+    {
+        var result = CompilerPipeline.Compile(
+            """
+            var outer = 0
+            while outer < 3
+                var inner = 0
+                while inner < 3
+                    echo "$outer:$inner"
+                    break 2
+                end
+                outer++
+            end
+            """);
+
+        Assert.False(result.Diagnostics.HasErrors, string.Join(Environment.NewLine, result.Diagnostics.GetErrors()));
+        var bash = Assert.IsType<string>(result.Bash);
+        var run = CompilerPipeline.RunBash(bash);
+        Assert.Equal(0, run.ExitCode);
+        Assert.Equal("0:0\n", run.StdOut);
     }
 }

@@ -743,6 +743,20 @@ public class BashGeneratorTests
     }
 
     [Fact]
+    public void BashGenerator_EmitsAssociativeArraySyntaxForMapLiterals()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            let meta = {"name": "lash", "version": "0.14"}
+            let selected = meta["name"]
+            """);
+
+        var bash = new BashGenerator().Generate(program);
+        Assert.Contains("declare -A meta=([\"name\"]=\"lash\" [\"version\"]=\"0.14\")", bash);
+        Assert.Contains("selected=${meta[\"name\"]}", bash);
+    }
+
+    [Fact]
     public void BashGenerator_DoesNotFoldIndexedValueAcrossDivergentUnknownBranches()
     {
         var program = TestCompiler.ParseOrThrow(
@@ -811,6 +825,56 @@ public class BashGeneratorTests
         Assert.Contains("(( n %= 6 ))", bash);
         Assert.Contains("(( n++ ))", bash);
         Assert.Contains("(( n-- ))", bash);
+    }
+
+    [Fact]
+    public void BashGenerator_EmitsLoopDepthForBreakAndContinue()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            while true
+                if flag
+                    continue 2
+                else
+                    break 3
+                end
+            end
+            """);
+
+        var bash = new BashGenerator().Generate(program);
+        Assert.Contains("continue 2", bash);
+        Assert.Contains("break 3", bash);
+    }
+
+    [Fact]
+    public void BashGenerator_EmitsRegexMatchConditions()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            let name = $(echo lash)
+            if name =~ "^la"
+                echo ok
+            end
+            """);
+
+        var bash = new BashGenerator().Generate(program);
+        Assert.Contains("[[ ${name} =~ ^la ]]", bash);
+    }
+
+    [Fact]
+    public void BashGenerator_EmitsMultiPatternSwitchCases()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            let answer = $(echo yes)
+            switch answer
+                case "y", "yes":
+                    echo ok
+            end
+            """);
+
+        var bash = new BashGenerator().Generate(program);
+        Assert.Contains("y|yes)", bash);
     }
 
     [Fact]

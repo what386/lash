@@ -37,6 +37,35 @@ public class GrammarTests
     }
 
     [Fact]
+    public void ModuleLoader_ParsesMapLiteralRegexMatchAndMultiPatternSwitchCase()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            let meta = {"name": "lash", "version": "0.14"}
+
+            if meta["name"] =~ "^la"
+                switch meta["name"]
+                    case "lash", "lash-lang":
+                        echo ok
+                end
+            end
+            """);
+
+        var metaDeclaration = Assert.IsType<VariableDeclaration>(program.Statements[0]);
+        var map = Assert.IsType<MapLiteral>(metaDeclaration.Value);
+        Assert.Equal(2, map.Entries.Count);
+
+        var ifStatement = Assert.IsType<IfStatement>(program.Statements[1]);
+        var regex = Assert.IsType<BinaryExpression>(ifStatement.Condition);
+        Assert.Equal("=~", regex.Operator);
+
+        var switchStatement = Assert.IsType<SwitchStatement>(Assert.Single(ifStatement.ThenBlock));
+        var clause = Assert.Single(switchStatement.Cases);
+        Assert.False(clause.IsWildcard);
+        Assert.Equal(2, clause.Patterns.Count);
+    }
+
+    [Fact]
     public void ModuleLoader_ParsesGlobalVariableDeclarationAndAssignment()
     {
         var program = TestCompiler.ParseOrThrow(
@@ -491,6 +520,24 @@ public class GrammarTests
         var loop = Assert.IsType<WhileLoop>(Assert.Single(program.Statements));
         Assert.IsType<ContinueStatement>(loop.Body[0]);
         Assert.IsType<BreakStatement>(loop.Body[1]);
+    }
+
+    [Fact]
+    public void ModuleLoader_ParsesBreakAndContinueDepths()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            while true
+                continue 2
+                break 3
+            end
+            """);
+
+        var loop = Assert.IsType<WhileLoop>(Assert.Single(program.Statements));
+        var continueStatement = Assert.IsType<ContinueStatement>(loop.Body[0]);
+        var breakStatement = Assert.IsType<BreakStatement>(loop.Body[1]);
+        Assert.Equal(2, continueStatement.Depth);
+        Assert.Equal(3, breakStatement.Depth);
     }
 
     [Fact]

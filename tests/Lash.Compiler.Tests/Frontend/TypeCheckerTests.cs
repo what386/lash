@@ -154,6 +154,40 @@ public class TypeCheckerTests
     }
 
     [Fact]
+    public void TypeChecker_RejectsNonStringMapLiteralKeys()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            let meta = {1: "lash"}
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new TypeChecker(diagnostics).Analyze(program);
+
+        Assert.Contains(
+            diagnostics.GetErrors(),
+            e => e.Code == DiagnosticCodes.InvalidIndexOrContainerUsage
+                 && e.Message.Contains("Map literal keys must be strings", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void TypeChecker_AllowsRegexMatchInConditions()
+    {
+        var program = TestCompiler.ParseOrThrow(
+            """
+            let name = "lash"
+            if name =~ "^la"
+                echo ok
+            end
+            """);
+
+        var diagnostics = new DiagnosticBag();
+        new TypeChecker(diagnostics).Analyze(program);
+
+        Assert.DoesNotContain(diagnostics.GetErrors(), e => e.Code == DiagnosticCodes.TypeMismatch);
+    }
+
+    [Fact]
     public void TypeChecker_AllowsStdoutAndStdinAndFdDupRedirectionExpressionStatements()
     {
         var program = TestCompiler.ParseOrThrow(

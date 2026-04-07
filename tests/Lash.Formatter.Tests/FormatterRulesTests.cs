@@ -216,6 +216,37 @@ public class FormatterRulesTests
     }
 
     [Fact]
+    public void Formatter_FormatsMapLiteralRegexAndLoopDepthSyntax()
+    {
+        const string input =
+            """
+            let meta={"name":"lash","version":"0.14"}
+            if meta["name"]=~"^la"
+            break 2
+            end
+            switch meta["name"]
+            case "lash","lash-lang":
+            continue 3
+            end
+            """;
+
+        const string expected =
+            """
+            let meta = { "name": "lash", "version": "0.14" }
+            if meta["name"] =~ "^la"
+                break 2
+            end
+            switch meta["name"]
+                case "lash", "lash-lang":
+                    continue 3
+            end
+            """;
+
+        var formatted = LashFormatter.Format(input);
+        Assert.Equal(expected.Replace("\r\n", "\n") + "\n", formatted);
+    }
+
+    [Fact]
     public void Formatter_WrapsLongArgumentLists()
     {
         const string input =
