@@ -689,5 +689,19 @@
       "completed_at": "2026-04-07T21:40:56.152480450Z"
     },
     "version": null
+  },
+  {
+    "change": {
+      "description": "Synchronize Lash docs with implemented language surface",
+      "priority": "High",
+      "tags": [
+        "feature",
+        "language",
+        "docs"
+      ],
+      "commit": null,
+      "completed_at": "2026-04-07T21:41:22.901404124Z"
+    },
+    "version": null
   }
 ]
