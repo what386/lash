@@ -5,8 +5,8 @@
 
 ## Tasks
 
-- [ ] Serialize per-RID tool publishing in build script to avoid project-output races (high) #bug #build #scripts
-      @created 2026-04-07 22:30
+- [ ] Parallelize archive creation in pack script with bounded concurrency #feature #build #scripts
+      @created 2026-04-07 22:50
 
 
 ## Completed
@@ -75,4 +75,8 @@
       @created 2026-04-07 21:16
       @completed 2026-04-07 21:41
       @completed_version 0.15.0
+
+- [x] Serialize per-RID tool publishing in build script to avoid project-output races (high) #bug #build #scripts
+      @created 2026-04-07 22:30
+      @completed 2026-04-07 22:34
 
