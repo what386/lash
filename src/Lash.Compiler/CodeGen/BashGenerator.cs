@@ -249,9 +249,19 @@ public class BashGenerator
             switch (statement)
             {
                 case VariableDeclaration variable:
+                    if (variable.Value is MapLiteral)
+                    {
+                        var scope = ResolveScopeForIdentifier(variable.Name, functionName, variable.IsGlobal);
+                        associativeVariables.Add(ScopedVariableKey(scope, variable.Name));
+                    }
                     CollectAssociativeUsages(variable.Value, functionName);
                     break;
                 case Assignment assignment:
+                    if (assignment.Target is IdentifierExpression identifierTarget && assignment.Value is MapLiteral)
+                    {
+                        var scope = ResolveScopeForIdentifier(identifierTarget.Name, functionName, assignment.IsGlobal);
+                        associativeVariables.Add(ScopedVariableKey(scope, identifierTarget.Name));
+                    }
                     if (assignment.Target is IndexAccessExpression indexAccess)
                     {
                         CollectAssociativeIndexUsage(indexAccess, functionName, assignment.IsGlobal);
@@ -279,7 +289,8 @@ public class BashGenerator
                     CollectAssociativeUsages(switchStatement.Value, functionName);
                     foreach (var clause in switchStatement.Cases)
                     {
-                        CollectAssociativeUsages(clause.Pattern, functionName);
+                        foreach (var pattern in clause.Patterns)
+                            CollectAssociativeUsages(pattern, functionName);
                         CollectAssociativeUsages(clause.Body, functionName);
                     }
                     break;
@@ -382,6 +393,13 @@ public class BashGenerator
             case ArrayLiteral array:
                 foreach (var element in array.Elements)
                     CollectAssociativeUsages(element, functionName);
+                break;
+            case MapLiteral map:
+                foreach (var entry in map.Entries)
+                {
+                    CollectAssociativeUsages(entry.Key, functionName);
+                    CollectAssociativeUsages(entry.Value, functionName);
+                }
                 break;
             case RangeExpression range:
                 CollectAssociativeUsages(range.Start, functionName);
@@ -636,7 +654,10 @@ public class BashGenerator
                     foreach (var clause in switchStatement.Cases)
                     {
                         if (!clause.IsWildcard)
-                            MarkArrayLikeParameterUsages(clause.Pattern, parameterNames, arrayLikeNames);
+                        {
+                            foreach (var pattern in clause.Patterns)
+                                MarkArrayLikeParameterUsages(pattern, parameterNames, arrayLikeNames);
+                        }
                         MarkArrayLikeParameterUsages(clause.Body, parameterNames, arrayLikeNames);
                     }
                     break;
@@ -749,6 +770,13 @@ public class BashGenerator
             case ArrayLiteral arrayLiteral:
                 foreach (var element in arrayLiteral.Elements)
                     MarkArrayLikeParameterUsages(element, parameterNames, arrayLikeNames);
+                break;
+            case MapLiteral mapLiteral:
+                foreach (var entry in mapLiteral.Entries)
+                {
+                    MarkArrayLikeParameterUsages(entry.Key, parameterNames, arrayLikeNames);
+                    MarkArrayLikeParameterUsages(entry.Value, parameterNames, arrayLikeNames);
+                }
                 break;
             case RangeExpression range:
                 MarkArrayLikeParameterUsages(range.Start, parameterNames, arrayLikeNames);

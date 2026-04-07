@@ -125,6 +125,9 @@ internal sealed partial class ExpressionGenerator
         if (operand is ArrayLiteral arrayLiteral)
             return arrayLiteral.Elements.Count.ToString(CultureInfo.InvariantCulture);
 
+        if (operand is MapLiteral mapLiteral)
+            return mapLiteral.Entries.Count.ToString(CultureInfo.InvariantCulture);
+
         return HandleUnsupportedExpression(operand, "length operand");
     }
 }
