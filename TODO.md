@@ -5,9 +5,6 @@
 
 ## Tasks
 
-- [ ] Synchronize Lash docs with implemented language surface (high) #feature #language #docs
-      @created 2026-04-07 21:16
-
 
 ## Completed
 
@@ -59,5 +56,9 @@
 
 - [x] Synchronize Lash docs with implemented language surface (high) #feature #language #docs
       @created 2026-04-07 21:15
+      @completed 2026-04-07 21:41
+
+- [x] Synchronize Lash docs with implemented language surface (high) #feature #language #docs
+      @created 2026-04-07 21:16
       @completed 2026-04-07 21:41
 
