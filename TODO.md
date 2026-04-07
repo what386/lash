@@ -20,6 +20,15 @@
 - [ ] Add first-class associative map literals to Lash (high) #feature #language #compiler
       @created 2026-04-07 21:16
 
+- [ ] Add loop-depth operands for break and continue #feature #language #compiler
+      @created 2026-04-07 21:16
+
+- [ ] Add condition-only regex match operator to Lash (high) #feature #language #compiler
+      @created 2026-04-07 21:16
+
+- [ ] Add multi-pattern switch cases to Lash #feature #language #compiler
+      @created 2026-04-07 21:16
+
 
 ## Completed
 
