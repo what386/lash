@@ -262,7 +262,9 @@ internal static class SpacingRules
                || line.StartsWith("untrap ", StringComparison.Ordinal)
                || line.StartsWith("shift", StringComparison.Ordinal)
                || line == "break"
-               || line == "continue";
+               || line.StartsWith("break ", StringComparison.Ordinal)
+               || line == "continue"
+               || line.StartsWith("continue ", StringComparison.Ordinal);
     }
 
     private static bool LooksLikeFunctionCallExpression(string line)
@@ -565,7 +567,7 @@ internal static class SpacingRules
             return true;
         }
 
-        if (twoChar is "==" or "!=" or "<=" or ">=" or "&&" or "||" or ".." or "+=" or "-=" or "*=" or "/=" or "%=" or "++" or "--")
+        if (twoChar is "==" or "!=" or "=~" or "<=" or ">=" or "&&" or "||" or ".." or "+=" or "-=" or "*=" or "/=" or "%=" or "++" or "--")
         {
             op = twoChar;
             consume = 2;

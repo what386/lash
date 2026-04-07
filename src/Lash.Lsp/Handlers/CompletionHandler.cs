@@ -11,10 +11,10 @@ internal sealed class CompletionHandler : CompletionHandlerBase
 {
     private static readonly string[] Keywords =
     [
-        "if", "elif", "else", "end", "fn", "for", "while", "switch", "case",
+        "if", "elif", "else", "end", "fn", "for", "select", "while", "switch", "case",
         "until",
         "var", "let", "readonly", "global", "return", "break", "continue", "shift",
-        "subshell", "wait", "in", "step", "into", "jobs", "sh", "test", "trap", "untrap", "enum"
+        "subshell", "coproc", "wait", "in", "step", "into", "jobs", "sh", "test", "trap", "untrap", "enum"
     ];
 
     private static readonly string[] Directives =
