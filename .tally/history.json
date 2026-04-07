@@ -661,5 +661,19 @@
       "completed_at": "2026-04-07T21:40:40.715482048Z"
     },
     "version": null
+  },
+  {
+    "change": {
+      "description": "Add condition-only regex match operator to Lash",
+      "priority": "High",
+      "tags": [
+        "feature",
+        "language",
+        "compiler"
+      ],
+      "commit": null,
+      "completed_at": "2026-04-07T21:40:48.692338555Z"
+    },
+    "version": null
   }
 ]
