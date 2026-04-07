@@ -217,7 +217,7 @@ fn build_tool_for_platform(tool_name, project_path, rid, bundle_dir)
     if src_file == "" || !file_exists(src_file)
         echo -e "${RED}✗ Build completed but executable not found for ${tool_name}${NC}"
         rm -rf "$temp_dir"
-        return 1
+        sh "return 1"
     end
 
     var extension = ""
@@ -261,10 +261,14 @@ fn build_platform(rid, description)
         let pid = $(printf '%s' $job | cut -d: -f1)
         let tool_name = $(printf '%s' $job | cut -d: -f2-)
 
+        // `wait` can return a non-zero child status, so disable errexit around it
+        // and let the explicit status check below decide whether to stop.
+        sh "set +e"
         wait pid into wait_status
+        sh "set -e"
         if wait_status != 0
             echo -e "${RED}✗ Build failed for ${tool_name} (${rid})${NC}"
-            return wait_status
+            sh $"return {wait_status}"
         end
     end
 
