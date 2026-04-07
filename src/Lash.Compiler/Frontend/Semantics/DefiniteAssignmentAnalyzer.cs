@@ -77,7 +77,10 @@ public sealed class DefiniteAssignmentAnalyzer
                 foreach (var clause in switchStatement.Cases)
                 {
                     if (!clause.IsWildcard)
-                        CheckExpression(clause.Pattern);
+                    {
+                        foreach (var pattern in clause.Patterns)
+                            CheckExpression(pattern);
+                    }
                     AnalyzeIsolatedBlock(clause.Body);
                 }
                 break;
@@ -284,6 +287,14 @@ public sealed class DefiniteAssignmentAnalyzer
             case ArrayLiteral arrayLiteral:
                 foreach (var element in arrayLiteral.Elements)
                     CheckExpression(element);
+                break;
+
+            case MapLiteral mapLiteral:
+                foreach (var entry in mapLiteral.Entries)
+                {
+                    CheckExpression(entry.Key);
+                    CheckExpression(entry.Value);
+                }
                 break;
         }
     }

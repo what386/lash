@@ -236,12 +236,14 @@ public sealed class NameResolver {
       var seenExactPatterns = new HashSet<string>(StringComparer.Ordinal);
       foreach (var clause in switchStatement.Cases) {
         if (!clause.IsWildcard) {
-          CheckExpression(clause.Pattern);
-          if (TryGetExactSwitchPatternKey(clause.Pattern, out var patternKey) &&
-              !seenExactPatterns.Add(patternKey)) {
-            Report(clause,
-                   "Duplicate switch case pattern; an earlier case uses the same pattern.",
-                   DiagnosticCodes.DuplicateSwitchCasePattern);
+          foreach (var pattern in clause.Patterns) {
+            CheckExpression(pattern);
+            if (TryGetExactSwitchPatternKey(pattern, out var patternKey) &&
+                !seenExactPatterns.Add(patternKey)) {
+              Report(clause,
+                     "Duplicate switch case pattern; an earlier case uses the same pattern.",
+                     DiagnosticCodes.DuplicateSwitchCasePattern);
+            }
           }
         } else {
           if (wildcardSeen) {
@@ -305,18 +307,20 @@ public sealed class NameResolver {
       PopScope();
       break;
 
-    case BreakStatement:
+    case BreakStatement breakStatement:
       if (loopDepth == 0) {
         Report(statement, "'break' can only be used inside a loop.",
                DiagnosticCodes.InvalidControlFlowContext);
       }
+      ValidateLoopControlDepth(breakStatement, "break");
       break;
 
-    case ContinueStatement:
+    case ContinueStatement continueStatement:
       if (loopDepth == 0) {
         Report(statement, "'continue' can only be used inside a loop.",
                DiagnosticCodes.InvalidControlFlowContext);
       }
+      ValidateLoopControlDepth(continueStatement, "continue");
       break;
 
     case ReturnStatement returnStatement:
@@ -501,7 +505,31 @@ public sealed class NameResolver {
       foreach (var element in arrayLiteral.Elements)
         CheckExpression(element);
       break;
+
+    case MapLiteral mapLiteral:
+      foreach (var entry in mapLiteral.Entries) {
+        CheckExpression(entry.Key);
+        CheckExpression(entry.Value);
+      }
+      break;
     }
+  }
+
+  private void ValidateLoopControlDepth(Statement statement, string keyword) {
+    var depth = statement switch {
+      BreakStatement breakStatement => breakStatement.Depth,
+      ContinueStatement continueStatement => continueStatement.Depth,
+      _ => null
+    };
+
+    if (depth is null)
+      return;
+
+    if (depth.Value >= 1)
+      return;
+
+    Report(statement, $"'{keyword}' depth must be a positive integer literal.",
+           DiagnosticCodes.InvalidControlFlowContext);
   }
 
   private void ValidateFunctionCall(FunctionCallExpression functionCall,

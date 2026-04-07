@@ -405,7 +405,8 @@ public sealed class WarningAnalyzer {
     if (!TryEvaluateConstValue(switchStatement.Value, out var switchValue)) {
       foreach (var clause in switchStatement.Cases)
         if (!clause.IsWildcard)
-          AnalyzeExpression(clause.Pattern);
+          foreach (var pattern in clause.Patterns)
+            AnalyzeExpression(pattern);
       return AnalyzeSwitchPaths(switchStatement.Cases, inLoop,
                                 CurrentTrackedJobs());
     }
@@ -413,7 +414,8 @@ public sealed class WarningAnalyzer {
     for (int i = 0; i < switchStatement.Cases.Count; i++) {
       var clause = switchStatement.Cases[i];
       if (!clause.IsWildcard)
-        AnalyzeExpression(clause.Pattern);
+        foreach (var pattern in clause.Patterns)
+          AnalyzeExpression(pattern);
 
       if (clause.IsWildcard) {
         var matchedWildcard =
@@ -428,13 +430,12 @@ public sealed class WarningAnalyzer {
         return matchedWildcard.Terminated;
       }
 
-      if (!TryEvaluateConstValue(clause.Pattern, out var patternValue) ||
-          !IsExactPattern(clause.Pattern)) {
+      if (!TryEvaluateExactPatterns(clause.Patterns, out var patternValues)) {
         var remaining = switchStatement.Cases.Skip(i).ToList();
         return AnalyzeSwitchPaths(remaining, inLoop, CurrentTrackedJobs());
       }
 
-      if (!ConstValuesEqual(switchValue, patternValue)) {
+      if (!patternValues.Any(patternValue => ConstValuesEqual(switchValue, patternValue))) {
         WarnBlockUnreachable(clause.Body,
                              "Unreachable case: pattern can never match this " +
                                  "constant switch value.",
@@ -620,8 +621,8 @@ public sealed class WarningAnalyzer {
           (l.Value is null && r.Value is null) ||
           (l.Value is not null && r.Value is not null &&
            AreEquivalentExpressions(l.Value, r.Value)),
-      (BreakStatement, BreakStatement) => true,
-      (ContinueStatement, ContinueStatement) => true,
+      (BreakStatement l, BreakStatement r) => l.Depth == r.Depth,
+      (ContinueStatement l, ContinueStatement r) => l.Depth == r.Depth,
       (IfStatement l, IfStatement r) =>
           AreEquivalentExpressions(l.Condition, r.Condition) &&
           AreEquivalentBlocks(l.ThenBlock, r.ThenBlock) &&
@@ -658,7 +659,7 @@ public sealed class WarningAnalyzer {
 
     for (var i = 0; i < left.Count; i++) {
       if (left[i].IsWildcard != right[i].IsWildcard ||
-          !AreEquivalentExpressions(left[i].Pattern, right[i].Pattern) ||
+          !AreEquivalentExpressionLists(left[i].Patterns, right[i].Patterns) ||
           !AreEquivalentBlocks(left[i].Body, right[i].Body)) {
         return false;
       }
@@ -710,6 +711,8 @@ public sealed class WarningAnalyzer {
           AreEquivalentExpressionLists(l.Arguments, r.Arguments),
       (ArrayLiteral l, ArrayLiteral r) =>
           AreEquivalentExpressionLists(l.Elements, r.Elements),
+      (MapLiteral l, MapLiteral r) =>
+          AreEquivalentMapEntries(l.Entries, r.Entries),
       (ShellCaptureExpression l, ShellCaptureExpression r) =>
           AreEquivalentExpressions(l.Command, r.Command),
       (TestCaptureExpression l, TestCaptureExpression r) =>
@@ -731,6 +734,22 @@ public sealed class WarningAnalyzer {
     for (var i = 0; i < left.Count; i++) {
       if (!AreEquivalentExpressions(left[i], right[i]))
         return false;
+    }
+
+    return true;
+  }
+
+  private static bool
+  AreEquivalentMapEntries(IReadOnlyList<MapLiteralEntry> left,
+                          IReadOnlyList<MapLiteralEntry> right) {
+    if (left.Count != right.Count)
+      return false;
+
+    for (var i = 0; i < left.Count; i++) {
+      if (!AreEquivalentExpressions(left[i].Key, right[i].Key) ||
+          !AreEquivalentExpressions(left[i].Value, right[i].Value)) {
+        return false;
+      }
     }
 
     return true;
@@ -810,6 +829,13 @@ public sealed class WarningAnalyzer {
     case ArrayLiteral arrayLiteral:
       foreach (var element in arrayLiteral.Elements)
         AnalyzeExpression(element);
+      break;
+
+    case MapLiteral mapLiteral:
+      foreach (var entry in mapLiteral.Entries) {
+        AnalyzeExpression(entry.Key);
+        AnalyzeExpression(entry.Value);
+      }
       break;
     }
   }
@@ -1298,6 +1324,22 @@ public sealed class WarningAnalyzer {
 
     var text = literal.Value?.ToString() ?? string.Empty;
     return text.IndexOfAny(['*', '?', '[', ']']) < 0;
+  }
+
+  private bool TryEvaluateExactPatterns(IReadOnlyList<Expression> patterns,
+                                        out List<ConstValue> values) {
+    values = new List<ConstValue>(patterns.Count);
+    foreach (var pattern in patterns) {
+      if (!TryEvaluateConstValue(pattern, out var value) ||
+          !IsExactPattern(pattern)) {
+        values.Clear();
+        return false;
+      }
+
+      values.Add(value);
+    }
+
+    return true;
   }
 
   private static bool ToBool(ConstValue value) {

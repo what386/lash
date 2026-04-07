@@ -74,7 +74,10 @@ public sealed class CodegenFeasibilityAnalyzer
                 foreach (var clause in switchStatement.Cases)
                 {
                     if (!clause.IsWildcard)
-                        ValidateValueExpression(clause.Pattern, ValueContext.GeneralValue);
+                    {
+                        foreach (var pattern in clause.Patterns)
+                            ValidateValueExpression(pattern, ValueContext.GeneralValue);
+                    }
                     foreach (var nested in clause.Body)
                         CheckStatement(nested);
                 }
@@ -357,6 +360,13 @@ public sealed class CodegenFeasibilityAnalyzer
                 return;
 
             case BinaryExpression binary:
+                if (binary.Operator == "=~" && context != ValueContext.Condition)
+                {
+                    Report(
+                        binary,
+                        "Regex match expressions ('=~') are only supported in condition positions for Bash code generation.",
+                        DiagnosticCodes.UnsupportedExpressionForCodegen);
+                }
                 ValidateValueExpression(binary.Left, ValueContext.GeneralValue);
                 ValidateValueExpression(binary.Right, ValueContext.GeneralValue);
                 return;
@@ -369,6 +379,14 @@ public sealed class CodegenFeasibilityAnalyzer
             case ArrayLiteral arrayLiteral:
                 foreach (var element in arrayLiteral.Elements)
                     ValidateValueExpression(element, ValueContext.GeneralValue);
+                return;
+
+            case MapLiteral mapLiteral:
+                foreach (var entry in mapLiteral.Entries)
+                {
+                    ValidateValueExpression(entry.Key, ValueContext.MapKey);
+                    ValidateValueExpression(entry.Value, ValueContext.GeneralValue);
+                }
                 return;
 
             default:
@@ -409,6 +427,7 @@ public sealed class CodegenFeasibilityAnalyzer
             IndexAccessExpression indexAccess when indexAccess.Array is IdentifierExpression => true,
             LiteralExpression literal when literal.LiteralType is PrimitiveType { PrimitiveKind: PrimitiveType.Kind.String } => true,
             ArrayLiteral => true,
+            MapLiteral => true,
             _ => false
         };
     }
@@ -462,6 +481,7 @@ public sealed class CodegenFeasibilityAnalyzer
         ForRange,
         AppendValue,
         LengthOperand,
+        MapKey,
         Condition
     }
 }

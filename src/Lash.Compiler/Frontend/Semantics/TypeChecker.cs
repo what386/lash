@@ -94,7 +94,10 @@ public sealed class TypeChecker
                 foreach (var clause in switchStatement.Cases)
                 {
                     if (!clause.IsWildcard)
-                        InferType(clause.Pattern);
+                    {
+                        foreach (var pattern in clause.Patterns)
+                            InferType(pattern);
+                    }
                     PushScope();
                     foreach (var nested in clause.Body)
                         CheckStatement(nested);
@@ -385,6 +388,7 @@ public sealed class TypeChecker
             LiteralExpression literal => literal.Type,
             NullLiteral => ExpressionTypes.Unknown,
             ArrayLiteral => ExpressionTypes.Array,
+            MapLiteral => InferMapLiteralType((MapLiteral)expression),
             IdentifierExpression identifier => InferIdentifierType(identifier),
             EnumAccessExpression => ExpressionTypes.String,
             IndexAccessExpression indexAccess => InferIndexAccessType(indexAccess),
@@ -508,6 +512,11 @@ public sealed class TypeChecker
             case "!=":
                 return ExpressionTypes.Bool;
 
+            case "=~":
+                ValidateRegexOperand(binary.Left);
+                ValidateRegexOperand(binary.Right);
+                return ExpressionTypes.Bool;
+
             case "&&":
             case "||":
                 ValidateLogical(binary, leftType, rightType);
@@ -562,6 +571,35 @@ public sealed class TypeChecker
 
         Report(operand, $"Operator '#' expects an array, got {FormatType(type)}.", DiagnosticCodes.TypeMismatch);
         return ExpressionTypes.Unknown;
+    }
+
+    private ExpressionType InferMapLiteralType(MapLiteral mapLiteral)
+    {
+        foreach (var entry in mapLiteral.Entries)
+        {
+            var keyType = InferType(entry.Key);
+            ValidateMapKeyType(entry.Key, keyType);
+            _ = InferType(entry.Value);
+        }
+
+        return ExpressionTypes.Array;
+    }
+
+    private void ValidateMapKeyType(Expression key, ExpressionType type)
+    {
+        if (IsUnknown(type) || IsString(type))
+            return;
+
+        Report(key, $"Map literal keys must be strings, got {FormatType(type)}.", DiagnosticCodes.InvalidIndexOrContainerUsage);
+    }
+
+    private void ValidateRegexOperand(Expression operand)
+    {
+        var type = InferType(operand);
+        if (IsUnknown(type) || IsString(type) || IsNumber(type) || type is BooleanType)
+            return;
+
+        Report(operand, $"Operator '=~' expects a string-like operand, got {FormatType(type)}.", DiagnosticCodes.TypeMismatch);
     }
 
     private void ValidateShellPayload(Expression command, AstNode node, string context)
@@ -628,6 +666,7 @@ public sealed class TypeChecker
             IdentifierExpression identifier => ResolveContainerMode(identifier.Name),
             ArrayLiteral arrayLiteral when arrayLiteral.Elements.Count == 0 => ContainerKeyKind.Unknown,
             ArrayLiteral => ContainerKeyKind.Numeric,
+            MapLiteral => ContainerKeyKind.String,
             RangeExpression => ContainerKeyKind.Numeric,
             _ => ContainerKeyKind.Unknown
         };

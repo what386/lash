@@ -86,7 +86,10 @@ public sealed class ConstantSafetyAnalyzer
                 foreach (var clause in switchStatement.Cases)
                 {
                     if (!clause.IsWildcard)
-                        CheckExpression(clause.Pattern);
+                    {
+                        foreach (var pattern in clause.Patterns)
+                            CheckExpression(pattern);
+                    }
                     AnalyzeIsolated(clause.Body);
                 }
                 break;
@@ -240,6 +243,14 @@ public sealed class ConstantSafetyAnalyzer
             case ArrayLiteral arrayLiteral:
                 foreach (var element in arrayLiteral.Elements)
                     CheckExpression(element);
+                break;
+
+            case MapLiteral mapLiteral:
+                foreach (var entry in mapLiteral.Entries)
+                {
+                    CheckExpression(entry.Key);
+                    CheckExpression(entry.Value);
+                }
                 break;
         }
     }

@@ -827,7 +827,9 @@ public static class ModuleLoader
                || line.StartsWith("untrap ", StringComparison.Ordinal)
                || line.StartsWith("shift", StringComparison.Ordinal)
                || line == "break"
+               || line.StartsWith("break ", StringComparison.Ordinal)
                || line == "continue"
+               || line.StartsWith("continue ", StringComparison.Ordinal)
                || line.StartsWith("__cmd ", StringComparison.Ordinal);
     }
 
