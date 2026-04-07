@@ -1,6 +1,20 @@
 # Changelog — lash-lang
 
-*Generated on 2026-04-05*
+*Generated on 2026-04-07*
+
+## 0.15.0 — 2026-04-07
+
+### High Priority
+
+- Add first-class associative map literals to Lash `feature`, `language`, `compiler`
+- Add condition-only regex match operator to Lash `feature`, `language`, `compiler`
+- Synchronize Lash docs with implemented language surface `feature`, `language`, `docs`
+
+### Changes
+
+- Add loop-depth operands for break and continue `feature`, `language`, `compiler`
+- Add multi-pattern switch cases to Lash `feature`, `language`, `compiler`
+
 
 ## 0.14.0 — 2026-04-05
 
