@@ -11,9 +11,6 @@
 - [ ] Synchronize Lash docs with implemented language surface (high) #feature #language #docs
       @created 2026-04-07 21:16
 
-- [ ] Add multi-pattern switch cases to Lash #feature #language #compiler
-      @created 2026-04-07 21:34
-
 
 ## Completed
 
@@ -57,5 +54,9 @@
 
 - [x] Add multi-pattern switch cases to Lash #feature #language #compiler
       @created 2026-04-07 21:16
+      @completed 2026-04-07 21:41
+
+- [x] Add multi-pattern switch cases to Lash #feature #language #compiler
+      @created 2026-04-07 21:34
       @completed 2026-04-07 21:41
 
